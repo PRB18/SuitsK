@@ -62,7 +62,14 @@ try {
   for (const pw of PASSWORDS) {
     await page.fill('#password-input', pw);
     await page.click('#lock-submit-btn');
-    await page.waitForTimeout(600);
+    // scrypt is intentionally expensive; wait for the current attempt to
+    // finish before trying another password instead of clicking a disabled
+    // button while the request is still in flight.
+    await Promise.race([
+      page.locator('.dashboard-wrapper').waitFor({ state: 'attached', timeout: 30000 }),
+      page.locator('#lock-submit-btn:not([disabled])').waitFor({ state: 'attached', timeout: 30000 }),
+    ]).catch(() => { });
+    await page.waitForTimeout(100);
     if (await page.locator('.dashboard-wrapper').count()) {
       unlocked = true;
       pass(`unlock-with-password (${pw})`);

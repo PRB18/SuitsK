@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scratch/smoke_e2e.mjs)",
+      "Bash(npm *)",
+      "Bash(git *)"
+    ]
+  }
+}

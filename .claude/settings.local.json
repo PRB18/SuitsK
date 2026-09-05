@@ -4,7 +4,8 @@
       "Bash(curl *)",
       "Bash(node *)",
       "Bash(git add *)",
-      "Bash(git commit -m 'Fix dashboard scroll container and delete modal bugs *)"
+      "Bash(git commit -m 'Fix dashboard scroll container and delete modal bugs *)",
+      "Bash(git commit -m 'Add permanent project infrastructure *)"
     ]
   }
 }

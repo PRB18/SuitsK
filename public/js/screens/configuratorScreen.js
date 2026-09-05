@@ -17,7 +17,6 @@ import { router } from '../router.js';
 import { TAILORING_SCHEMA, TOOLTIP_DESCRIPTIONS } from '../schema.js';
 import { showToast } from '../toast.js';
 import { getIcon } from '../icons.js';
-import { mountAtelierPreview } from '../vendor/atelierPreview.bundle.js';
 
 // ── Styled Tooltip DOM ────────────────────────────────────────────────────────
 // Single floating tooltip element reused across all option cards.
@@ -170,13 +169,6 @@ export function renderConfiguratorScreen(container) {
 
     <!-- Wizard Content Panel -->
     <main class="wizard-main">
-      <section class="atelier-preview-shell" aria-label="Bespoke atelier preview">
-        <div class="atelier-preview-copy">
-          <span class="step-tag">Atelier preview</span>
-          <p>Shape, proportion, and finish in motion.</p>
-        </div>
-        <div id="atelier-preview-mount" class="atelier-preview-mount"></div>
-      </section>
       <div class="wizard-panel-container" id="wizard-panel-container">
         <!-- Step panel rendered here dynamically -->
       </div>
@@ -210,8 +202,6 @@ export function renderConfiguratorScreen(container) {
   `;
 
   container.appendChild(wrapper);
-
-  const disposeAtelierPreview = mountAtelierPreview(wrapper.querySelector('#atelier-preview-mount'));
 
   // Hook up event listeners
   const panelContainer = wrapper.querySelector('#wizard-panel-container');
@@ -331,7 +321,6 @@ export function renderConfiguratorScreen(container) {
   const observer = new MutationObserver(() => {
     if (!document.body.contains(wrapper)) {
       document.removeEventListener('keydown', onWizardKeydown);
-      disposeAtelierPreview();
       observer.disconnect();
     }
   });

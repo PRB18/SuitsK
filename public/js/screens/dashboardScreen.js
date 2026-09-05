@@ -61,6 +61,15 @@ export function renderDashboardScreen(container) {
             Lock Vault
           </button>
 
+          <button id="backup-vault-btn" class="btn btn-secondary btn-sm" title="Create an encrypted vault backup" aria-label="Create encrypted backup">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 3v12"></path>
+              <path d="m7 10 5 5 5-5"></path>
+              <path d="M5 21h14"></path>
+            </svg>
+            Backup
+          </button>
+
           <!-- Primary CTA visible at all times in header — Rule 2: Shortcut to main action -->
           <button id="new-suit-btn" class="btn btn-primary btn-sm" title="New bespoke suit (N)" aria-label="Configure new suit">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
@@ -126,6 +135,19 @@ export function renderDashboardScreen(container) {
       router.navigate('#lock');
     } catch (err) {
       showToast('Error locking vault: ' + err.message, 'error');
+    }
+  });
+
+  wrapper.querySelector('#backup-vault-btn').addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      const result = await api.backupVault();
+      showToast(`Encrypted backup created: ${result.backupName}`, 'success');
+    } catch (err) {
+      showToast('Backup failed: ' + err.message, 'error');
+    } finally {
+      button.disabled = false;
     }
   });
 

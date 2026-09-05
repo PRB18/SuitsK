@@ -32,18 +32,15 @@
 const express  = require('express');
 const crypto   = require('crypto');
 const fs       = require('fs');
-const path     = require('path');
 
-const { openDatabase, closeDatabase, isUnlocked, getDbPath, ensureDataDir } = require('./db');
+const { openDatabase, closeDatabase, isUnlocked, getDbPath } = require('./db');
+const { CONFIG_PATH, ensureDataDir, createVaultBackup } = require('./storage');
 
 const router = express.Router();
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-const DATA_DIR    = path.join(__dirname, '..', 'data');
-const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 
 // scrypt parameters
 // N=65536 (2^16) — strong KDF, ~100-200ms per derivation on modern hardware
@@ -57,6 +54,9 @@ const SCRYPT_MAXMEM = 128 * SCRYPT_N * SCRYPT_R * 2;  // ~134MB — well within 
 // Artificial delay appended to every failed unlock response
 // (on top of the ~100-200ms scrypt cost already incurred)
 const FAIL_DELAY_MS = 300;
+
+// Resolve and migrate the local vault before any status or unlock request.
+ensureDataDir();
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -227,6 +227,23 @@ router.post('/unlock', async (req, res) => {
 router.post('/lock', (req, res) => {
   closeDatabase();
   res.json({ ok: true, message: 'Database locked.' });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/auth/backup
+// ---------------------------------------------------------------------------
+router.post('/backup', (req, res) => {
+  if (!isUnlocked()) {
+    return res.status(423).json({ error: 'Unlock the vault before creating a backup.' });
+  }
+
+  try {
+    const backup = createVaultBackup();
+    res.json({ ok: true, backupName: backup.backupName });
+  } catch (err) {
+    console.error('[backup] Error:', err);
+    res.status(500).json({ error: 'Backup failed: ' + err.message });
+  }
 });
 
 module.exports = router;

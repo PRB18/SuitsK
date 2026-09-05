@@ -8,11 +8,11 @@
     "dev": "node server/index.js"
   },
   "dependencies": {
-    "better-sqlite3-multiple-ciphers": "^9.1.2",
+    "better-sqlite3-multiple-ciphers": "^13.0.3",
     "express": "^4.19.2",
     "uuid": "^9.0.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   }
 }

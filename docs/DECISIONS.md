@@ -5,6 +5,14 @@ Format: **Decision / Why / Alternatives considered / Status**
 
 ---
 
+### [DEC-011] Per-User Local Vault Storage and Encrypted Backups
+- **Decision:** Store `config.json`, `suits.db`, and timestamped backup folders under `%LOCALAPPDATA%\\KrishnaSuitsCustom\\data`. Migrate the legacy project `data/` folder only when the AppData vault is empty. Add a dashboard backup action that copies both vault files together while the vault is unlocked.
+- **Why:** Application updates must not overwrite client suit data. The database remains SQLCipher-encrypted, and backups preserve the encrypted database plus its matching salts/configuration without creating plaintext exports or cloud copies.
+- **Alternatives considered:** Keep data beside the application (discarded: updates and uninstallers can overwrite or remove it), back up only `suits.db` (discarded: the matching `config.json` salts are required), cloud backup (discarded: violates the offline/local security requirement).
+- **Status:** Implemented in `server/storage.js`, `server/auth.js`, `server/db.js`, and the dashboard backup action. Verified by AppData migration, unlock, backup file checks, and the 23-check smoke test.
+
+---
+
 ### [DEC-010] Dashboard Scroll Container Flex Layout Fix
 - **Decision:** Remove `height: 0` from `.dashboard-wrapper` in `public/styles/main.css` and change `.dashboard-main` from `overflow-y: scroll` to `overflow-y: auto`.
 - **Why:** The `height: 0` was intended as a flex-shrink trick (similar to `.configurator-wrapper`), but in the dashboard's specific layout with a fixed `.app-header`, it constrained the outer wrapper to exactly match the viewport height (768px) rather than allowing the flex layout to naturally allocate space between the fixed header and the scrollable `.dashboard-main`. This caused the smoke test's `dashboard-scroll-container` check to fail with `wrapH === rootH` instead of proper containment. Additionally, `overflow-y: scroll` forced a permanent scrollbar even when content fit; `auto` only shows the scrollbar when needed.

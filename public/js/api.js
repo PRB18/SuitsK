@@ -55,6 +55,12 @@ export const api = {
     });
   },
 
+  async backupVault() {
+    return request('/api/auth/backup', {
+      method: 'POST',
+    });
+  },
+
   // Suit CRUD endpoints
   async getSuits() {
     return request('/api/suits');

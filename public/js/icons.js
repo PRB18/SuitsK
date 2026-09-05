@@ -380,6 +380,83 @@ Object.assign(ICONS, {
   Large: stomachIcon('Large', 'Large'),
 });
 
+function premiumLapelIcon(style) {
+  const isShawl = style === 'shawl' || style === 'tuxedo-shawl';
+  const isPeak = style === 'peak' || style === 'tuxedo-peak';
+  const isTuxedo = style.startsWith('tuxedo-');
+  const shawlWidth = style === 'tuxedo-shawl-slim' ? 6 : style === 'tuxedo-shawl-wide' ? 15 : 10;
+  const leftLapel = isShawl
+    ? `M35 11 C${35 - shawlWidth} 15 ${18 - shawlWidth / 2} 25 ${18 - shawlWidth / 2} 36 C${20 - shawlWidth / 3} 40 28 42 35 43`
+    : isPeak
+      ? 'M35 11 L22 18 L12 16 L24 31 L35 43'
+      : 'M35 11 L23 19 L16 27 L24 31 L35 43';
+  const rightLapel = leftLapel.replace(/(M35|L35|C35)/g, 'X').replace(/[0-9]+/g, (value) => String(70 - Number(value))).replace(/X/g, (value) => value);
+  const mirrored = isShawl
+    ? `M35 11 C${35 + shawlWidth} 15 ${52 + shawlWidth / 2} 25 ${52 + shawlWidth / 2} 36 C${50 + shawlWidth / 3} 40 42 42 35 43`
+    : isPeak
+      ? 'M35 11 L48 18 L58 16 L46 31 L35 43'
+      : 'M35 11 L47 19 L54 27 L46 31 L35 43';
+  const satin = isTuxedo
+    ? `<path d="${isShawl ? `M35 14 C${35 - shawlWidth + 3} 18 ${22 - shawlWidth / 2} 27 ${22 - shawlWidth / 2} 35` : isPeak ? 'M34 14 L24 20 L17 19 L27 29 L34 40' : 'M34 14 L25 21 L20 27 L26 29 L34 40'}" stroke="#C9A87A" stroke-width="1.15" stroke-linecap="round"/>`
+    : '';
+  const widthMarker = style === 'tuxedo-shawl-slim'
+    ? '<path d="M21 48 H27 M21 51 H27" stroke="#C9A87A" stroke-width="1.4" stroke-linecap="round"/>'
+    : style === 'tuxedo-shawl-wide'
+      ? '<path d="M17 48 H29 M17 51 H29" stroke="#C9A87A" stroke-width="1.4" stroke-linecap="round"/>'
+      : style === 'tuxedo-shawl'
+        ? '<path d="M19 48 H28 M19 51 H28" stroke="#C9A87A" stroke-width="1.4" stroke-linecap="round"/>'
+        : '';
+  return `
+    <svg width="40" height="46" viewBox="0 0 70 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M35 10 L14 22 L10 74 L60 74 L56 22 Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.22" stroke-linejoin="round"/>
+      <path d="M28 10 L35 16 L42 10" stroke="currentColor" stroke-width="1" stroke-opacity="0.38"/>
+      <path d="M35 42 V72" stroke="currentColor" stroke-width="1" stroke-opacity="0.18" stroke-dasharray="2 3"/>
+      <path d="${leftLapel}" stroke="currentColor" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="${mirrored}" stroke="currentColor" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round"/>
+      ${satin}
+      ${isTuxedo ? '<path d="M31 15 L35 18 L39 15" stroke="#C9A87A" stroke-width="1" stroke-linecap="round"/>' : ''}
+      ${widthMarker}
+    </svg>
+  `;
+}
+
+function premiumShoulderIcon(style) {
+  const shoulder = style === 'square'
+    ? 'M28 17 L10 18 L8 53 M42 17 L60 18 L62 53'
+    : style === 'sloping'
+      ? 'M28 17 L12 29 L10 53 M42 17 L58 29 L60 53'
+      : 'M28 17 Q17 19 11 25 L10 53 M42 17 Q53 19 59 25 L60 53';
+  const marker = style === 'square'
+    ? '<path d="M10 15 L12 24 M60 15 L58 24" stroke="#C9A87A" stroke-width="1.4"/>'
+    : style === 'sloping'
+      ? '<path d="M14 27 L18 30 M56 27 L52 30" stroke="#C9A87A" stroke-width="1.4"/>'
+      : '<path d="M15 24 Q18 28 21 29 M55 24 Q52 28 49 29" stroke="#C9A87A" stroke-width="1.4" fill="none"/>';
+  return `
+    <svg width="40" height="40" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M28 16 C32 14 38 14 42 16" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.42"/>
+      <path d="M28 16 L31 28 M42 16 L39 28" stroke="currentColor" stroke-width="1" stroke-opacity="0.28"/>
+      <path d="${shoulder}" stroke="currentColor" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"/>
+      ${marker}
+      <line x1="35" y1="28" x2="35" y2="57" stroke="currentColor" stroke-width="1" stroke-opacity="0.18" stroke-dasharray="2 3"/>
+    </svg>
+  `;
+}
+
+Object.assign(ICONS, {
+  Notch: premiumLapelIcon('notch'),
+  Peak: premiumLapelIcon('peak'),
+  Shawl: premiumLapelIcon('shawl'),
+  'Tuxedo Notch': premiumLapelIcon('tuxedo-notch'),
+  'Tuxedo Peak': premiumLapelIcon('tuxedo-peak'),
+  'Tuxedo Shawl 1': premiumLapelIcon('tuxedo-shawl-slim'),
+  'Tuxedo Shawl 2': premiumLapelIcon('tuxedo-shawl'),
+  'Tuxedo Shawl 3': premiumLapelIcon('tuxedo-shawl-wide'),
+  'Same as Sample': premiumLapelIcon('notch'),
+  Square: premiumShoulderIcon('square'),
+  Regular: premiumShoulderIcon('regular'),
+  Sloping: premiumShoulderIcon('sloping'),
+});
+
 /**
  * Get the SVG markup for a specific icon by option value.
  * Returns null if no custom icon exists for this value.

@@ -382,9 +382,9 @@ function showDeleteModal(suitName, onConfirm) {
     if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
   }, { once: true });
 
-  backdrop.querySelector('#modal-confirm-btn').addEventListener('click', () => {
+  backdrop.querySelector('#modal-confirm-btn').addEventListener('click', async () => {
     close();
-    onConfirm();
+    await onConfirm();
   });
 
   // Focus the cancel button for safety (Rule 4)

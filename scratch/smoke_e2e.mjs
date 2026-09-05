@@ -182,13 +182,18 @@ try {
   if (afterDup > before) pass('duplicate-works');
   else fail('duplicate-works', `before=${before} after=${afterDup}`);
 
-  // Delete all smoke-test cards (confirm dialogs)
+  // Delete all smoke-test cards (handles both native dialogs and custom HCI modal)
   page.on('dialog', async (d) => {
     try { await d.accept(); } catch { /* already handled */ }
   });
   while (await page.locator('.suit-card', { hasText: 'Smoke Test' }).count()) {
     await page.locator('.suit-card', { hasText: 'Smoke Test' }).first().locator('.action-delete').click();
-    await page.waitForTimeout(450);
+    await page.waitForTimeout(250);
+    const modalConfirm = page.locator('#modal-confirm-btn');
+    if (await modalConfirm.count()) {
+      await modalConfirm.click();
+      await page.waitForTimeout(450);
+    }
   }
   if ((await page.locator('.suit-card', { hasText: 'Smoke Test' }).count()) === 0) pass('delete-works');
   else fail('delete-works', 'smoke cards remain');

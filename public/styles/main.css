@@ -215,7 +215,6 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;      /* allow flex child to shrink so .dashboard-main can scroll */
-  height: 0;          /* same flex-shrink trick as .configurator-wrapper */
   overflow: hidden;   /* only .dashboard-main scrolls — body is overflow:hidden */
 }
 
@@ -278,7 +277,7 @@ body {
   flex: 1;
   min-height: 0;
   overflow-x: hidden;
-  overflow-y: scroll;
+  overflow-y: auto;
   scrollbar-gutter: stable;
   padding: var(--space-xl) var(--space-lg);
 }

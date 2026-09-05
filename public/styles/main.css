@@ -1792,3 +1792,70 @@ body {
 }
 .fab-new-suit:active { transform: translateY(0); }
 
+@media (max-width: 700px) {
+  .header-container {
+    padding: var(--space-sm) var(--space-md);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+  }
+
+  .header-brand {
+    justify-content: center;
+  }
+
+  .header-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 32px minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .header-actions .btn-sm {
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    white-space: nowrap;
+  }
+
+  .header-actions #new-suit-btn {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  .wizard-header-container {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .wizard-title-block {
+    gap: 0;
+  }
+
+  .wizard-mode-badge {
+    display: none;
+  }
+
+  .wizard-suit-title {
+    max-width: 34vw;
+    font-size: 1rem;
+  }
+
+  .stepper-container {
+    padding: 0 var(--space-md);
+    scrollbar-width: thin;
+    scroll-snap-type: x proximity;
+  }
+
+  .step-nav-item {
+    padding: var(--space-sm) 12px;
+    scroll-snap-align: start;
+  }
+
+  .fab-new-suit {
+    right: 16px;
+    bottom: 16px;
+    padding: 11px 16px;
+    font-size: 0.875rem;
+  }
+}
+

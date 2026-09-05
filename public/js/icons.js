@@ -1,142 +1,277 @@
 /**
- * icons.js — Custom SVG icon library for Krishna Suits
+ * icons.js — Bespoke Vector Line-Art Icon Library for Krishna Suits
  *
- * Stage 5: Bespoke vector icons for jacket lapel styles and shoulder shapes.
- * Each icon is optimized for 36x36px rendering inside .option-card containers.
+ * Stage 5 (Revised): Open line-art illustrations inspired by Savile Row & premium
+ * made-to-measure tailoring guides (Proper Cloth / Suitsupply).
  *
- * Stroke color inherits currentColor from parent for proper theme integration.
+ * Design Principles:
+ *  1. Open transparent silhouettes (no heavy dark solid polygon fills).
+ *  2. Stroke hierarchy: Primary tailoring feature in crisp 1.8-2.0px accent stroke;
+ *     supporting garment body lines in 1.0px muted subtle strokes.
+ *  3. Proportional clarity: Exaggerated contour geometry so variations (e.g., Notch vs Peak,
+ *     Tuxedo Shawl 1 vs 2 vs 3, Square vs Regular vs Sloping) are instantly recognizable at 36px.
  */
 
 export const ICONS = {
   // ============================================================================
-  // JACKET LAPEL STYLES (9 icons)
+  // JACKET LAPEL STYLES (9 icons) - 70x80 viewBox
   // ============================================================================
 
+  // 1. Notch: Classic 75-90° step-notch cut where lapel meets collar
   'Notch': `
-    <svg width="36" height="44" viewBox="0 0 70 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M35 8 L10 22 L6 74 L64 74 L60 22 Z" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.3"/>
-      <path d="M35 10 L18 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      <path d="M35 10 L22 28 L16 32 L20 36 L35 28" fill="#252520" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M35 10 L52 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      <path d="M35 10 L48 28 L54 32 L50 36 L35 28" fill="#252520" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <line x1="35" y1="28" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.3"/>
+    <svg width="40" height="46" viewBox="0 0 70 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Jacket Body Silhouette (subtle reference lines) -->
+      <path d="M35 10 L14 22 L10 74 L60 74 L56 22 Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.25" stroke-linejoin="round"/>
+      <line x1="35" y1="36" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
+      <circle cx="35" cy="50" r="1.5" fill="currentColor" opacity="0.3"/>
+      <circle cx="35" cy="62" r="1.5" fill="currentColor" opacity="0.3"/>
+
+      <!-- Shirt Collar Stand (context) -->
+      <path d="M28 10 L35 16 L42 10" stroke="currentColor" stroke-width="1" stroke-opacity="0.4"/>
+
+      <!-- Left Lapel: Collar step + Lapel triangle notch -->
+      <path d="M35 10 L23 18 L15 25 L23 29 L35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="23" y1="18" x2="15" y2="25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Right Lapel (mirror) -->
+      <path d="M35 10 L47 18 L55 25 L47 29 L35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="47" y1="18" x2="55" y2="25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </svg>
   `,
 
+  // 2. Peak: Bold upward and outward pointing spear tip extending past collar seam
   'Peak': `
-    <svg width="36" height="44" viewBox="0 0 70 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M35 8 L10 22 L6 74 L64 74 L60 22 Z" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.3"/>
-      <path d="M35 10 L16 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      <path d="M35 10 L18 24 L8 20 L18 30 L35 28" fill="#252520" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M35 10 L54 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      <path d="M35 10 L52 24 L62 20 L52 30 L35 28" fill="#252520" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <line x1="35" y1="28" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.3"/>
+    <svg width="40" height="46" viewBox="0 0 70 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Jacket Body Silhouette -->
+      <path d="M35 10 L14 22 L10 74 L60 74 L56 22 Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.25" stroke-linejoin="round"/>
+      <line x1="35" y1="38" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
+      <circle cx="35" cy="52" r="1.5" fill="currentColor" opacity="0.3"/>
+      <circle cx="35" cy="64" r="1.5" fill="currentColor" opacity="0.3"/>
+
+      <!-- Shirt Collar Stand -->
+      <path d="M28 10 L35 16 L42 10" stroke="currentColor" stroke-width="1" stroke-opacity="0.4"/>
+
+      <!-- Left Peak Lapel: Upward high peak gorge -->
+      <path d="M35 10 L22 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M22 17 L10 20 L23 30 L35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Right Peak Lapel -->
+      <path d="M35 10 L48 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M48 17 L60 20 L47 30 L35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `,
 
+  // 3. Shawl: Smooth continuous unbroken curve with zero notch
   'Shawl': `
-    <svg width="36" height="44" viewBox="0 0 70 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M35 8 L10 22 L6 74 L64 74 L60 22 Z" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.3"/>
-      <path d="M35 10 C30 12 20 20 16 32 C22 34 30 30 35 28" fill="#252520" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M35 10 C40 12 50 20 54 32 C48 34 40 30 35 28" fill="#252520" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <line x1="35" y1="28" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.3"/>
+    <svg width="40" height="46" viewBox="0 0 70 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Jacket Body Silhouette -->
+      <path d="M35 10 L14 22 L10 74 L60 74 L56 22 Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.25" stroke-linejoin="round"/>
+      <line x1="35" y1="38" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
+      <circle cx="35" cy="52" r="1.5" fill="currentColor" opacity="0.3"/>
+      <circle cx="35" cy="64" r="1.5" fill="currentColor" opacity="0.3"/>
+
+      <!-- Shirt Collar Stand -->
+      <path d="M28 10 L35 16 L42 10" stroke="currentColor" stroke-width="1" stroke-opacity="0.4"/>
+
+      <!-- Continuous unbroken shawl sweep (smooth single curve) -->
+      <path d="M35 10 C26 12 16 22 16 32 C18 36 28 38 35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M35 10 C44 12 54 22 54 32 C52 36 42 38 35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `,
 
+  // 4. Tuxedo Notch: Classic notch geometry + double satin facing accent ribbon
   'Tuxedo Notch': `
-    <svg width="36" height="44" viewBox="0 0 70 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M35 8 L10 22 L6 74 L64 74 L60 22 Z" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.3"/>
-      <path d="M35 10 L22 28 L16 32 L20 36 L35 28" fill="#252520" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M35 10 L48 28 L54 32 L50 36 L35 28" fill="#252520" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M35 11 L23 28 L18 31 L21 35 L35 28" fill="none" stroke="#8B6F47" stroke-width="1.2"/>
-      <path d="M35 11 L47 28 L52 31 L49 35 L35 28" fill="none" stroke="#8B6F47" stroke-width="1.2"/>
-      <line x1="35" y1="28" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.3"/>
+    <svg width="40" height="46" viewBox="0 0 70 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Jacket Body -->
+      <path d="M35 10 L14 22 L10 74 L60 74 L56 22 Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.25" stroke-linejoin="round"/>
+      <line x1="35" y1="36" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
+      <circle cx="35" cy="52" r="1.5" fill="currentColor" opacity="0.3"/>
+
+      <!-- Bowtie outline for formal evening wear context -->
+      <path d="M32 14 L38 18 M38 14 L32 18" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.6"/>
+
+      <!-- Left Outer Notch Lapel -->
+      <path d="M35 10 L23 18 L15 25 L23 29 L35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Left Satin Facing Inner Ribbon -->
+      <path d="M34 12 L24 18 L18 24 L24 28 L34 36" stroke="#C9A87A" stroke-width="1.2" stroke-opacity="0.9"/>
+
+      <!-- Right Outer Notch Lapel -->
+      <path d="M35 10 L47 18 L55 25 L47 29 L35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Right Satin Facing Inner Ribbon -->
+      <path d="M36 12 L46 18 L52 24 L46 28 L36 36" stroke="#C9A87A" stroke-width="1.2" stroke-opacity="0.9"/>
     </svg>
   `,
 
+  // 5. Tuxedo Peak: Wide dramatic peak lapel + satin facing ribbon + formal closure
   'Tuxedo Peak': `
-    <svg width="36" height="44" viewBox="0 0 70 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M35 8 L10 22 L6 74 L64 74 L60 22 Z" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.3"/>
-      <path d="M35 10 L18 24 L8 20 L18 30 L35 28" fill="#252520" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M35 10 L52 24 L62 20 L52 30 L35 28" fill="#252520" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M35 11 L19 24 L10 21 L19 29 L35 28" fill="none" stroke="#8B6F47" stroke-width="1.2"/>
-      <path d="M35 11 L51 24 L60 21 L51 29 L35 28" fill="none" stroke="#8B6F47" stroke-width="1.2"/>
-      <line x1="35" y1="28" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.3"/>
+    <svg width="40" height="46" viewBox="0 0 70 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Jacket Body -->
+      <path d="M35 10 L14 22 L10 74 L60 74 L56 22 Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.25" stroke-linejoin="round"/>
+      <line x1="35" y1="38" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
+      <circle cx="35" cy="52" r="1.5" fill="currentColor" opacity="0.3"/>
+
+      <!-- Bowtie outline -->
+      <path d="M32 14 L38 18 M38 14 L32 18" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.6"/>
+
+      <!-- Left Outer Peak Lapel -->
+      <path d="M35 10 L22 17 L10 20 L23 30 L35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Left Satin Facing Ribbon -->
+      <path d="M34 12 L23 18 L13 21 L23 28 L33 36" stroke="#C9A87A" stroke-width="1.2" stroke-opacity="0.9"/>
+
+      <!-- Right Outer Peak Lapel -->
+      <path d="M35 10 L48 17 L60 20 L47 30 L35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Right Satin Facing Ribbon -->
+      <path d="M36 12 L47 18 L57 21 L47 28 L37 36" stroke="#C9A87A" stroke-width="1.2" stroke-opacity="0.9"/>
     </svg>
   `,
 
+  // 6. Tuxedo Shawl 1 — Slim / Narrow Collar (roll stays high and tight to neck, 2.25" narrow profile)
   'Tuxedo Shawl 1': `
-    <svg width="36" height="44" viewBox="0 0 70 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M35 8 L10 22 L6 74 L64 74 L60 22 Z" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.3"/>
-      <path d="M35 10 C32 13 24 22 22 30 C26 32 32 30 35 28" fill="#252520" stroke="currentColor" stroke-width="2"/>
-      <path d="M35 10 C38 13 46 22 48 30 C44 32 38 30 35 28" fill="#252520" stroke="currentColor" stroke-width="2"/>
-      <path d="M35 11 C33 14 26 22 24 30 C27 31 32 30 35 28" fill="none" stroke="#8B6F47" stroke-width="1.2"/>
-      <path d="M35 11 C37 14 44 22 46 30 C43 31 38 30 35 28" fill="none" stroke="#8B6F47" stroke-width="1.2"/>
-      <line x1="35" y1="28" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.3"/>
+    <svg width="40" height="46" viewBox="0 0 70 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Jacket Body -->
+      <path d="M35 10 L14 22 L10 74 L60 74 L56 22 Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.25" stroke-linejoin="round"/>
+      <line x1="35" y1="34" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
+      <circle cx="35" cy="48" r="1.5" fill="currentColor" opacity="0.3"/>
+
+      <!-- Bowtie outline -->
+      <path d="M32 14 L38 18 M38 14 L32 18" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.6"/>
+
+      <!-- Slim Shawl Outer Line (Narrow width, max outward sweep x=24) -->
+      <path d="M35 10 C31 12 24 18 24 26 C26 31 31 33 35 34" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M35 10 C39 12 46 18 46 26 C44 31 39 33 35 34" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Slim Satin Inner Track -->
+      <path d="M35 12 C32 14 27 19 27 25 C29 28 32 30 35 32" stroke="#C9A87A" stroke-width="1.2" stroke-opacity="0.9"/>
+      <path d="M35 12 C38 14 43 19 43 25 C41 28 38 30 35 32" stroke="#C9A87A" stroke-width="1.2" stroke-opacity="0.9"/>
+
+      <!-- Dimension Badge Label "SLIM" -->
+      <text x="35" y="68" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.1em">SLIM</text>
     </svg>
   `,
 
+  // 7. Tuxedo Shawl 2 — Classic / Medium Width (graceful proportioned roll down to mid-waist)
   'Tuxedo Shawl 2': `
-    <svg width="36" height="44" viewBox="0 0 70 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M35 8 L10 22 L6 74 L64 74 L60 22 Z" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.3"/>
-      <path d="M35 10 C30 13 18 24 14 42 C20 44 30 38 35 36" fill="#252520" stroke="currentColor" stroke-width="2"/>
-      <path d="M35 10 C40 13 52 24 56 42 C50 44 40 38 35 36" fill="#252520" stroke="currentColor" stroke-width="2"/>
-      <path d="M35 11 C31 14 20 24 16 42 C21 43 30 38 35 36" fill="none" stroke="#8B6F47" stroke-width="1.2"/>
-      <path d="M35 11 C39 14 50 24 54 42 C49 43 40 38 35 36" fill="none" stroke="#8B6F47" stroke-width="1.2"/>
-      <line x1="35" y1="36" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.3"/>
+    <svg width="40" height="46" viewBox="0 0 70 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Jacket Body -->
+      <path d="M35 10 L14 22 L10 74 L60 74 L56 22 Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.25" stroke-linejoin="round"/>
+      <line x1="35" y1="38" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
+      <circle cx="35" cy="52" r="1.5" fill="currentColor" opacity="0.3"/>
+
+      <!-- Bowtie outline -->
+      <path d="M32 14 L38 18 M38 14 L32 18" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.6"/>
+
+      <!-- Classic Medium Shawl Outer Line (Medium outward sweep x=18) -->
+      <path d="M35 10 C29 13 18 20 18 30 C20 35 28 37 35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M35 10 C41 13 52 20 52 30 C50 35 42 37 35 38" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Satin Inner Track -->
+      <path d="M35 12 C30 14 22 20 22 28 C24 32 30 34 35 35" stroke="#C9A87A" stroke-width="1.2" stroke-opacity="0.9"/>
+      <path d="M35 12 C40 14 48 20 48 28 C46 32 40 34 35 35" stroke="#C9A87A" stroke-width="1.2" stroke-opacity="0.9"/>
+
+      <!-- Dimension Badge Label "REGULAR" -->
+      <text x="35" y="68" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.1em">CLASSIC</text>
     </svg>
   `,
 
+  // 8. Tuxedo Shawl 3 — Wide / Dramatic Belly (broad sweeping bell curve extending toward armholes)
   'Tuxedo Shawl 3': `
-    <svg width="36" height="44" viewBox="0 0 70 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M35 8 L10 22 L6 74 L64 74 L60 22 Z" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.3"/>
-      <path d="M35 10 C28 14 12 28 6 52 C14 54 28 46 35 42" fill="#252520" stroke="currentColor" stroke-width="2"/>
-      <path d="M35 10 C42 14 58 28 64 52 C56 54 42 46 35 42" fill="#252520" stroke="currentColor" stroke-width="2"/>
-      <path d="M35 11 C29 15 14 28 8 52 C15 53 28 46 35 42" fill="none" stroke="#8B6F47" stroke-width="1.2"/>
-      <path d="M35 11 C41 15 56 28 62 52 C55 53 42 46 35 42" fill="none" stroke="#8B6F47" stroke-width="1.2"/>
-      <line x1="35" y1="42" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.3"/>
+    <svg width="40" height="46" viewBox="0 0 70 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Jacket Body -->
+      <path d="M35 10 L14 22 L10 74 L60 74 L56 22 Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.25" stroke-linejoin="round"/>
+      <line x1="35" y1="42" x2="35" y2="74" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
+      <circle cx="35" cy="56" r="1.5" fill="currentColor" opacity="0.3"/>
+
+      <!-- Bowtie outline -->
+      <path d="M32 14 L38 18 M38 14 L32 18" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.6"/>
+
+      <!-- Dramatic Wide Shawl (Wide belly outward sweep x=10) -->
+      <path d="M35 10 C24 14 10 24 10 35 C14 40 26 41 35 42" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M35 10 C46 14 60 24 60 35 C56 40 44 41 35 42" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+
+      <!-- Double Satin Contour Ribbon -->
+      <path d="M35 12 C26 16 15 25 15 33 C18 36 28 38 35 39" stroke="#C9A87A" stroke-width="1.3" stroke-opacity="0.9"/>
+      <path d="M35 12 C44 16 55 25 55 33 C52 36 42 38 35 39" stroke="#C9A87A" stroke-width="1.3" stroke-opacity="0.9"/>
+
+      <!-- Dimension Badge Label "WIDE" -->
+      <text x="35" y="68" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.1em">WIDE</text>
     </svg>
   `,
 
+  // 9. Same as Sample: Tailor reference swatch with measuring tape graphic
   'Same as Sample': `
-    <svg width="36" height="44" viewBox="0 0 70 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M35 8 L10 22 L6 74 L64 74 L60 22 Z" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" stroke-opacity="0.5"/>
-      <path d="M25 30 L45 30 M25 40 L45 40 M25 50 L45 50" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.6"/>
-      <text x="35" y="45" font-family="var(--font-ui)" font-size="10" fill="currentColor" text-anchor="middle" opacity="0.7">≈</text>
+    <svg width="40" height="46" viewBox="0 0 70 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Reference Silhouette (dashed guide) -->
+      <path d="M35 10 L14 22 L10 74 L60 74 L56 22 Z" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3" stroke-opacity="0.4"/>
+      <!-- Tailor Tape / Sample Tag Swatch -->
+      <rect x="22" y="24" width="26" height="32" rx="3" stroke="currentColor" stroke-width="1.6" fill="#F7F4EF" fill-opacity="0.1"/>
+      <line x1="26" y1="32" x2="44" y2="32" stroke="#C9A87A" stroke-width="1.5"/>
+      <line x1="26" y1="40" x2="40" y2="40" stroke="#C9A87A" stroke-width="1.5"/>
+      <line x1="26" y1="48" x2="36" y2="48" stroke="#C9A87A" stroke-width="1.5"/>
+      <text x="35" y="68" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="currentColor" opacity="0.6" text-anchor="middle">SAMPLE</text>
     </svg>
   `,
 
   // ============================================================================
-  // JACKET SHOULDER SHAPES (3 icons)
+  // JACKET SHOULDER SHAPES (3 icons) - 70x70 viewBox
   // ============================================================================
 
+  // 1. Square: Roped, padded Pagoda / British structured horizontal shoulder pitch
   'Square': `
-    <svg width="36" height="36" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="35" cy="18" r="8" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5"/>
-      <path d="M12 24 L12 24 L12 60 L58 60 L58 24 L58 24" stroke="currentColor" stroke-width="2" stroke-linejoin="miter" stroke-linecap="square"/>
-      <line x1="12" y1="24" x2="27" y2="18" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="58" y1="24" x2="43" y2="18" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="35" y1="26" x2="35" y2="60" stroke="currentColor" stroke-width="1" stroke-opacity="0.3"/>
+    <svg width="40" height="40" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Neck base & collar -->
+      <path d="M28 16 C32 14 38 14 42 16" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.5"/>
+      <path d="M28 16 L31 28 M42 16 L39 28" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.4"/>
+
+      <!-- Square / Roped Shoulder Line: Firm, horizontal shoulder pitch with sharp 90° roped sleevehead -->
+      <path d="M28 16 L10 18 L8 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"/>
+      <path d="M42 16 L60 18 L62 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"/>
+
+      <!-- Roped head ridge marker -->
+      <path d="M10 16 L12 24 M60 16 L58 24" stroke="#C9A87A" stroke-width="1.5"/>
+
+      <!-- Center seam guide -->
+      <line x1="35" y1="28" x2="35" y2="56" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
+
+      <!-- Label subtitle -->
+      <text x="35" y="62" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">STRUCTURED</text>
     </svg>
   `,
 
+  // 2. Regular: Natural soft Neapolitan shoulder line (Spalla Camicia)
   'Regular': `
-    <svg width="36" height="36" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="35" cy="18" r="8" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5"/>
-      <path d="M12 28 Q12 24 15 24 L15 24 L15 60 L55 60 L55 24 L55 24 Q58 24 58 28" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <line x1="15" y1="24" x2="27" y2="18" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="55" y1="24" x2="43" y2="18" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="35" y1="26" x2="35" y2="60" stroke="currentColor" stroke-width="1" stroke-opacity="0.3"/>
+    <svg width="40" height="40" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Neck base -->
+      <path d="M28 16 C32 14 38 14 42 16" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.5"/>
+      <path d="M28 16 L31 28 M42 16 L39 28" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.4"/>
+
+      <!-- Regular / Natural Shoulder Line: Gentle natural anatomy drape with softly rounded sleevehead -->
+      <path d="M28 16 Q16 19 12 23 L10 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M42 16 Q54 19 58 23 L60 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Center seam guide -->
+      <line x1="35" y1="28" x2="35" y2="56" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
+
+      <!-- Label subtitle -->
+      <text x="35" y="62" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">NATURAL</text>
     </svg>
   `,
 
+  // 3. Sloping: Pronounced downward athletic drop from neck point to armhole
   'Sloping': `
-    <svg width="36" height="36" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="35" cy="18" r="8" fill="#1c1c1c" stroke="currentColor" stroke-width="1.5"/>
-      <path d="M12 32 L18 60 L52 60 L58 32" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      <line x1="12" y1="32" x2="27" y2="18" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="58" y1="32" x2="43" y2="18" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="35" y1="26" x2="35" y2="60" stroke="currentColor" stroke-width="1" stroke-opacity="0.3"/>
+    <svg width="40" height="40" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Neck base -->
+      <path d="M28 16 C32 14 38 14 42 16" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.5"/>
+      <path d="M28 16 L31 28 M42 16 L39 28" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.4"/>
+
+      <!-- Sloping Shoulder Line: Steep downward gradient angle from collar to armhole -->
+      <path d="M28 16 L12 29 L11 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M42 16 L58 29 L59 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Center seam guide -->
+      <line x1="35" y1="28" x2="35" y2="56" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
+
+      <!-- Label subtitle -->
+      <text x="35" y="62" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">SLOPING</text>
     </svg>
   `,
 };

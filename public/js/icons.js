@@ -276,6 +276,110 @@ export const ICONS = {
   `,
 };
 
+const JACKET_ICON_LABELS = [
+  '1 Button Suit', '2 Button Suit', '3 Button Suit', '4 Button', '6 Button',
+  'Single Breasted', 'Double Breasted', 'HS3', 'H4', 'HS5', 'HS4',
+  'Single Vent', 'Double Vent', 'Straight Bone', 'Slanted Bone',
+  'Straight Valet', 'Slanting Valet', 'Barchetta', 'Tasca Pignata',
+  'Rounded Patch Pocket', 'Normal', 'Erect', 'Hunched', 'Flat', 'Slight', 'Large',
+];
+
+function jacketLineIcon(label, detail, body) {
+  return `
+    <svg width="40" height="40" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M35 9 L17 20 L11 62 L59 62 L53 20 Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.25" stroke-linejoin="round"/>
+      <path d="M35 9 L27 16 L35 27 L43 16 Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.35"/>
+      ${body}
+      <text x="35" y="68" font-family="var(--font-ui, sans-serif)" font-size="6.5" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.06em">${detail}</text>
+    </svg>
+  `;
+}
+
+function buttonIcon(label, count, doubleBreasted = false) {
+  const columns = doubleBreasted ? [28, 42] : [35];
+  const buttons = columns.flatMap((x) => Array.from({ length: count }, (_, index) =>
+    `<circle cx="${x}" cy="${30 + index * 7}" r="2" stroke="currentColor" stroke-width="1.5"/>`
+  )).join('');
+  return jacketLineIcon(label, label.replace(/[^0-9A-Z]/g, '').slice(0, 9), `
+    <path d="M35 25 V61" stroke="currentColor" stroke-width="1" stroke-opacity="0.25" stroke-dasharray="2 2"/>
+    ${buttons}
+  `);
+}
+
+function sleeveButtonIcon(label, count) {
+  return jacketLineIcon(label, label, `
+    <path d="M22 24 L16 51 M48 24 L54 51" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    ${Array.from({ length: count }, (_, index) => `<circle cx="${19 + index * 3}" cy="${53 - index * 2}" r="1.5" fill="#C9A87A"/>`).join('')}
+    ${Array.from({ length: count }, (_, index) => `<circle cx="${51 - index * 3}" cy="${53 - index * 2}" r="1.5" fill="#C9A87A"/>`).join('')}
+  `);
+}
+
+function ventIcon(label, doubleVent) {
+  return jacketLineIcon(label, doubleVent ? 'DOUBLE' : 'SINGLE', `
+    <path d="M35 28 V61" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    ${doubleVent ? '<path d="M29 44 V61 M41 44 V61" stroke="#C9A87A" stroke-width="1.5"/>' : ''}
+  `);
+}
+
+function pocketIcon(label, rounded = false, slanted = false, flap = false) {
+  const path = rounded
+    ? 'M18 40 Q35 34 52 40 V49 Q35 57 18 49 Z'
+    : slanted
+      ? 'M17 38 L53 45 L51 51 L18 44 Z'
+      : 'M17 39 H53 V50 H17 Z';
+  return jacketLineIcon(label, label.split(' ').map((part) => part[0]).join('').slice(0, 8), `
+    <path d="${path}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    ${flap ? '<path d="M17 39 H53" stroke="#C9A87A" stroke-width="1.5"/>' : ''}
+  `);
+}
+
+function shapeIcon(label, shape) {
+  const path = shape === 'Erect'
+    ? 'M18 52 Q22 25 35 18 Q48 25 52 52'
+    : shape === 'Hunched'
+      ? 'M18 48 Q22 32 35 28 Q48 32 52 48'
+      : 'M18 52 Q22 20 35 20 Q48 20 52 52';
+  return jacketLineIcon(label, label.toUpperCase(), `<path d="${path}" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`);
+}
+
+function stomachIcon(label, amount) {
+  const path = amount === 'Large'
+    ? 'M24 21 Q15 35 24 52 Q35 59 46 52 Q55 35 46 21'
+    : amount === 'Slight'
+      ? 'M27 21 Q22 35 27 51 Q35 56 43 51 Q48 35 43 21'
+      : 'M30 21 Q28 35 30 50 H40 Q42 35 40 21';
+  return jacketLineIcon(label, label.toUpperCase(), `<path d="${path}" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`);
+}
+
+Object.assign(ICONS, {
+  '1 Button Suit': buttonIcon('1 Button Suit', 1),
+  '2 Button Suit': buttonIcon('2 Button Suit', 2),
+  '3 Button Suit': buttonIcon('3 Button Suit', 3),
+  '4 Button': buttonIcon('4 Button', 4),
+  '6 Button': buttonIcon('6 Button', 6),
+  'Single Breasted': buttonIcon('Single Breasted', 2),
+  'Double Breasted': buttonIcon('Double Breasted', 3, true),
+  HS3: sleeveButtonIcon('HS3', 3),
+  H4: sleeveButtonIcon('H4', 4),
+  HS5: sleeveButtonIcon('HS5', 5),
+  HS4: sleeveButtonIcon('HS4', 4),
+  'Single Vent': ventIcon('Single Vent', false),
+  'Double Vent': ventIcon('Double Vent', true),
+  'Straight Bone': pocketIcon('Straight Bone'),
+  'Slanted Bone': pocketIcon('Slanted Bone', false, true),
+  'Straight Valet': pocketIcon('Straight Valet', false, false, true),
+  'Slanting Valet': pocketIcon('Slanting Valet', false, true, true),
+  Barchetta: pocketIcon('Barchetta', true),
+  'Tasca Pignata': pocketIcon('Tasca Pignata', true, false, true),
+  'Rounded Patch Pocket': pocketIcon('Rounded Patch Pocket', true, false, true),
+  Normal: shapeIcon('Normal', 'Normal'),
+  Erect: shapeIcon('Erect', 'Erect'),
+  Hunched: shapeIcon('Hunched', 'Hunched'),
+  Flat: stomachIcon('Flat', 'Flat'),
+  Slight: stomachIcon('Slight', 'Slight'),
+  Large: stomachIcon('Large', 'Large'),
+});
+
 /**
  * Get the SVG markup for a specific icon by option value.
  * Returns null if no custom icon exists for this value.

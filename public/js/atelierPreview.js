@@ -11,8 +11,8 @@ export function mountAtelierPreview(container) {
   scene.fog = new THREE.Fog(0xF7F4EF, 7, 15);
 
   const camera = new THREE.PerspectiveCamera(27, 1, 0.1, 100);
-  camera.position.set(0, 0.15, 7.4);
-  camera.lookAt(0, 0.35, 0);
+  camera.position.set(0, 0.45, 9.2);
+  camera.lookAt(0, 0.45, 0);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
@@ -36,60 +36,109 @@ export function mountAtelierPreview(container) {
   rim.position.set(4, 2, -2);
   scene.add(rim);
 
-  const fabric = new THREE.MeshStandardMaterial({ color: FABRIC, roughness: 0.78, metalness: 0.02 });
-  const darkFabric = new THREE.MeshStandardMaterial({ color: INK, roughness: 0.72, metalness: 0.04 });
+  const fabric = new THREE.MeshStandardMaterial({ color: FABRIC, roughness: 0.78, metalness: 0.02, side: THREE.DoubleSide });
+  const darkFabric = new THREE.MeshStandardMaterial({ color: INK, roughness: 0.72, metalness: 0.04, side: THREE.DoubleSide });
   const brass = new THREE.MeshStandardMaterial({ color: BRASS, roughness: 0.36, metalness: 0.72 });
   const lining = new THREE.MeshStandardMaterial({ color: 0x8B6F47, roughness: 0.62, metalness: 0.1 });
 
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(1.28, 1.75, 8, 20), fabric);
-  torso.scale.set(1, 1, 0.52);
-  torso.position.y = 0.08;
-  torso.castShadow = true;
-  torso.receiveShadow = true;
-  stage.add(torso);
+  const jacketShape = new THREE.Shape();
+  jacketShape.moveTo(-1.38, -1.42);
+  jacketShape.lineTo(-1.28, 0.42);
+  jacketShape.lineTo(-0.86, 1.1);
+  jacketShape.lineTo(-0.38, 1.42);
+  jacketShape.lineTo(0.38, 1.42);
+  jacketShape.lineTo(0.86, 1.1);
+  jacketShape.lineTo(1.28, 0.42);
+  jacketShape.lineTo(1.38, -1.42);
+  jacketShape.quadraticCurveTo(0, -1.62, -1.38, -1.42);
+  const jacket = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(jacketShape, { depth: 0.7, bevelEnabled: true, bevelSize: 0.06, bevelThickness: 0.08 }),
+    fabric
+  );
+  jacket.position.z = -0.35;
+  jacket.castShadow = true;
+  jacket.receiveShadow = true;
+  stage.add(jacket);
 
-  const shoulderGeometry = new THREE.BoxGeometry(3.2, 0.22, 0.62);
-  const shoulders = new THREE.Mesh(shoulderGeometry, fabric);
-  shoulders.position.y = 1.05;
-  shoulders.castShadow = true;
-  stage.add(shoulders);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 0.46, 20), lining);
+  neck.position.set(0, 1.58, 0.02);
+  stage.add(neck);
 
-  const collar = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.08, 8, 24, Math.PI), darkFabric);
-  collar.rotation.x = Math.PI / 2;
-  collar.position.set(0, 1.32, 0.26);
-  stage.add(collar);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.52, 24, 18), new THREE.MeshStandardMaterial({ color: 0xB98262, roughness: 0.82 }));
+  head.scale.set(0.88, 1.08, 0.82);
+  head.position.set(0, 2.18, 0.02);
+  head.castShadow = true;
+  stage.add(head);
 
-  const lapelShape = new THREE.Shape();
-  lapelShape.moveTo(0, 0.72);
-  lapelShape.lineTo(-0.68, 0.2);
-  lapelShape.lineTo(-0.37, -0.04);
-  lapelShape.lineTo(0, -0.62);
-  lapelShape.lineTo(0.16, -0.48);
-  lapelShape.lineTo(-0.2, 0.08);
-  lapelShape.closePath();
-  const lapelGeometry = new THREE.ExtrudeGeometry(lapelShape, { depth: 0.07, bevelEnabled: true, bevelSize: 0.025, bevelThickness: 0.02 });
-  const leftLapel = new THREE.Mesh(lapelGeometry, darkFabric);
-  leftLapel.position.set(-0.03, 0.56, 0.39);
-  leftLapel.rotation.y = Math.PI;
-  leftLapel.castShadow = true;
-  stage.add(leftLapel);
+  for (const side of [-1, 1]) {
+    const sleeve = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 1.52, 8, 16), fabric);
+    sleeve.position.set(side * 1.43, 0.05, -0.02);
+    sleeve.rotation.z = side * -0.12;
+    sleeve.castShadow = true;
+    stage.add(sleeve);
+  }
 
-  const rightLapel = leftLapel.clone();
-  rightLapel.position.x = 0.03;
-  rightLapel.rotation.y = 0;
-  stage.add(rightLapel);
+  const flatDetail = (shape, material, z) => {
+    const mesh = new THREE.Mesh(new THREE.ShapeGeometry(shape), material);
+    mesh.position.z = z;
+    mesh.castShadow = true;
+    stage.add(mesh);
+    return mesh;
+  };
+
+  const shirtShape = new THREE.Shape();
+  shirtShape.moveTo(-0.34, 1.4);
+  shirtShape.lineTo(0, 1.1);
+  shirtShape.lineTo(0.34, 1.4);
+  shirtShape.lineTo(0.18, 0.72);
+  shirtShape.lineTo(-0.18, 0.72);
+  shirtShape.closePath();
+  flatDetail(shirtShape, new THREE.MeshStandardMaterial({ color: 0xE8E2D8, roughness: 0.68, side: THREE.DoubleSide }), 0.39);
+
+  const tieShape = new THREE.Shape();
+  tieShape.moveTo(-0.08, 1.12);
+  tieShape.lineTo(0.08, 1.12);
+  tieShape.lineTo(0.15, 0.82);
+  tieShape.lineTo(0, 0.66);
+  tieShape.lineTo(-0.15, 0.82);
+  tieShape.closePath();
+  flatDetail(tieShape, darkFabric, 0.46);
+
+  const leftLapelShape = new THREE.Shape();
+  leftLapelShape.moveTo(-0.36, 1.42);
+  leftLapelShape.lineTo(-0.92, 0.96);
+  leftLapelShape.lineTo(-0.2, 0.18);
+  leftLapelShape.lineTo(-0.06, 0.72);
+  leftLapelShape.closePath();
+  flatDetail(leftLapelShape, darkFabric, 0.42);
+
+  const rightLapelShape = new THREE.Shape();
+  rightLapelShape.moveTo(0.36, 1.42);
+  rightLapelShape.lineTo(0.92, 0.96);
+  rightLapelShape.lineTo(0.2, 0.18);
+  rightLapelShape.lineTo(0.06, 0.72);
+  rightLapelShape.closePath();
+  flatDetail(rightLapelShape, darkFabric, 0.42);
+
+  const seamMaterial = new THREE.LineBasicMaterial({ color: BRASS, transparent: true, opacity: 0.85 });
+  const seam = (points) => {
+    const geometry = new THREE.BufferGeometry().setFromPoints(points.map(([x, y]) => new THREE.Vector3(x, y, 0.53)));
+    stage.add(new THREE.Line(geometry, seamMaterial));
+  };
+  seam([[-0.36, 1.42], [-0.92, 0.96], [-0.2, 0.18], [-0.06, 0.72]]);
+  seam([[0.36, 1.42], [0.92, 0.96], [0.2, 0.18], [0.06, 0.72]]);
 
   for (const y of [0.42, 0.03, -0.36]) {
     const button = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 8), brass);
-    button.position.set(0, y, 0.46);
+    button.position.set(0, y, 0.47);
     button.scale.z = 0.35;
     stage.add(button);
   }
 
-  const pocketGeometry = new THREE.BoxGeometry(0.62, 0.035, 0.04);
+  const pocketGeometry = new THREE.BoxGeometry(0.62, 0.05, 0.04);
   for (const x of [-0.82, 0.82]) {
     const pocket = new THREE.Mesh(pocketGeometry, lining);
-    pocket.position.set(x, -0.15, 0.4);
+    pocket.position.set(x, -0.15, 0.47);
     pocket.rotation.z = x < 0 ? -0.08 : 0.08;
     stage.add(pocket);
   }

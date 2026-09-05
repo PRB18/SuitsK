@@ -1,0 +1,35 @@
+---
+description: Krishna Suits project purpose and architecture map for new conversations
+alwaysApply: true
+---
+
+# Krishna Suits Custom
+
+Personal, offline **bespoke suit configurator** — not a public shop. Digitises tailor order sheets into a password-locked vault.
+
+## Stack
+- Express on `127.0.0.1:3737` only (never bind `0.0.0.0`)
+- SQLCipher DB via `better-sqlite3-multiple-ciphers` → `data/suits.db`
+- Vanilla ES modules in `public/` (no React/bundler); hash routes `#lock` `#dashboard` `#configurator`
+- Canonical options: `public/js/schema.js` (audited vs `reference_images/`)
+
+## Flows
+1. Lock → setup/unlock master password (scrypt; no recovery)
+2. Dashboard → list / edit / duplicate / delete suits; Lock Vault
+3. Configurator wizard → Jacket → Shirt → Trouser → Waistcoat → Embroidery → Measurements → Save
+
+## Key paths
+| Area | Path |
+|------|------|
+| Server entry | `server/index.js` |
+| Auth / unlock | `server/auth.js` |
+| Encrypted DB | `server/db.js` |
+| Suit CRUD | `server/suits.js` |
+| Frontend bootstrap | `public/js/app.js` |
+| Vault files (never commit) | `data/` |
+
+## Status
+Stages 1–4 done (vault + CRUD + wizard). Stage 5 WIP: custom SVG option icons (`scratch/icons_*.html`).
+
+## Graphify
+Before grepping, query `graphify-out/` (`graphify query` / `path` / `explain`). After code edits: `graphify update .`

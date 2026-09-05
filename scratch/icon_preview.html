@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stage 5 Icon Preview — Krishna Suits</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #111;
+      color: #E2DDD6;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 32px;
+    }
+    h1 { font-size: 1.5rem; font-weight: 600; color: #C9A87A; margin-bottom: 6px; }
+    .subtitle { font-size: 0.85rem; color: #888; margin-bottom: 40px; }
+    h2 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+         color: #C9A87A; margin-bottom: 16px; border-bottom: 1px solid #2a2a2a; padding-bottom: 6px; }
+    .group { margin-bottom: 48px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 24px; }
+    .icon-cell {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .icon-cell .label { font-size: 0.75rem; color: #888; text-align: center; max-width: 80px; line-height: 1.3; }
+    .size-row { display: flex; align-items: flex-end; gap: 12px; }
+    .size-chip { font-size: 0.65rem; color: #555; margin-top: 4px; }
+
+    /* 48px box */
+    .box-48 { width: 48px; height: 48px; display:flex; align-items:center; justify-content:center;
+               background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; }
+    /* 96px box */
+    .box-96 { width: 96px; height: 96px; display:flex; align-items:center; justify-content:center;
+               background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; }
+
+    svg { overflow: visible; }
+  </style>
+</head>
+<body>
+
+<h1>Stage 5 — Icon Set Preview</h1>
+<p class="subtitle">12 initial icons for review before generating remaining ~85. Shown at 48px and 96px. Stroke: #C9A87A (Camel) on dark background.</p>
+
+<!-- ============================================================
+     GROUP 1: LAPEL STYLES (9 icons)
+     ============================================================ -->
+<div class="group">
+  <h2>Lapel Styles (9)</h2>
+  <div class="grid">
+
+    <!-- 1. Notch -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="64" height="80" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="1.5" stroke-linejoin="round">
+              <!-- Jacket body outline -->
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <!-- Left lapel: notch shape - classic V notch where lapel meets collar -->
+              <path d="M32 4 L20 18 L14 26 L20 30 L32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <!-- Right lapel (mirror) -->
+              <path d="M32 4 L44 18 L50 26 L44 30 L32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <!-- Centre line -->
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="30" height="38" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="2" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <path d="M32 4 L20 18 L14 26 L20 30 L32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <path d="M32 4 L44 18 L50 26 L44 30 L32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Notch</div>
+    </div>
+
+    <!-- 2. Peak -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="64" height="80" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="1.5" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <!-- Peak lapel: wide lapel that points upward and outward -->
+              <path d="M32 4 L18 16 L8 28 L18 24 L32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <path d="M32 4 L46 16 L56 28 L46 24 L32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="30" height="38" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="2" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <path d="M32 4 L18 16 L8 28 L18 24 L32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <path d="M32 4 L46 16 L56 28 L46 24 L32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Peak</div>
+    </div>
+
+    <!-- 3. Shawl -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="64" height="80" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="1.5" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <!-- Shawl: smooth rounded curve, no notch, continuous roll from shoulder -->
+              <path d="M32 4 C26 8 18 16 16 24 C20 26 28 24 32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <path d="M32 4 C38 8 46 16 48 24 C44 26 36 24 32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="30" height="38" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="2" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <path d="M32 4 C26 8 18 16 16 24 C20 26 28 24 32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <path d="M32 4 C38 8 46 16 48 24 C44 26 36 24 32 20" fill="#1e1e1e" stroke="#C9A87A"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Shawl</div>
+    </div>
+
+    <!-- 4. Tuxedo Notch -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="64" height="80" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="1.5" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <!-- Tuxedo Notch: notch shape but satin-faced, shown with double-stroke accent -->
+              <path d="M32 4 L20 18 L14 26 L20 30 L32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 4 L44 18 L50 26 L44 30 L32 20" fill="#252520" stroke="#C9A87A"/>
+              <!-- Satin facing accent lines (parallel inner stroke) -->
+              <path d="M32 6 L22 18 L16 25 L22 29 L32 20" fill="none" stroke="#8B6F47" stroke-width="0.8"/>
+              <path d="M32 6 L42 18 L48 25 L42 29 L32 20" fill="none" stroke="#8B6F47" stroke-width="0.8"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+              <!-- Tuxedo stripe on trouser -->
+              <line x1="32" y1="38" x2="32" y2="72" stroke="#8B6F47" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="30" height="38" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="2" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <path d="M32 4 L20 18 L14 26 L20 30 L32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 4 L44 18 L50 26 L44 30 L32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 6 L22 18 L16 25 L22 29 L32 20" fill="none" stroke="#8B6F47" stroke-width="1"/>
+              <path d="M32 6 L42 18 L48 25 L42 29 L32 20" fill="none" stroke="#8B6F47" stroke-width="1"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Tuxedo Notch</div>
+    </div>
+
+    <!-- 5. Tuxedo Peak -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="64" height="80" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="1.5" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <!-- Tuxedo Peak: wide peak with satin facing accent -->
+              <path d="M32 4 L18 16 L8 28 L18 24 L32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 4 L46 16 L56 28 L46 24 L32 20" fill="#252520" stroke="#C9A87A"/>
+              <!-- Satin accent -->
+              <path d="M32 6 L20 16 L11 27 L20 24 L32 21" fill="none" stroke="#8B6F47" stroke-width="0.8"/>
+              <path d="M32 6 L44 16 L53 27 L44 24 L32 21" fill="none" stroke="#8B6F47" stroke-width="0.8"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+              <line x1="32" y1="38" x2="32" y2="72" stroke="#8B6F47" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="30" height="38" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="2" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <path d="M32 4 L18 16 L8 28 L18 24 L32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 4 L46 16 L56 28 L46 24 L32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 6 L20 16 L11 27 L20 24 L32 21" fill="none" stroke="#8B6F47" stroke-width="1"/>
+              <path d="M32 6 L44 16 L53 27 L44 24 L32 21" fill="none" stroke="#8B6F47" stroke-width="1"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Tuxedo Peak</div>
+    </div>
+
+    <!-- 6. Tuxedo Shawl 1 -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="64" height="80" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="1.5" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <!-- Tuxedo Shawl 1: smooth shawl, roll ends at waist level (long roll) -->
+              <path d="M32 4 C26 8 18 18 16 30 C20 32 28 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 4 C38 8 46 18 48 30 C44 32 36 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <!-- Satin accent -->
+              <path d="M32 6 C27 10 20 19 18 30 C21 31 28 28 32 21" fill="none" stroke="#8B6F47" stroke-width="0.8"/>
+              <path d="M32 6 C37 10 44 19 46 30 C43 31 36 28 32 21" fill="none" stroke="#8B6F47" stroke-width="0.8"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+              <line x1="32" y1="38" x2="32" y2="72" stroke="#8B6F47" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="30" height="38" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="2" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <path d="M32 4 C26 8 18 18 16 30 C20 32 28 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 4 C38 8 46 18 48 30 C44 32 36 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 6 C27 10 20 19 18 30 C21 31 28 28 32 21" fill="none" stroke="#8B6F47" stroke-width="1"/>
+              <path d="M32 6 C37 10 44 19 46 30 C43 31 36 28 32 21" fill="none" stroke="#8B6F47" stroke-width="1"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Tuxedo Shawl 1</div>
+    </div>
+
+    <!-- 7. Tuxedo Shawl 2 -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="64" height="80" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="1.5" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <!-- Tuxedo Shawl 2: wider shawl width, more dramatic curve -->
+              <path d="M32 4 C24 6 14 18 12 28 C18 32 26 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 4 C40 6 50 18 52 28 C46 32 38 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <!-- Satin accent -->
+              <path d="M32 6 C26 8 17 19 14 28 C19 31 26 28 32 21" fill="none" stroke="#8B6F47" stroke-width="0.8"/>
+              <path d="M32 6 C38 8 47 19 50 28 C45 31 38 28 32 21" fill="none" stroke="#8B6F47" stroke-width="0.8"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+              <line x1="32" y1="38" x2="32" y2="72" stroke="#8B6F47" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="30" height="38" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="2" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <path d="M32 4 C24 6 14 18 12 28 C18 32 26 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 4 C40 6 50 18 52 28 C46 32 38 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 6 C26 8 17 19 14 28 C19 31 26 28 32 21" fill="none" stroke="#8B6F47" stroke-width="1"/>
+              <path d="M32 6 C38 8 47 19 50 28 C45 31 38 28 32 21" fill="none" stroke="#8B6F47" stroke-width="1"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Tuxedo Shawl 2</div>
+    </div>
+
+    <!-- 8. Tuxedo Shawl 3 -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="64" height="80" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="1.5" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <!-- Tuxedo Shawl 3: widest, most dramatic — extends to jacket edge -->
+              <path d="M32 4 C22 5 10 16 8 28 C16 34 24 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 4 C42 5 54 16 56 28 C48 34 40 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <!-- Satin accent -->
+              <path d="M32 6 C24 7 13 17 10 28 C17 33 24 28 32 21" fill="none" stroke="#8B6F47" stroke-width="0.8"/>
+              <path d="M32 6 C40 7 51 17 54 28 C47 33 40 28 32 21" fill="none" stroke="#8B6F47" stroke-width="0.8"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+              <line x1="32" y1="38" x2="32" y2="72" stroke="#8B6F47" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="30" height="38" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="2" stroke-linejoin="round">
+              <path d="M32 4 L16 20 L8 72 L56 72 L48 20 Z" stroke="#3a3a3a" fill="none"/>
+              <path d="M32 4 C22 5 10 16 8 28 C16 34 24 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 4 C42 5 54 16 56 28 C48 34 40 28 32 20" fill="#252520" stroke="#C9A87A"/>
+              <path d="M32 6 C24 7 13 17 10 28 C17 33 24 28 32 21" fill="none" stroke="#8B6F47" stroke-width="1"/>
+              <path d="M32 6 C40 7 51 17 54 28 C47 33 40 28 32 21" fill="none" stroke="#8B6F47" stroke-width="1"/>
+              <line x1="32" y1="20" x2="32" y2="72" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Tuxedo Shawl 3</div>
+    </div>
+
+    <!-- 9. Same as Sample -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="64" height="80" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="1.5">
+              <!-- "Same as Sample" — question mark + ruler / reference mark -->
+              <circle cx="32" cy="36" r="22" stroke="#C9A87A" stroke-width="1.2" fill="none"/>
+              <text x="32" y="44" text-anchor="middle" font-family="serif" font-size="26" fill="#C9A87A">?</text>
+              <text x="32" y="70" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="8" fill="#8B6F47" letter-spacing="1">SAMPLE</text>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="30" height="38" viewBox="0 0 64 80" fill="none" stroke="#C9A87A" stroke-width="1.5">
+              <circle cx="32" cy="36" r="22" stroke="#C9A87A" stroke-width="1.5" fill="none"/>
+              <text x="32" y="44" text-anchor="middle" font-family="serif" font-size="26" fill="#C9A87A">?</text>
+              <text x="32" y="70" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="8" fill="#8B6F47" letter-spacing="1">SAMPLE</text>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Same as Sample</div>
+    </div>
+
+  </div><!-- /grid lapels -->
+</div><!-- /group lapels -->
+
+
+<!-- ============================================================
+     GROUP 2: SHOULDER SHAPES (3 icons)
+     ============================================================ -->
+<div class="group">
+  <h2>Shoulder Shapes (3)</h2>
+  <div class="grid">
+
+    <!-- 1. Square Shoulder -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="72" height="60" viewBox="0 0 72 60" fill="none" stroke="#C9A87A" stroke-width="1.5" stroke-linejoin="round">
+              <!-- Jacket body from above/side — showing shoulder line profile -->
+              <!-- Square: horizontal shoulder, drops sharply at armhole -->
+              <path d="M4 20 L4 12 L68 12 L68 20" stroke="#C9A87A" fill="none"/>
+              <!-- Armhole drop — sharp right angle at shoulder end -->
+              <path d="M4 12 L4 52 L36 56 L68 52 L68 12" stroke="#3a3a3a" fill="#1a1a1a"/>
+              <!-- Collar/neck -->
+              <path d="M24 12 Q36 4 48 12" stroke="#C9A87A" fill="none" stroke-width="1.2"/>
+              <!-- Sleeve suggestion -->
+              <line x1="4" y1="20" x2="4" y2="44" stroke="#555" stroke-width="1"/>
+              <line x1="68" y1="20" x2="68" y2="44" stroke="#555" stroke-width="1"/>
+              <!-- SQUARE indicator: right-angle mark at shoulder -->
+              <polyline points="4,20 10,20 10,14" stroke="#C9A87A" stroke-width="1.2" fill="none"/>
+              <polyline points="68,20 62,20 62,14" stroke="#C9A87A" stroke-width="1.2" fill="none"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="40" height="34" viewBox="0 0 72 60" fill="none" stroke="#C9A87A" stroke-width="2" stroke-linejoin="round">
+              <path d="M4 20 L4 12 L68 12 L68 20" stroke="#C9A87A" fill="none"/>
+              <path d="M4 12 L4 52 L36 56 L68 52 L68 12" stroke="#3a3a3a" fill="#1a1a1a"/>
+              <path d="M24 12 Q36 4 48 12" stroke="#C9A87A" fill="none" stroke-width="1.5"/>
+              <polyline points="4,20 10,20 10,14" stroke="#C9A87A" stroke-width="1.5" fill="none"/>
+              <polyline points="68,20 62,20 62,14" stroke="#C9A87A" stroke-width="1.5" fill="none"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Square</div>
+    </div>
+
+    <!-- 2. Regular Shoulder -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="72" height="60" viewBox="0 0 72 60" fill="none" stroke="#C9A87A" stroke-width="1.5" stroke-linejoin="round">
+              <!-- Regular: slight natural slope, gentle rounded shoulder -->
+              <path d="M4 12 L4 52 L36 56 L68 52 L68 12" stroke="#3a3a3a" fill="#1a1a1a"/>
+              <!-- Slight slope at shoulder: left side goes from 10 to 14, right mirrors -->
+              <path d="M4 14 C4 12 8 10 16 10 L56 10 C64 10 68 12 68 14" stroke="#C9A87A" fill="none"/>
+              <path d="M24 10 Q36 3 48 10" stroke="#C9A87A" fill="none" stroke-width="1.2"/>
+              <line x1="4" y1="18" x2="4" y2="44" stroke="#555" stroke-width="1"/>
+              <line x1="68" y1="18" x2="68" y2="44" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="40" height="34" viewBox="0 0 72 60" fill="none" stroke="#C9A87A" stroke-width="2" stroke-linejoin="round">
+              <path d="M4 12 L4 52 L36 56 L68 52 L68 12" stroke="#3a3a3a" fill="#1a1a1a"/>
+              <path d="M4 14 C4 12 8 10 16 10 L56 10 C64 10 68 12 68 14" stroke="#C9A87A" fill="none"/>
+              <path d="M24 10 Q36 3 48 10" stroke="#C9A87A" fill="none" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Regular</div>
+    </div>
+
+    <!-- 3. Sloping Shoulder -->
+    <div class="icon-cell">
+      <div class="size-row">
+        <div>
+          <div class="box-96">
+            <svg width="72" height="60" viewBox="0 0 72 60" fill="none" stroke="#C9A87A" stroke-width="1.5" stroke-linejoin="round">
+              <!-- Sloping: pronounced downward slope from neck to shoulder -->
+              <path d="M4 14 L4 52 L36 56 L68 52 L68 14" stroke="#3a3a3a" fill="#1a1a1a"/>
+              <!-- Dramatic slope: shoulder line drops from center to edge -->
+              <path d="M16 6 L4 18 M56 6 L68 18" stroke="#C9A87A" fill="none" stroke-width="1.8"/>
+              <!-- Neck -->
+              <path d="M24 8 Q36 2 48 8" stroke="#C9A87A" fill="none" stroke-width="1.2"/>
+              <!-- Centre button line -->
+              <line x1="36" y1="14" x2="36" y2="56" stroke="#555" stroke-width="1"/>
+              <line x1="4" y1="22" x2="4" y2="44" stroke="#555" stroke-width="1"/>
+              <line x1="68" y1="22" x2="68" y2="44" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">96px</div>
+        </div>
+        <div>
+          <div class="box-48">
+            <svg width="40" height="34" viewBox="0 0 72 60" fill="none" stroke="#C9A87A" stroke-width="2" stroke-linejoin="round">
+              <path d="M4 14 L4 52 L36 56 L68 52 L68 14" stroke="#3a3a3a" fill="#1a1a1a"/>
+              <path d="M16 6 L4 18 M56 6 L68 18" stroke="#C9A87A" fill="none" stroke-width="2.5"/>
+              <path d="M24 8 Q36 2 48 8" stroke="#C9A87A" fill="none" stroke-width="1.5"/>
+              <line x1="36" y1="14" x2="36" y2="56" stroke="#555" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="size-chip" style="text-align:center">48px</div>
+        </div>
+      </div>
+      <div class="label">Sloping</div>
+    </div>
+
+  </div><!-- /grid shoulders -->
+</div><!-- /group shoulders -->
+
+<!-- Design notes -->
+<div style="margin-top: 32px; padding: 16px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; max-width: 680px;">
+  <div style="font-size: 0.75rem; color: #8B6F47; font-weight: 700; letter-spacing: 0.1em; text-transform:uppercase; margin-bottom: 8px;">Design Notes</div>
+  <ul style="font-size: 0.78rem; color: #888; line-height: 1.7; list-style: none; padding: 0;">
+    <li>• <strong style="color:#C9A87A">Lapels 1–3</strong> (Notch, Peak, Shawl) — standard suiting, camel stroke on dark fill</li>
+    <li>• <strong style="color:#C9A87A">Lapels 4–8</strong> (Tuxedo variants) — double stroke: outer camel + inner bronze (#8B6F47) for satin facing; tuxedo stripe on trouser</li>
+    <li>• <strong style="color:#C9A87A">Lapel 9</strong> (Same as Sample) — universal "?" mark to signal match-to-garment</li>
+    <li>• <strong style="color:#C9A87A">Shoulders</strong> — shown as front-facing jacket silhouette profile; Square has right-angle corner markers, Regular has gentle curve, Sloping has pronounced diagonal drop lines</li>
+    <li>• Three Tuxedo Shawl variants differ by shawl WIDTH: Shawl 1 = narrow, Shawl 2 = medium, Shawl 3 = wide (extends to jacket edge)</li>
+  </ul>
+</div>
+
+</body>
+</html>

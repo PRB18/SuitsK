@@ -1,0 +1,15 @@
+---
+description: HCI and usability checks required after every UI change
+alwaysApply: true
+---
+
+# HCI / usability (mandatory)
+
+After any UI change, verify in a real browser session before reporting done:
+
+1. **No dead controls** — every visible button/link works from every relevant state.
+2. **No overflow** at ~1280×720 / 1366×768 — content scrolls or wraps inside its container; never clipped with nowhere to scroll.
+3. **Feedback** — hover, selected/active, loading while saving, success path clear; errors visible (not silent).
+4. **Way back** — Dashboard button, browser back, and Escape (wizard) always return; mid-wizard included.
+5. **Keyboard** — sensible tab order, visible `:focus-visible`, Enter/Space on option cards; nothing mouse-only.
+6. **Smoke** — lock → unlock → dashboard → new suit → all 7 steps → save → edit → duplicate → delete → lock when the change touches navigation or layout.

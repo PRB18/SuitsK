@@ -186,13 +186,17 @@ try {
   page.on('dialog', async (d) => {
     try { await d.accept(); } catch { /* already handled */ }
   });
-  while (await page.locator('.suit-card', { hasText: 'Smoke Test' }).count()) {
-    await page.locator('.suit-card', { hasText: 'Smoke Test' }).first().locator('.action-delete').click();
-    await page.waitForTimeout(250);
+  while (await page.locator('.suit-card', { hasText: 'Smoke Test' }).count() > 0) {
+    const cardToDelete = page.locator('.suit-card', { hasText: 'Smoke Test' }).first();
+    const deleteBtn = cardToDelete.locator('.action-delete');
+    await deleteBtn.click();
+    await page.waitForTimeout(200);
+
     const modalConfirm = page.locator('#modal-confirm-btn');
     if (await modalConfirm.count()) {
       await modalConfirm.click();
-      await page.waitForTimeout(450);
+      await page.waitForSelector('.ks-modal-backdrop', { state: 'detached' });
+      await page.waitForTimeout(500);
     }
   }
   if ((await page.locator('.suit-card', { hasText: 'Smoke Test' }).count()) === 0) pass('delete-works');

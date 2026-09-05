@@ -16,6 +16,7 @@ import { state } from '../state.js';
 import { router } from '../router.js';
 import { TAILORING_SCHEMA, TOOLTIP_DESCRIPTIONS } from '../schema.js';
 import { showToast } from '../toast.js';
+import { getIcon } from '../icons.js';
 
 // ── Styled Tooltip DOM ────────────────────────────────────────────────────────
 // Single floating tooltip element reused across all option cards.
@@ -840,14 +841,17 @@ function renderOptionSection(title, category, field, options, currentValue) {
 
 function renderOptionCard(category, field, value, isSelected) {
   const tip = TOOLTIP_DESCRIPTIONS[value] || '';
+  const customIcon = getIcon(value);
+  const iconContent = customIcon || getPlaceholderIcon(category, field, value);
+
   return `
-    <div class="option-card ${isSelected ? 'selected' : ''}" 
-         data-category="${category}" 
-         data-field="${field}" 
+    <div class="option-card ${isSelected ? 'selected' : ''}"
+         data-category="${category}"
+         data-field="${field}"
          data-value="${escapeHtml(value)}"
          data-tooltip="${escapeHtml(tip)}"
-         tabindex="0" 
-         role="button" 
+         tabindex="0"
+         role="button"
          aria-pressed="${isSelected}">
       <div class="option-card-badge">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
@@ -855,7 +859,7 @@ function renderOptionCard(category, field, value, isSelected) {
         </svg>
       </div>
       <div class="option-card-icon">
-        ${getPlaceholderIcon(category, field, value)}
+        ${iconContent}
       </div>
       <div class="option-card-label">${escapeHtml(value)}</div>
     </div>

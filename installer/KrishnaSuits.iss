@@ -1,5 +1,5 @@
 #define MyAppName "Krishna Suits"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "Krishna Suits"
 #define MyAppExeName "Start-Krishna-Suits.cmd"
 

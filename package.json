@@ -1,6 +1,6 @@
 {
   "name": "krishna-suits-custom",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Personal Bespoke Suit Configurator — local, SQLCipher-encrypted, offline",
   "main": "server/index.js",
   "scripts": {

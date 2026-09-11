@@ -97,6 +97,8 @@ export function renderDashboardScreen(container) {
           </div>
         </div>
 
+        <section id="backup-receipt" class="backup-receipt" role="status" aria-live="polite" hidden></section>
+
         <!-- Analytics panel — Rule 5: collection overview at a glance -->
         <div id="analytics-panel-container"></div>
 
@@ -140,14 +142,31 @@ export function renderDashboardScreen(container) {
 
   wrapper.querySelector('#backup-vault-btn').addEventListener('click', async (event) => {
     const button = event.currentTarget;
+    const originalLabel = button.innerHTML;
     button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    button.textContent = 'Backing up…';
+    const receipt = wrapper.querySelector('#backup-receipt');
     try {
       const result = await api.backupVault();
+      receipt.innerHTML = `
+        <h3>Encrypted backup created</h3>
+        <p>Saved in your vault’s data folder:</p>
+        <code>backups\\${escapeHtml(result.backupName)}</code>
+        <p>Standard data folder: <code>%LOCALAPPDATA%\\KrishnaSuitsCustom\\data</code></p>
+        <p>Keep <strong>config.json</strong> and <strong>suits.db</strong> together. Recovery requires the password used for this backup. Copy the complete backup folder to a separate local drive for protection against disk failure.</p>
+      `;
+      receipt.hidden = false;
+      receipt.scrollIntoView({ block: 'nearest', behavior: 'instant' });
       showToast(`Encrypted backup created: ${result.backupName}`, 'success');
     } catch (err) {
+      receipt.textContent = 'Backup failed: ' + err.message + '. No new backup is confirmed; try again.';
+      receipt.hidden = false;
       showToast('Backup failed: ' + err.message, 'error');
     } finally {
       button.disabled = false;
+      button.removeAttribute('aria-busy');
+      button.innerHTML = originalLabel;
     }
   });
 
@@ -396,13 +415,8 @@ function showDeleteModal(suitName, onConfirm) {
 
   document.body.appendChild(backdrop);
 
-  const close = () => backdrop.remove();
-
+  const close = bindDialog(backdrop, '#modal-cancel-btn');
   backdrop.querySelector('#modal-cancel-btn').addEventListener('click', close);
-  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
-  document.addEventListener('keydown', function onEsc(e) {
-    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
-  }, { once: true });
 
   backdrop.querySelector('#modal-confirm-btn').addEventListener('click', async () => {
     close();
@@ -457,12 +471,44 @@ function showShortcutOverlay(context = 'dashboard') {
 
   document.body.appendChild(backdrop);
 
-  const close = () => backdrop.remove();
+  const close = bindDialog(backdrop, '#shortcuts-close-btn');
   backdrop.querySelector('#shortcuts-close-btn').addEventListener('click', close);
-  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
-  document.addEventListener('keydown', function onEsc(e) {
-    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
-  }, { once: true });
+}
+
+function bindDialog(backdrop, initialFocus) {
+  const previousFocus = document.activeElement;
+  const app = document.getElementById('app');
+  const wasInert = app.inert;
+  app.inert = true;
+
+  const close = () => {
+    document.removeEventListener('keydown', onKey, true);
+    backdrop.remove();
+    app.inert = wasInert;
+    if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+  };
+  const onKey = (event) => {
+    event.stopPropagation();
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      close();
+    } else if (event.key === 'Tab') {
+      const buttons = [...backdrop.querySelectorAll('button:not(:disabled)')];
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  };
+  document.addEventListener('keydown', onKey, true);
+  backdrop.addEventListener('click', (event) => { if (event.target === backdrop) close(); });
+  backdrop.querySelector(initialFocus).focus();
+  return close;
 }
 
 // ---------------------------------------------------------------------------

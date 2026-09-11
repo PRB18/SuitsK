@@ -287,15 +287,24 @@ export function renderConfiguratorScreen(container) {
   });
 
   function goToStep(index) {
+    hideTooltip();
     state.setStep(index);
     updateStepUI();
+    wrapper.querySelector('.wizard-main').scrollTop = 0;
+    panelContainer.querySelector('.step-panel-title').focus({ preventScroll: true });
+    stepButtons[index].scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
   }
 
   function updateStepUI() {
     stepButtons.forEach((btn, idx) => {
       btn.classList.toggle('active', idx === state.currentStep);
       btn.classList.toggle('completed', idx < state.currentStep);
+      if (idx === state.currentStep) btn.setAttribute('aria-current', 'step');
+      else btn.removeAttribute('aria-current');
     });
+    const progress = wrapper.querySelector('.wizard-progress-bar');
+    progress.setAttribute('aria-valuenow', state.currentStep + 1);
+    progress.setAttribute('aria-label', `Step ${state.currentStep + 1} of ${STEPS.length}`);
 
     prevBtn.disabled = state.currentStep === 0;
     nextBtn.innerHTML = state.currentStep === STEPS.length - 1
@@ -315,7 +324,8 @@ export function renderConfiguratorScreen(container) {
   }
 
   // Initial render
-  renderStepPanel(panelContainer, state.currentStep);
+  updateStepUI();
+  wrapper.querySelector('.wizard-main').addEventListener('scroll', hideTooltip, { passive: true });
 
   // Cleanup Escape listener when the screen is torn down by the router
   const observer = new MutationObserver(() => {
@@ -337,7 +347,7 @@ function renderStepPanel(container, stepIndex) {
   panel.innerHTML = `
     <div class="step-panel-header">
       <div class="step-tag">Step 0${stepIndex + 1}</div>
-      <h2 class="step-panel-title">${step.label} Configuration</h2>
+      <h2 class="step-panel-title" tabindex="-1">${step.id === 'save' ? 'Review & Save' : step.label + ' Configuration'}</h2>
       <p class="step-panel-subtitle">${step.subtitle}</p>
     </div>
 
@@ -519,8 +529,9 @@ function renderMeasurementsPanel(container) {
         <div class="foundation-grid">
           ${TAILORING_SCHEMA.measurements.defaultFields.map(f => `
             <div class="form-group">
-              <label class="form-label">${f.label} (${m.unit})</label>
-              <input 
+              <label class="form-label" for="metric-${f.key}">${f.label} (${m.unit})</label>
+              <input
+                id="metric-${f.key}"
                 type="number" 
                 step="0.25" 
                 class="form-input measurement-default-input" 
@@ -545,8 +556,8 @@ function renderMeasurementsPanel(container) {
             <p class="text-secondary" style="font-size:0.875rem; font-style:italic;">No custom metrics added yet. Click "+ Add Custom Metric" to add specialized tailor measurements.</p>
           ` : m.custom.map((cmField, idx) => `
             <div class="custom-field-row" data-index="${idx}">
-              <input type="text" class="form-input custom-name-input" placeholder="Measurement Label (e.g. Wrist, Calf)" value="${escapeHtml(cmField.name || '')}" />
-              <input type="number" step="0.25" class="form-input custom-val-input" placeholder="Value (${m.unit})" value="${cmField.value ?? ''}" />
+              <input type="text" class="form-input custom-name-input" aria-label="Custom measurement ${idx + 1} name" placeholder="Measurement Label (e.g. Wrist, Calf)" value="${escapeHtml(cmField.name || '')}" />
+              <input type="number" step="0.25" class="form-input custom-val-input" aria-label="Custom measurement ${idx + 1} value (${m.unit})" placeholder="Value (${m.unit})" value="${cmField.value ?? ''}" />
               <button type="button" class="btn btn-ghost btn-sm text-danger remove-custom-btn" data-index="${idx}">Remove</button>
             </div>
           `).join('')}
@@ -875,7 +886,7 @@ function renderBooleanToggleSection(title, category, field, currentValue, falseL
           ${currentValue ? trueLabel : falseLabel}
         </span>
       </div>
-      <div class="option-grid" style="grid-template-columns: repeat(2, minmax(160px, 1fr));">
+      <div class="option-grid option-grid-boolean">
         <div class="option-card ${!currentValue ? 'selected' : ''}" 
              data-category="${category}" 
              data-field="${field}" 
@@ -949,7 +960,8 @@ function renderColorSection(title, category, field, currentColor) {
         <div class="swatch-custom-wrap">
           <input 
             type="color" 
-            class="color-input-swatch color-sync-input" 
+            class="color-input-swatch color-sync-input"
+            aria-label="${title}: custom color"
             data-category="${category}" 
             data-field="${field}" 
             value="${activeColor}" 
@@ -970,7 +982,8 @@ function renderTextInputSection(title, category, field, currentValue, placeholde
       <div class="form-group" style="max-width: 480px;">
         <input 
           type="text" 
-          class="form-input text-sync-input" 
+          class="form-input text-sync-input"
+          aria-label="${title}"
           data-category="${category}" 
           data-field="${field}" 
           value="${escapeHtml(currentValue || '')}" 
@@ -1039,6 +1052,13 @@ function bindOptionCards(container, onSelectCallback) {
 
 function bindBooleanToggles(container) {
   container.querySelectorAll('.option-card[data-boolean-val]').forEach(card => {
+    card.setAttribute('aria-pressed', card.classList.contains('selected'));
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        card.click();
+      }
+    });
     card.addEventListener('click', () => {
       const cat = card.dataset.category;
       const field = card.dataset.field;
@@ -1048,8 +1068,12 @@ function bindBooleanToggles(container) {
 
       const section = card.closest('.wizard-field-section');
       if (section) {
-        section.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        section.querySelectorAll('.option-card').forEach(c => {
+          c.classList.remove('selected');
+          c.setAttribute('aria-pressed', 'false');
+        });
         card.classList.add('selected');
+        card.setAttribute('aria-pressed', 'true');
 
         const badge = section.querySelector(`#current-badge-${cat}-${field}`);
         if (badge) badge.textContent = val ? 'Gurkha Wrap Waistband' : 'Standard Waistband';

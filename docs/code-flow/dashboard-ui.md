@@ -84,7 +84,7 @@ Renders a card for each suit with:
 - **Confirm button:** Closes modal, **awaits** `onConfirm()` callback (async as of bug fix).
 - **Escape key:** Closes modal.
 - **Click backdrop:** Closes modal.
-- **Focus safety:** Cancel button receives focus on open (prevents accidental deletion).
+- **Focus safety:** Cancel receives initial focus. `bindDialog()` makes the app inert, contains Tab navigation, blocks background shortcuts and restores the invoking control on dismissal. Escape remains registered after other keys and is removed when the dialog closes.
 
 ### Keyboard Shortcuts
 
@@ -98,4 +98,8 @@ Renders a card for each suit with:
 **showShortcutOverlay():**
 - Shows a modal dialog listing all available shortcuts.
 - Displays shortcuts for both Dashboard and Configurator screens.
-- Close via Escape or "X" button.
+- Close via Escape or "X" button; shares `bindDialog()` focus containment and cleanup with delete confirmation.
+
+### Backup Feedback
+
+The existing backup endpoint and storage behavior are unchanged. During a request the button shows `Backing up…` and `aria-busy`. Success adds a persistent live-status receipt with `backups\\<timestamp>` relative to the vault data folder, the standard AppData location, paired-file guidance and the original-password requirement. Failure explicitly states that no new backup is confirmed. The receipt lasts until dashboard navigation/re-render; it is not a backup history or restore interface.

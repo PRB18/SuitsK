@@ -5,6 +5,14 @@ Format: **Decision / Why / Alternatives considered / Status**
 
 ---
 
+### [DEC-012] Atelier UI Refinement and Keyboard-Safe Controls
+- **Decision:** Retain the existing local garment diagrams and locked schema; refine typography, spacing, brass selection states, mobile layouts and reduced-motion transitions. Keep backup results visible on the dashboard with relative location and paired-file guidance. Share focus containment and Escape cleanup across existing dialogs.
+- **Why:** Gurkha cards lacked keyboard activation, dialog Escape handlers used `once: true` (so Tab consumed them), and progress ARIA values did not update with navigation. Fixed-width Gurkha tracks could exceed a mobile panel. The backup action previously supplied only a transient timestamp toast.
+- **Alternatives considered:** New 3D assets/dependencies (rejected: no approved licensed asset pipeline); broad redesign (deferred until this stage is reviewed). Research accessed Suitsupply, Oliver Wicks and Drake’s; Proper Cloth and Indochino blocked automated access.
+- **Status:** 2026-09-11: baseline and final smoke tests pass 23/23; `scratch/refinement_e2e.mjs` passes 47 focused checks across 1366×768 and 390×844. Screenshots remain local under `scratch/refinement-review/`. Tests use a disposable server copy and temporary vault, not client data. Backup file presence is tested; restore, installer lifecycle and physical-device testing are not covered by this UI stage.
+
+---
+
 ### [DEC-011] Per-User Local Vault Storage and Encrypted Backups
 - **Decision:** Store `config.json`, `suits.db`, and timestamped backup folders under `%LOCALAPPDATA%\\KrishnaSuitsCustom\\data`. Migrate the legacy project `data/` folder only when the AppData vault is empty. Add a dashboard backup action that copies both vault files together while the vault is unlocked.
 - **Why:** Application updates must not overwrite client suit data. The database remains SQLCipher-encrypted, and backups preserve the encrypted database plus its matching salts/configuration without creating plaintext exports or cloud copies.

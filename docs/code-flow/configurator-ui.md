@@ -79,6 +79,9 @@ Each step calls a dedicated `render*Panel()` function that builds the form UI in
 - Step nav items (`.step-nav-item`) clickable.
 - "Dashboard" button (`#wizard-back-vault-btn`) returns to `#dashboard`.
 - "Review & Save" button (`#wizard-quick-save-btn`) jumps to step 7.
+- Step changes hide tooltips, reset main scroll, focus the new heading and reveal the active step in the horizontally scrolling navigation.
+- Active navigation uses `aria-current="step"`; progress ARIA values update with the visible step.
+- Both option cards and Gurkha cards support Enter/Space with synchronized `aria-pressed` states. Standard measurement inputs have associated labels.
 
 **Draft State:**
 - All field changes are stored in `state.currentSuit.data` via `state.updateDraftCategory(category, field, value)`.

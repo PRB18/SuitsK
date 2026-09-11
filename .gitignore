@@ -4,6 +4,8 @@ data/
 *.log
 .env
 scratch/overflow_shots/
+scratch/refinement-before/
+scratch/refinement-review/
 graphify-out/
 release/
 dist/

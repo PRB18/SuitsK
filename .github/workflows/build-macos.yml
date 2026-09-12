@@ -1,70 +1,69 @@
 name: Build macOS Package
 
 on:
-  workflow_dispatch:        # run manually from the GitHub Actions tab
+  workflow_dispatch:
   push:
     tags:
-      - 'v*'               # also auto-runs on version tags like v1.0.2
+      - 'v*'
 
 jobs:
   build-macos:
     runs-on: macos-latest
 
     steps:
-      # ── 1. Checkout ────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Node 22 ─────────────────────────────────────────────────────────
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      # ── 3. Install production deps natively on macOS ───────────────────────
-      #       better-sqlite3-multiple-ciphers compiles its .node binding here.
-      #       This is why we MUST build on a real Mac runner.
       - name: Install production dependencies
         run: npm ci --omit=dev
 
-      # ── 4. Bundle the app + bundled Node binary ────────────────────────────
-      - name: Stage macOS package
+      - name: Build macOS package
         run: |
+          set -e
           OUTPUT="dist/KrishnaSuits-macOS"
           rm -rf "$OUTPUT"
-          mkdir -p "$OUTPUT"
+          mkdir -p "$OUTPUT/runtime"
 
-          # Copy app source files
-          cp -R public server "$OUTPUT/"
+          # Copy app source
+          cp -R public "$OUTPUT/"
+          cp -R server "$OUTPUT/"
           cp package.json "$OUTPUT/"
 
-          # Copy the launcher scripts (already in repo root)
-          cp Start-Krishna-Suits.command "$OUTPUT/"
-          cp Stop-Krishna-Suits.sh "$OUTPUT/"
-          chmod +x "$OUTPUT/Start-Krishna-Suits.command"
-          chmod +x "$OUTPUT/Stop-Krishna-Suits.sh"
+          # Install native deps inside package (compiles better-sqlite3 for Mac)
+          (cd "$OUTPUT" && npm install --omit=dev --ignore-scripts=false)
 
-          # Bundle the system Node binary so the Mac user doesn't need Node
-          mkdir -p "$OUTPUT/runtime"
+          # Bundle Node binary so the user doesn't need Node installed
           cp "$(command -v node)" "$OUTPUT/runtime/node"
           chmod +x "$OUTPUT/runtime/node"
 
-          # Install deps inside the package folder (native .node binding for Mac)
-          (cd "$OUTPUT" && npm ci --omit=dev)
+          # Write a clean launcher script
+          cat > "$OUTPUT/Start Krishna Suits.command" << 'LAUNCHER'
+          #!/bin/sh
+          set -eu
+          DIR="$(cd "$(dirname "$0")" && pwd)"
+          NODE="$DIR/runtime/node"
+          cd "$DIR"
+          "$NODE" server/index.js &
+          sleep 1.5
+          open http://127.0.0.1:3737
+          echo "Krishna Suits is running at http://127.0.0.1:3737"
+          echo "Close this window to stop the server."
+          wait
+          LAUNCHER
+          chmod +x "$OUTPUT/Start Krishna Suits.command"
 
-          # Patch launcher to use bundled node
-          sed -i '' 's|node server/index.js|"$(dirname "$0")/runtime/node" server/index.js|g' \
-            "$OUTPUT/Start-Krishna-Suits.command" || true
-
-      # ── 5. Zip it up ───────────────────────────────────────────────────────
-      - name: Create zip archive
+      - name: Zip archive
         run: |
           cd dist
           zip -r KrishnaSuits-macOS.zip KrishnaSuits-macOS
-          echo "✅ Archive size: $(du -sh KrishnaSuits-macOS.zip)"
+          echo "Done: $(du -sh KrishnaSuits-macOS.zip)"
 
-      # ── 6. Upload as downloadable artifact ─────────────────────────────────
-      - name: Upload macOS package
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: KrishnaSuits-macOS

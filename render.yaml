@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: krishna-suits
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true        # Render auto-generates a secure random string
+      - key: TURSO_DATABASE_URL
+        sync: false                # You paste this in from Turso dashboard
+      - key: TURSO_AUTH_TOKEN
+        sync: false                # You paste this in from Turso dashboard
+      - key: VAULT_PASSWORD_HASH
+        sync: false                # Generated during first-run setup

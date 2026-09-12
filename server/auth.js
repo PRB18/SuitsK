@@ -1,174 +1,77 @@
 'use strict';
 /**
- * auth.js — Authentication router  (/api/auth/*)
+ * auth.js — Authentication router (/api/auth/*)
  *
- * Security model:
- *   - Two independent scrypt derivations from the same password:
- *       1. verifierKey  = scrypt(password, verifierSalt, 32)
- *          → stored as hex in config.json to check password correctness
- *       2. dbKey        = scrypt(password, dbSalt, 32)
- *          → NEVER stored anywhere; passed directly to SQLCipher via
- *            PRAGMA key = "x'<hex>'" to unlock the encrypted database;
- *            gone from memory when the DB is locked.
- *   - The two salts are different random values, so dbKey is not
- *     derivable from verifierKey (or vice versa) without the password.
- *   - config.json stores: { verifierSalt, verifierHash, dbSalt }
- *     — no raw key is ever written to disk.
- *
- * Encryption:
- *   - SQLCipher encrypts every page of the .db file with AES-256-CBC.
- *   - No application-layer encryption needed — the whole file is
- *     ciphertext. The data column stores plain JSON inside SQLCipher.
+ * Security model (cloud version):
+ *   - Vault password is stored as a bcrypt hash in the VAULT_PASSWORD_HASH
+ *     environment variable (set on Render — never in code or git).
+ *   - On first run (no env var set): a setup flow lets the user set a password,
+ *     which we hash and print to the console — you then paste it into Render's
+ *     env vars and redeploy (one-time setup).
+ *   - After correct password: req.session.unlocked = true
+ *   - Session is stored server-side (express-session in-memory store)
+ *   - All traffic is HTTPS on Render (TLS in transit)
+ *   - SESSION_SECRET env var signs the session cookie (httpOnly, sameSite)
  *
  * Brute-force mitigation:
- *   - scrypt (N=65536, r=8, p=1, maxmem=~134MB) adds ~100-200ms cost
- *   - Failed unlock adds FAIL_DELAY_MS additional artificial delay
- *
- * Edge-case:
- *   - config.json present but suits.db missing → 500 with clear message
- *     instructing the user to delete config.json and start over.
+ *   - bcrypt cost factor 12 adds ~250ms per attempt
+ *   - Additional FAIL_DELAY_MS on wrong password
  */
 
-const express  = require('express');
-const crypto   = require('crypto');
-const fs       = require('fs');
-
-const { openDatabase, closeDatabase, isUnlocked, getDbPath } = require('./db');
-const { CONFIG_PATH, ensureDataDir, createVaultBackup } = require('./storage');
+const express = require('express');
+const bcrypt  = require('bcrypt');
 
 const router = express.Router();
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-// scrypt parameters
-// N=65536 (2^16) — strong KDF, ~100-200ms per derivation on modern hardware
-// maxmem must be set explicitly: Node 24's default 32MB cap rejects N=65536 with r=8
-const SCRYPT_N      = 65536;
-const SCRYPT_R      = 8;
-const SCRYPT_P      = 1;
-const KEY_LEN       = 32;                              // 256-bit key
-const SCRYPT_MAXMEM = 128 * SCRYPT_N * SCRYPT_R * 2;  // ~134MB — well within RAM
-
-// Artificial delay appended to every failed unlock response
-// (on top of the ~100-200ms scrypt cost already incurred)
-const FAIL_DELAY_MS = 300;
-
-// Resolve and migrate the local vault before any status or unlock request.
-ensureDataDir();
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Derive a 32-byte key from a password + hex-encoded salt using scrypt.
- * @param {string} password
- * @param {string} saltHex
- * @returns {Buffer}
- */
-function deriveKey(password, saltHex) {
-  const salt = Buffer.from(saltHex, 'hex');
-  return crypto.scryptSync(password, salt, KEY_LEN, {
-    N:      SCRYPT_N,
-    r:      SCRYPT_R,
-    p:      SCRYPT_P,
-    maxmem: SCRYPT_MAXMEM,
-  });
-}
-
-function configExists() {
-  return fs.existsSync(CONFIG_PATH);
-}
-
-function readConfig() {
-  return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-}
-
-/**
- * Write config.json atomically: write to .tmp then rename.
- * @param {{ verifierSalt: string, verifierHash: string, dbSalt: string }} data
- */
-function writeConfig(data) {
-  ensureDataDir();
-  const tmp = CONFIG_PATH + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
-  fs.renameSync(tmp, CONFIG_PATH);
-}
-
-/**
- * Detect the "config exists but DB missing" crash-recovery state.
- * @returns {string|null} error message, or null if state is consistent
- */
-function detectInconsistency() {
-  const cfgExists = configExists();
-  const dbExists  = fs.existsSync(getDbPath());
-
-  if (cfgExists && !dbExists) {
-    return (
-      'Setup appears incomplete: config.json exists but suits.db is missing. ' +
-      'This usually means a previous setup attempt crashed mid-way. ' +
-      'To recover: delete the file at "' + CONFIG_PATH + '" and restart the app to begin setup again. ' +
-      'Warning: if you had previously saved suits, they cannot be recovered from this state.'
-    );
-  }
-  return null;
-}
+const FAIL_DELAY_MS  = 300;
+const BCRYPT_ROUNDS  = 12;
 
 // ---------------------------------------------------------------------------
 // GET /api/auth/status
 // ---------------------------------------------------------------------------
 router.get('/status', (req, res) => {
-  const inconsistency = detectInconsistency();
-  if (inconsistency) {
-    return res.status(500).json({ error: inconsistency, inconsistentState: true });
-  }
-
+  const hasPassword = !!process.env.VAULT_PASSWORD_HASH;
   res.json({
-    firstRun: !configExists(),
-    unlocked: isUnlocked(),
+    firstRun: !hasPassword,
+    unlocked: !!req.session?.unlocked,
   });
 });
 
 // ---------------------------------------------------------------------------
 // POST /api/auth/setup  { password: string }
+// Only works if VAULT_PASSWORD_HASH is not yet set.
+// Prints the hash to server logs — operator copies it to env vars.
 // ---------------------------------------------------------------------------
-router.post('/setup', (req, res) => {
-  if (configExists()) {
+router.post('/setup', async (req, res) => {
+  if (process.env.VAULT_PASSWORD_HASH) {
     return res.status(409).json({ error: 'Password already set. Use /unlock instead.' });
   }
 
   const { password } = req.body;
-  if (!password || typeof password !== 'string' || password.length === 0) {
-    return res.status(400).json({ error: 'Password is required.' });
+  if (!password || typeof password !== 'string' || password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
   }
 
   try {
-    // Generate two independent random salts
-    const verifierSalt = crypto.randomBytes(32).toString('hex');
-    const dbSalt       = crypto.randomBytes(32).toString('hex');
+    const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    // Derive verifier (for future password checks) — stored in config.json
-    const verifierKey  = deriveKey(password, verifierSalt);
+    // Print to server logs (Render's log panel) — operator pastes into env vars
+    console.log('\n  ╔══════════════════════════════════════════════════════╗');
+    console.log('  ║  VAULT PASSWORD HASH — copy this to Render env vars ║');
+    console.log('  ║  Variable name: VAULT_PASSWORD_HASH                 ║');
+    console.log('  ╠══════════════════════════════════════════════════════╣');
+    console.log(`  ║  ${hash}`);
+    console.log('  ╚══════════════════════════════════════════════════════╝\n');
 
-    // Derive DB encryption key — NEVER stored anywhere
-    const dbKey        = deriveKey(password, dbSalt);
+    // Also unlock this session so the user can immediately use the app
+    req.session.unlocked = true;
 
-    // Write config: only verifier hash and both salts, no raw key
-    writeConfig({
-      verifierSalt,
-      verifierHash: verifierKey.toString('hex'),
-      dbSalt,
+    res.json({
+      ok: true,
+      message: 'Password set for this session. Check server logs for the hash to save permanently.',
+      hash, // also returned so the operator can copy from the API response if needed
     });
-
-    // Create the SQLCipher-encrypted database and build schema
-    openDatabase(dbKey, /* isNew= */ true);
-
-    res.json({ ok: true, message: 'Password set and encrypted database created.' });
   } catch (err) {
-    // Roll back partial config on failure
-    try { if (fs.existsSync(CONFIG_PATH)) fs.unlinkSync(CONFIG_PATH); } catch (_) {}
     console.error('[setup] Error:', err);
     res.status(500).json({ error: 'Setup failed: ' + err.message });
   }
@@ -178,16 +81,13 @@ router.post('/setup', (req, res) => {
 // POST /api/auth/unlock  { password: string }
 // ---------------------------------------------------------------------------
 router.post('/unlock', async (req, res) => {
-  if (!configExists()) {
+  const hash = process.env.VAULT_PASSWORD_HASH;
+
+  if (!hash) {
     return res.status(400).json({ error: 'No password set yet. Use /setup first.' });
   }
 
-  const inconsistency = detectInconsistency();
-  if (inconsistency) {
-    return res.status(500).json({ error: inconsistency, inconsistentState: true });
-  }
-
-  if (isUnlocked()) {
+  if (req.session?.unlocked) {
     return res.json({ ok: true, message: 'Already unlocked.' });
   }
 
@@ -196,28 +96,19 @@ router.post('/unlock', async (req, res) => {
     return res.status(400).json({ error: 'Password is required.' });
   }
 
-  const cfg = readConfig();
-
-  // Step 1: Verify password via the stored verifier hash (timing-safe compare)
-  const candidateVerifier = deriveKey(password, cfg.verifierSalt);
-  const expectedVerifier  = Buffer.from(cfg.verifierHash, 'hex');
-  const passwordCorrect   = crypto.timingSafeEqual(candidateVerifier, expectedVerifier);
-
-  if (!passwordCorrect) {
-    // Artificial delay to rate-limit brute-force attempts
-    await new Promise(resolve => setTimeout(resolve, FAIL_DELAY_MS));
-    return res.status(401).json({ error: 'Incorrect password.' });
-  }
-
-  // Step 2: Derive the DB key (only reached with correct password) and unlock
-  const dbKey = deriveKey(password, cfg.dbSalt);
-
   try {
-    openDatabase(dbKey, /* isNew= */ false);
-    res.json({ ok: true, message: 'Database unlocked.' });
+    const correct = await bcrypt.compare(password, hash);
+
+    if (!correct) {
+      await new Promise(resolve => setTimeout(resolve, FAIL_DELAY_MS));
+      return res.status(401).json({ error: 'Incorrect password.' });
+    }
+
+    req.session.unlocked = true;
+    res.json({ ok: true, message: 'Vault unlocked.' });
   } catch (err) {
-    console.error('[unlock] DB open failed:', err);
-    res.status(500).json({ error: 'Failed to open database: ' + err.message });
+    console.error('[unlock] Error:', err);
+    res.status(500).json({ error: 'Unlock failed: ' + err.message });
   }
 });
 
@@ -225,25 +116,17 @@ router.post('/unlock', async (req, res) => {
 // POST /api/auth/lock
 // ---------------------------------------------------------------------------
 router.post('/lock', (req, res) => {
-  closeDatabase();
-  res.json({ ok: true, message: 'Database locked.' });
+  if (req.session) {
+    req.session.unlocked = false;
+  }
+  res.json({ ok: true, message: 'Vault locked.' });
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/auth/backup
+// POST /api/auth/backup  (no-op in cloud mode — data lives in Turso)
 // ---------------------------------------------------------------------------
 router.post('/backup', (req, res) => {
-  if (!isUnlocked()) {
-    return res.status(423).json({ error: 'Unlock the vault before creating a backup.' });
-  }
-
-  try {
-    const backup = createVaultBackup();
-    res.json({ ok: true, backupName: backup.backupName });
-  } catch (err) {
-    console.error('[backup] Error:', err);
-    res.status(500).json({ error: 'Backup failed: ' + err.message });
-  }
+  res.json({ ok: true, message: 'Data is stored in Turso cloud — no local backup needed.' });
 });
 
 module.exports = router;

@@ -1,29 +1,20 @@
 {
   "name": "krishna-suits-custom",
-  "version": "1.0.1",
-  "description": "Personal Bespoke Suit Configurator — local, SQLCipher-encrypted, offline",
+  "version": "1.1.0",
+  "description": "Bespoke Suit Configurator — cloud-hosted, multi-device, encrypted vault",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js"
   },
   "dependencies": {
-    "better-sqlite3-multiple-ciphers": "^13.0.3",
+    "@libsql/client": "^0.14.0",
+    "bcrypt": "^5.1.1",
     "express": "^4.19.2",
+    "express-session": "^1.18.0",
     "uuid": "^9.0.1"
   },
   "engines": {
     "node": ">=22.0.0"
-  },
-  "pkg": {
-    "assets": [
-      "public/**/*",
-      "server/**/*"
-    ],
-    "targets": [
-      "node22-macos-arm64",
-      "node22-macos-x64"
-    ],
-    "outputPath": "dist"
   }
 }

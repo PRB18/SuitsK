@@ -1,33 +1,56 @@
 'use strict';
 /**
- * index.js — Express application entry point
+ * index.js — Express application entry point (cloud version)
  *
- * Binds ONLY to 127.0.0.1 (localhost) — never reachable from the network.
- * Serves the static frontend from /public and mounts API routers.
- *
- * No CORS middleware — this is a same-origin app: Express serves both
- * the API and the static frontend from the same origin.
+ * Changes from the local version:
+ *   - Binds to 0.0.0.0 (required for Render's reverse proxy)
+ *   - Adds express-session (session-based vault unlock)
+ *   - Adds /ping health endpoint (for UptimeRobot keep-alive)
+ *   - Initialises Turso DB client on startup
  */
 
 const express = require('express');
 const path    = require('path');
+const session = require('express-session');
 
-const authRouter          = require('./auth');
-const suitsRouter         = require('./suits');
-const requireUnlocked     = require('./middleware/requireUnlocked');
+const authRouter      = require('./auth');
+const suitsRouter     = require('./suits');
+const requireUnlocked = require('./middleware/requireUnlocked');
+const { initDatabase } = require('./db');
 
 const app  = express();
-const PORT = 3737;
-const HOST = '127.0.0.1'; // NEVER 0.0.0.0
+const PORT = process.env.PORT || 3737;
+const HOST = '0.0.0.0'; // Render requires 0.0.0.0
 
 // ---------------------------------------------------------------------------
-// Body parsing — hard limit to 1 mb
+// Session middleware
+// ---------------------------------------------------------------------------
+app.use(session({
+  secret:            process.env.SESSION_SECRET || 'dev-secret-change-in-production',
+  resave:            false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'strict',
+    // On Render (HTTPS), set secure: true. Locally (HTTP) it must be false.
+    secure:   process.env.NODE_ENV === 'production',
+    maxAge:   8 * 60 * 60 * 1000, // 8 hours
+  },
+}));
+
+// ---------------------------------------------------------------------------
+// Body parsing
 // ---------------------------------------------------------------------------
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
 // ---------------------------------------------------------------------------
-// Static files (the browser UI lives here)
+// Health endpoint — hit this every 5 min with UptimeRobot to keep Render awake
+// ---------------------------------------------------------------------------
+app.get('/ping', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
+
+// ---------------------------------------------------------------------------
+// Static files
 // ---------------------------------------------------------------------------
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
@@ -37,27 +60,29 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/api/auth',  authRouter);
 app.use('/api/suits', requireUnlocked, suitsRouter);
 
-// ---------------------------------------------------------------------------
-// Explicit API 404 handler: catches ALL HTTP methods on unhandled /api/* routes
-// Guarantees no unhandled API route can ever be swallowed into an HTML 200.
-// ---------------------------------------------------------------------------
+// Catch unhandled /api/* routes
 app.all('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found.' });
 });
 
-// ---------------------------------------------------------------------------
-// SPA catch-all: serve index.html for client-side navigation (non-API GETs)
-// ---------------------------------------------------------------------------
+// SPA catch-all
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 // ---------------------------------------------------------------------------
-// Start
+// Start — initialise DB first, then listen
 // ---------------------------------------------------------------------------
-app.listen(PORT, HOST, () => {
-  console.log(`\n  Krishna Suits Configurator`);
-  console.log(`  ─────────────────────────────`);
-  console.log(`  Running at  http://${HOST}:${PORT}`);
-  console.log(`  Press Ctrl+C to stop.\n`);
-});
+initDatabase()
+  .then(() => {
+    app.listen(PORT, HOST, () => {
+      console.log(`\n  Krishna Suits Configurator`);
+      console.log(`  ─────────────────────────────`);
+      console.log(`  Running at  http://${HOST}:${PORT}`);
+      console.log(`  Press Ctrl+C to stop.\n`);
+    });
+  })
+  .catch(err => {
+    console.error('[startup] Failed to connect to database:', err.message);
+    process.exit(1);
+  });

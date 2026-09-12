@@ -5,8 +5,12 @@ const os = require('os');
 const path = require('path');
 
 const LEGACY_DATA_DIR = path.join(__dirname, '..', 'data');
-const LOCAL_APP_DATA = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
-const DATA_DIR = process.env.KRISHNA_DATA_DIR || path.join(LOCAL_APP_DATA, 'KrishnaSuitsCustom', 'data');
+const platformDataRoot = process.platform === 'win32'
+  ? (process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'))
+  : process.platform === 'darwin'
+    ? path.join(os.homedir(), 'Library', 'Application Support')
+    : (process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'));
+const DATA_DIR = process.env.KRISHNA_DATA_DIR || path.join(platformDataRoot, 'KrishnaSuitsCustom', 'data');
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const DB_PATH = path.join(DATA_DIR, 'suits.db');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');

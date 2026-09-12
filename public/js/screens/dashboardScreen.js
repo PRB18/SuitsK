@@ -30,93 +30,108 @@ export function renderDashboardScreen(container) {
   wrapper.className = 'dashboard-wrapper';
 
   wrapper.innerHTML = `
-    <header class="app-header">
-      <div class="header-container">
-        <div class="header-brand">
-          <div class="brand-monogram sm">KS</div>
-          <div class="header-titles">
-            <h1 class="header-title">Krishna Suits</h1>
-            <span class="header-subtitle">Tailoring Vault</span>
-          </div>
+    <!-- ── Dark Sidebar ─────────────────────────────────────────── -->
+    <aside class="ds-sidebar">
+      <div class="ds-sidebar-brand">
+        <div class="ds-sidebar-brand-mark">CTB</div>
+        <div class="ds-sidebar-title">Client Database</div>
+        <div class="ds-sidebar-sub">Bespoke Vault</div>
+      </div>
+
+      <div class="ds-sidebar-actions">
+        <button id="back-to-hub-btn" class="ds-sidebar-btn" aria-label="Back to Atelier Hub">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Atelier Hub
+        </button>
+
+        <button id="new-suit-btn" class="ds-sidebar-btn primary" aria-label="Configure new suit (N)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          New Suit
+        </button>
+
+        <button id="lock-vault-btn" class="ds-sidebar-btn" aria-label="Lock vault">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Lock Vault
+        </button>
+
+        <button id="backup-vault-btn" class="ds-sidebar-btn" aria-label="Create encrypted backup">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>
+          </svg>
+          Backup Vault
+        </button>
+
+        <button id="shortcut-help-btn" class="ds-sidebar-btn" aria-label="Keyboard shortcuts">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          Shortcuts
+        </button>
+      </div>
+
+      <div class="ds-sidebar-footer">
+        <div class="ds-vault-dot"></div>
+        SQLCipher Encrypted
+      </div>
+    </aside>
+
+    <!-- ── Main Content ──────────────────────────────────────────── -->
+    <div class="ds-content">
+
+      <!-- Top bar -->
+      <div class="ds-top-bar">
+        <div>
+          <div class="ds-top-heading">Suit Collection</div>
+          <div class="ds-top-sub">Your bespoke configurations, encrypted at rest</div>
         </div>
+        <span id="suit-count-badge" class="vault-status-badge" aria-live="polite">
+          <span class="status-dot"></span>
+          <span id="suit-count-text">— suits</span>
+        </span>
+      </div>
 
-        <div class="header-actions">
-          <!-- Suit count badge — Rule 3: visible feedback on collection size -->
-          <span id="suit-count-badge" class="suit-count-badge" aria-live="polite" title="Total suits in vault">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-              <rect x="2" y="7" width="20" height="14" rx="2"></rect>
-              <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path>
-            </svg>
-            <span id="suit-count-text">— suits</span>
-          </span>
-
-          <!-- Help button — Rule 5: always visible shortcut reference -->
-          <button id="shortcut-help-btn" class="btn-help" title="Keyboard shortcuts (?)" aria-label="Show keyboard shortcuts">?</button>
-
-          <button id="lock-vault-btn" class="btn btn-secondary btn-sm" title="Lock the encrypted vault" aria-label="Lock vault">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
-            Lock Vault
-          </button>
-
-          <button id="backup-vault-btn" class="btn btn-secondary btn-sm" title="Create an encrypted vault backup" aria-label="Create encrypted backup">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M12 3v12"></path>
-              <path d="m7 10 5 5 5-5"></path>
-              <path d="M5 21h14"></path>
-            </svg>
-            Backup
-          </button>
-
-          <!-- Primary CTA visible at all times in header — Rule 2: Shortcut to main action -->
-          <button id="new-suit-btn" class="btn btn-primary btn-sm" title="New bespoke suit (N)" aria-label="Configure new suit">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            New Suit
-          </button>
+      <!-- Stats strip -->
+      <div class="ds-stats-strip" id="ds-stats-strip">
+        <div class="ds-stat">
+          <div class="ds-stat-value" id="stat-total">—</div>
+          <div class="ds-stat-label">Total Suits</div>
+        </div>
+        <div class="ds-stat">
+          <div class="ds-stat-value" id="stat-avg">—</div>
+          <div class="ds-stat-label">Avg. Complete</div>
+        </div>
+        <div class="ds-stat">
+          <div class="ds-stat-value" id="stat-fabrics">—</div>
+          <div class="ds-stat-label">Unique Fabrics</div>
         </div>
       </div>
-    </header>
 
-    <main class="dashboard-main">
-      <div class="content-container">
+      <!-- Backup receipt -->
+      <section id="backup-receipt" class="backup-receipt" role="status" aria-live="polite" hidden></section>
 
-        <!-- Section header -->
-        <div class="dashboard-intro">
-          <div class="intro-text">
-            <h2 class="section-title">Your Suit Collection</h2>
-            <p class="section-description">Select a suit to view, edit tailoring details, or configure a new bespoke garment.</p>
-          </div>
-          <div class="vault-status-badge">
-            <span class="status-dot"></span>
-            SQLCipher Encrypted (Local)
-          </div>
-        </div>
-
-        <section id="backup-receipt" class="backup-receipt" role="status" aria-live="polite" hidden></section>
-
-        <!-- Analytics panel — Rule 5: collection overview at a glance -->
-        <div id="analytics-panel-container"></div>
-
-        <!-- Suit cards grid -->
+      <!-- Scrollable body -->
+      <div class="ds-scroll">
+        <div class="ds-section-label">Configured Garments</div>
         <div id="suits-grid-container" class="suits-grid-container">
           <div class="loading-state">Loading your vault…</div>
         </div>
+        <div id="analytics-panel-container"></div>
       </div>
-    </main>
 
-    <!-- Floating Action Button — Rule 2: primary action always 1 click away -->
-    <button id="fab-new-suit" class="fab-new-suit" title="New bespoke suit (N)" aria-label="Configure new suit">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-      New Bespoke Suit
-    </button>
+      <!-- FAB -->
+      <button id="fab-new-suit" class="fab-new-suit" title="New bespoke suit (N)" aria-label="Configure new suit">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New Bespoke Suit
+      </button>
+    </div>
   `;
 
   container.appendChild(wrapper);
@@ -129,6 +144,7 @@ export function renderDashboardScreen(container) {
 
   wrapper.querySelector('#new-suit-btn').addEventListener('click', openNewSuit);
   wrapper.querySelector('#fab-new-suit').addEventListener('click', openNewSuit);
+  wrapper.querySelector('#back-to-hub-btn').addEventListener('click', () => router.navigate('#congressional'));
 
   wrapper.querySelector('#lock-vault-btn').addEventListener('click', async () => {
     try {
@@ -206,9 +222,24 @@ async function loadSuits(gridContainer, analyticsContainer, wrapper) {
     const suits = await api.getSuits();
     state.setSuits(suits);
 
-    // Update suit count badge
     const countText = wrapper.querySelector('#suit-count-text');
     if (countText) countText.textContent = `${suits.length} suit${suits.length !== 1 ? 's' : ''}`;
+
+    // Update stats strip
+    const statTotal = wrapper.querySelector('#stat-total');
+    const statAvg   = wrapper.querySelector('#stat-avg');
+    const statFabrics = wrapper.querySelector('#stat-fabrics');
+    if (statTotal) statTotal.textContent = suits.length;
+    if (statAvg) {
+      const avgFilled = suits.length
+        ? Math.round(suits.reduce((s, x) => s + (x.summary?.fieldCount ?? 0), 0) / suits.length)
+        : 0;
+      statAvg.textContent = Math.round((avgFilled / 32) * 100) + '%';
+    }
+    if (statFabrics) {
+      const fabSet = new Set(suits.map(s => s.summary?.fabricCode).filter(Boolean));
+      statFabrics.textContent = fabSet.size || '—';
+    }
 
     // Render analytics panel (even with 0 suits — shows empty state)
     renderAnalyticsPanel(analyticsContainer, suits);
@@ -275,73 +306,54 @@ function createSuitCard(suit, gridContainer, analyticsContainer, wrapper) {
   const pct    = Math.round((filled / 32) * 100);
 
   card.innerHTML = `
-    <div class="suit-card-header">
-      <h3 class="suit-card-title">${escapeHtml(suit.name)}</h3>
-      <span class="suit-card-date">${dateStr}</span>
-    </div>
+    <div class="suit-card-stripe"></div>
+    <div class="suit-card-inner">
+      <div class="suit-card-header">
+        <h3 class="suit-card-title">${escapeHtml(suit.name)}</h3>
+        <span class="suit-card-date">${dateStr}</span>
+      </div>
 
-    ${suit.notes ? `<p class="suit-card-notes">${escapeHtml(suit.notes)}</p>` : ''}
+      ${suit.notes ? `<p class="suit-card-notes">${escapeHtml(suit.notes)}</p>` : ''}
 
-    <div class="suit-card-summary">
-      <div class="summary-badge">
-        <span class="badge-label">Lapel</span>
-        <span class="badge-value">${escapeHtml(lapel)}</span>
-      </div>
-      <div class="summary-badge">
-        <span class="badge-label">Shirt</span>
-        <span class="badge-value">${escapeHtml(collar)}</span>
-      </div>
-      <div class="summary-badge">
-        <span class="badge-label">Fabric</span>
-        <span class="badge-value">${escapeHtml(fabric)}</span>
-      </div>
-      ${piping ? `
+      <div class="suit-card-summary">
         <div class="summary-badge">
-          <span class="badge-label">Piping</span>
-          <span class="badge-value piping-chip">
-            <span class="color-swatch" style="background-color: ${escapeHtml(piping)};"></span>
-            ${escapeHtml(piping)}
-          </span>
+          <span class="badge-label">Lapel</span>
+          <span class="badge-value">${escapeHtml(lapel)}</span>
         </div>
-      ` : ''}
-    </div>
-
-    <!-- Completeness mini-bar — Rule 3: visible progress feedback -->
-    <div style="margin-bottom: var(--space-sm);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-        <span style="font-size:0.6875rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--color-text-muted); font-weight:600;">Configured</span>
-        <span style="font-size:0.75rem; font-weight:600; color:var(--color-accent);">${pct}%</span>
+        <div class="summary-badge">
+          <span class="badge-label">Shirt</span>
+          <span class="badge-value">${escapeHtml(collar)}</span>
+        </div>
+        <div class="summary-badge">
+          <span class="badge-label">Fabric</span>
+          <span class="badge-value">${escapeHtml(fabric)}</span>
+        </div>
+        ${piping ? `
+          <div class="summary-badge">
+            <span class="badge-label">Piping</span>
+            <span class="badge-value piping-chip">
+              <span class="color-swatch" style="background-color: ${escapeHtml(piping)};"></span>
+              ${escapeHtml(piping)}
+            </span>
+          </div>
+        ` : ''}
       </div>
-      <div class="bar-track">
-        <div class="bar-fill" style="width:${pct}%"></div>
-      </div>
-    </div>
 
-    <div class="suit-card-actions">
-      <!-- Edit is the primary action — most prominent -->
-      <button class="btn btn-outline btn-sm action-edit" title="Edit this suit configuration">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-        </svg>
-        Edit
-      </button>
-      <button class="btn btn-ghost btn-sm action-duplicate" title="Duplicate this suit">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-        </svg>
-        Duplicate
-      </button>
-      <button class="btn btn-ghost btn-sm text-danger action-delete" title="Delete this suit permanently">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-          <path d="M10 11v6"></path>
-          <path d="M14 11v6"></path>
-        </svg>
-        Delete
-      </button>
+      <div style="margin-bottom: var(--space-sm);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:0.6rem; text-transform:uppercase; letter-spacing:0.1em; color:#C9A84C; font-weight:600;">Configured</span>
+          <span style="font-size:0.75rem; font-weight:600; color:#2C1810;">${pct}%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%; background:#C9A84C"></div>
+        </div>
+      </div>
+
+      <div class="suit-card-actions">
+        <button class="btn btn-outline btn-sm action-edit">Edit</button>
+        <button class="btn btn-ghost btn-sm action-duplicate">Duplicate</button>
+        <button class="btn btn-ghost btn-sm text-danger action-delete">Delete</button>
+      </div>
     </div>
   `;
 

@@ -5,8 +5,9 @@ import { api } from './api.js';
 import { state } from './state.js';
 import { router } from './router.js';
 
-import { renderLockScreen } from './screens/lockScreen.js';
-import { renderDashboardScreen } from './screens/dashboardScreen.js';
+import { renderLockScreen }        from './screens/lockScreen.js';
+import { renderCongressionalScreen } from './screens/congressionalScreen.js';
+import { renderDashboardScreen }    from './screens/dashboardScreen.js';
 import { renderConfiguratorScreen } from './screens/configuratorScreen.js';
 
 async function bootstrap() {
@@ -19,9 +20,10 @@ async function bootstrap() {
 
     // 2. Register routes
     const routes = {
-      '#lock': renderLockScreen,
-      '#dashboard': renderDashboardScreen,
-      '#configurator': renderConfiguratorScreen,
+      '#lock':           renderLockScreen,
+      '#congressional':  renderCongressionalScreen,
+      '#dashboard':      renderDashboardScreen,
+      '#configurator':   renderConfiguratorScreen,
     };
 
     // 3. Initialize router

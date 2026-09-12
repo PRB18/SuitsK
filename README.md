@@ -1,5 +1,17 @@
 # krishna-suits-custom
 
+## Client packaging
+
+The Inno Setup installer is Windows-only. To create a macOS package, run the following on a Mac with Node.js 22 or later:
+
+```sh
+sh scripts/build-macos-package.sh
+```
+
+Zip the generated `dist/KrishnaSuits-macOS` folder and send it to the client. On the Mac, the client should extract it, right-click `Start-Krishna-Suits.command`, choose **Open**, and confirm the first launch. macOS builds must be staged on macOS because `better-sqlite3-multiple-ciphers` includes native binaries.
+
+The encrypted vault is stored in `~/Library/Application Support/KrishnaSuitsCustom/data` on macOS and remains separate from the application folder.
+
 
 
 ## Getting started

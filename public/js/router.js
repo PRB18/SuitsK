@@ -18,7 +18,7 @@ class Router {
 
     // Normalize empty hash so navigate('#dashboard') and browser history stay consistent
     if (!window.location.hash) {
-      const initial = state.status.unlocked ? '#dashboard' : '#lock';
+      const initial = state.status.unlocked ? '#congressional' : '#lock';
       history.replaceState(null, '', initial);
     }
 
@@ -47,12 +47,12 @@ class Router {
     } else {
       // If vault is unlocked, prevent going to #lock
       if (cleanHash === '#lock') {
-        window.location.hash = '#dashboard';
+        window.location.hash = '#congressional';
         return;
       }
     }
 
-    const handler = this.routes[cleanHash] || this.routes['#dashboard'];
+    const handler = this.routes[cleanHash] || this.routes['#congressional'];
     if (handler && this.rootElement) {
       this.currentRoute = cleanHash;
       this.rootElement.innerHTML = '';

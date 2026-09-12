@@ -121,7 +121,7 @@ export function renderLockScreen(container) {
       const suits = await api.getSuits();
       state.setSuits(suits);
 
-      router.navigate('#dashboard');
+      router.navigate('#congressional');
     } catch (err) {
       showError(err.message || 'Operation failed. Please try again.');
       submitBtn.disabled = false;

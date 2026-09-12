@@ -5,6 +5,14 @@ Format: **Decision / Why / Alternatives considered / Status**
 
 ---
 
+### [DEC-013] Native macOS Client Package Path
+- **Decision:** Keep the Inno Setup installer for Windows and add a macOS package staging script with a `.command` launcher. Resolve the encrypted vault under the platform's standard application-data directory, including `~/Library/Application Support/KrishnaSuitsCustom/data` on macOS.
+- **Why:** The Windows `.exe` and `.cmd` launcher cannot run on macOS, and the native SQLite dependency must be installed for the target operating system and architecture. A Mac build must therefore be assembled on macOS rather than relabeled as a Windows installer.
+- **Alternatives considered:** Tell users to bypass Gatekeeper (rejected: it does not make a Windows executable compatible with macOS); store data beside the package (rejected: updates and extraction can overwrite application data); cross-compile the native dependency on Windows (rejected: unreliable for the client's Mac architecture).
+- **Status:** Implemented in `server/storage.js`, `Start-Krishna-Suits.command`, `Stop-Krishna-Suits.sh`, and `scripts/build-macos-package.sh`. macOS staging requires Node.js 22+ and must be run on macOS; Apple signing/notarization is still a release-distribution step.
+
+---
+
 ### [DEC-012] Atelier UI Refinement and Keyboard-Safe Controls
 - **Decision:** Retain the existing local garment diagrams and locked schema; refine typography, spacing, brass selection states, mobile layouts and reduced-motion transitions. Keep backup results visible on the dashboard with relative location and paired-file guidance. Share focus containment and Escape cleanup across existing dialogs.
 - **Why:** Gurkha cards lacked keyboard activation, dialog Escape handlers used `once: true` (so Tab consumed them), and progress ARIA values did not update with navigation. Fixed-width Gurkha tracks could exceed a mobile panel. The backup action previously supplied only a transient timestamp toast.

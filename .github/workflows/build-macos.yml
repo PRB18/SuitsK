@@ -1,66 +1,117 @@
-name: Build macOS Package
+name: Build macOS App
 
 on:
-  workflow_dispatch:          # run manually from GitHub UI with one click
+  workflow_dispatch:        # ← run manually from GitHub Actions tab with one click
   push:
     tags:
-      - 'v*'                  # also auto-runs when you push a version tag (e.g. v1.0.2)
+      - 'v*'               # ← also auto-runs when you push a tag like v1.0.2
 
 jobs:
   build-macos:
     runs-on: macos-latest
 
     steps:
-      # ── 1. Check out the repo ──────────────────────────────────────────────
+      # ── 1. Checkout ────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Set up Node.js 22 (matches your engines field) ─────────────────
+      # ── 2. Node 22 ─────────────────────────────────────────────────────────
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
 
-      # ── 3. Install production dependencies natively on macOS ───────────────
-      #       better-sqlite3-multiple-ciphers compiles here, so it will work
-      #       on the client's Mac without any extra steps.
-      - name: Install production dependencies
+      # ── 3. Install app deps natively on macOS ──────────────────────────────
+      #       better-sqlite3-multiple-ciphers compiles its native .node binding
+      #       here — this is why we MUST build on a real Mac runner.
+      - name: Install dependencies
         run: npm ci --omit=dev
 
-      # ── 4. Stage the macOS package folder ─────────────────────────────────
-      - name: Stage macOS package
+      # ── 4. Build a self-contained binary with pkg ──────────────────────────
+      #       pkg bundles Node + your app into one executable.
+      #       The user just double-clicks KrishnaSuits — no Node install needed.
+      - name: Build standalone binary (pkg)
         run: |
-          OUTPUT="dist/KrishnaSuits-macOS"
-          rm -rf "$OUTPUT"
-          mkdir -p "$OUTPUT/runtime"
+          npx pkg@5 server/index.js \
+            --target node22-macos-arm64,node22-macos-x64 \
+            --output dist/KrishnaSuits \
+            --assets "public/**,server/**" \
+            --compress GZip
+          ls -lh dist/
 
-          # Copy app source
-          cp -R public server "$OUTPUT/"
-          cp package.json package-lock.json "$OUTPUT/"
+      # ── 5. Create a clean .app launcher folder ─────────────────────────────
+      - name: Bundle into .app folder
+        run: |
+          APP="dist/Krishna Suits.app"
+          CONTENTS="$APP/Contents"
+          MACOS="$CONTENTS/MacOS"
+          RESOURCES="$CONTENTS/Resources"
 
-          # Copy launcher scripts
-          cp Start-Krishna-Suits.command Stop-Krishna-Suits.sh "$OUTPUT/"
-          chmod +x "$OUTPUT/Start-Krishna-Suits.command" "$OUTPUT/Stop-Krishna-Suits.sh"
+          mkdir -p "$MACOS" "$RESOURCES"
 
-          # Bundle the Node binary so the client doesn't need Node installed
-          cp "$(command -v node)" "$OUTPUT/runtime/node"
-          chmod +x "$OUTPUT/runtime/node"
+          # Copy the pkg binary (arm64 build — universal users can use x64 too)
+          cp dist/KrishnaSuits-macos-arm64 "$MACOS/KrishnaSuits"
+          chmod +x "$MACOS/KrishnaSuits"
 
-          # Install deps inside the staged folder so native modules match macOS
-          (cd "$OUTPUT" && npm ci --omit=dev)
+          # Launcher shell script that opens the browser after starting the server
+          cat > "$MACOS/start" << 'EOF'
+          #!/bin/bash
+          DIR="$(cd "$(dirname "$0")" && pwd)"
+          "$DIR/KrishnaSuits" &
+          sleep 1.5
+          open http://127.0.0.1:3737
+          EOF
+          chmod +x "$MACOS/start"
 
-      # ── 5. Zip the package ─────────────────────────────────────────────────
-      - name: Create zip archive
+          # Info.plist so macOS recognises it as an app
+          cat > "$CONTENTS/Info.plist" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key>
+            <string>Krishna Suits</string>
+            <key>CFBundleDisplayName</key>
+            <string>Krishna Suits — Bespoke</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.krishnasuits.bespoke</string>
+            <key>CFBundleVersion</key>
+            <string>1.0.1</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0.1</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleExecutable</key>
+            <string>start</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>12.0</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+
+          echo "App bundle created:"
+          find "$APP" -type f | head -20
+
+      # ── 6. Also zip the x64 binary for Intel Macs ─────────────────────────
+      - name: Package both architectures into a zip
         run: |
           cd dist
-          zip -r KrishnaSuits-macOS.zip KrishnaSuits-macOS
-          echo "Archive created: dist/KrishnaSuits-macOS.zip"
+          # Rename for clarity
+          mv KrishnaSuits-macos-arm64 KrishnaSuits-Apple-Silicon
+          mv KrishnaSuits-macos-x64  KrishnaSuits-Intel-Mac
+          zip -r "KrishnaSuits-macOS.zip" \
+            "Krishna Suits.app" \
+            KrishnaSuits-Apple-Silicon \
+            KrishnaSuits-Intel-Mac
+          echo "Zip size: $(du -sh KrishnaSuits-macOS.zip)"
 
-      # ── 6. Upload as a downloadable GitHub artifact ────────────────────────
-      - name: Upload macOS package
+      # ── 7. Upload artifact — download from the GitHub Actions tab ──────────
+      - name: Upload macOS build
         uses: actions/upload-artifact@v4
         with:
           name: KrishnaSuits-macOS
           path: dist/KrishnaSuits-macOS.zip
-          retention-days: 30      # artifact kept for 30 days; increase if needed
+          retention-days: 30

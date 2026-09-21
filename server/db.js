@@ -41,7 +41,7 @@ async function initDatabase() {
   client = createClient({ url, authToken: token });
 
   // ── Original suits table (unchanged) ────────────────────────────────────
-  await client.execute(`
+  const schemaTasks = [client.execute(`
     CREATE TABLE IF NOT EXISTS suits (
       id         TEXT PRIMARY KEY,
       name       TEXT NOT NULL,
@@ -50,12 +50,12 @@ async function initDatabase() {
       updated_at TEXT NOT NULL,
       data       TEXT NOT NULL DEFAULT '{}'
     )
-  `);
+  `),
 
   // ── Clients ──────────────────────────────────────────────────────────────
   // phone is the natural uniqueness enforcer (prevents duplicate client records).
   // client_ref is the human-readable ID auto-generated as CTB-YYYY-NNN.
-  await client.execute(`
+  client.execute(`
     CREATE TABLE IF NOT EXISTS clients (
       id          TEXT PRIMARY KEY,
       client_ref  TEXT NOT NULL UNIQUE,
@@ -68,13 +68,13 @@ async function initDatabase() {
       created_at  TEXT NOT NULL,
       updated_at  TEXT NOT NULL
     )
-  `);
+  `),
 
   // ── Orders ───────────────────────────────────────────────────────────────
   // One active order per client at a time; multiple garments (projects) per order.
   // status: pending | in_progress | ready | completed | cancelled
   // order_ref auto-generated as ORD-YYYY-NNN
-  await client.execute(`
+  client.execute(`
     CREATE TABLE IF NOT EXISTS orders (
       id            TEXT PRIMARY KEY,
       client_id     TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -89,7 +89,7 @@ async function initDatabase() {
       created_at    TEXT NOT NULL,
       updated_at    TEXT NOT NULL
     )
-  `);
+  `),
 
   // ── Projects (garments within an order) ──────────────────────────────────
   // garment_type: Jacket | Sherwani | Sadri | Waistcoat | Jodhpuri |
@@ -98,7 +98,7 @@ async function initDatabase() {
   //         pressing | trial | ready | delivered
   // suit_config_id: FK → suits.id (links style configuration)
   // measurements: JSON blob of project-specific body measurements
-  await client.execute(`
+  client.execute(`
     CREATE TABLE IF NOT EXISTS projects (
       id             TEXT PRIMARY KEY,
       order_id       TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -110,13 +110,13 @@ async function initDatabase() {
       created_at     TEXT NOT NULL,
       updated_at     TEXT NOT NULL
     )
-  `);
+  `),
 
   // ── Inventory ─────────────────────────────────────────────────────────────
   // item_type: fabric | accessory
   // unit: m (metres for fabric) | pcs (pieces for accessories)
   // low_stock_alert: quantity threshold that triggers a "Low Stock" badge
-  await client.execute(`
+  client.execute(`
     CREATE TABLE IF NOT EXISTS inventory (
       id              TEXT PRIMARY KEY,
       item_type       TEXT NOT NULL DEFAULT 'fabric',
@@ -133,12 +133,12 @@ async function initDatabase() {
       created_at      TEXT NOT NULL,
       updated_at      TEXT NOT NULL
     )
-  `);
+  `),
 
   // ── Inventory Transactions ───────────────────────────────────────────────
   // Full audit trail. type: add | deduct
   // project_id and client_id are optional (may be manual deductions).
-  await client.execute(`
+  client.execute(`
     CREATE TABLE IF NOT EXISTS inventory_transactions (
       id           TEXT PRIMARY KEY,
       inventory_id TEXT NOT NULL REFERENCES inventory(id) ON DELETE CASCADE,
@@ -149,14 +149,14 @@ async function initDatabase() {
       note         TEXT NOT NULL DEFAULT '',
       created_at   TEXT NOT NULL
     )
-  `);
+  `),
 
   // ── Schedule Events ───────────────────────────────────────────────────────
   // event_type: trial | delivery | client_visit | other
   // status: scheduled | completed | cancelled
   // cal_provider: google | apple | outlook (empty until synced)
   // cal_event_id: the external calendar's event ID for 2-way sync matching
-  await client.execute(`
+  client.execute(`
     CREATE TABLE IF NOT EXISTS schedule_events (
       id           TEXT PRIMARY KEY,
       client_id    TEXT NOT NULL DEFAULT '',
@@ -173,12 +173,12 @@ async function initDatabase() {
       created_at   TEXT NOT NULL,
       updated_at   TEXT NOT NULL
     )
-  `);
+  `),
 
   // ── Work Hierarchy ────────────────────────────────────────────────────────
   // sections in the physical workshop (e.g. Cutting, Canvas, Stitching …)
   // personnel: JSON array of name strings e.g. ["Rahim Shah", "Ali Hassan"]
-  await client.execute(`
+  client.execute(`
     CREATE TABLE IF NOT EXISTS work_hierarchy (
       id           TEXT PRIMARY KEY,
       section_name TEXT NOT NULL,
@@ -187,13 +187,13 @@ async function initDatabase() {
       created_at   TEXT NOT NULL,
       updated_at   TEXT NOT NULL
     )
-  `);
+  `),
 
   // ── Shortcomings (issue log) ──────────────────────────────────────────────
   // category: tailoring | managerial | client
   // severity: high | medium | low
   // status: open | in_progress | resolved
-  await client.execute(`
+  client.execute(`
     CREATE TABLE IF NOT EXISTS shortcomings (
       id            TEXT PRIMARY KEY,
       category      TEXT NOT NULL,
@@ -208,13 +208,13 @@ async function initDatabase() {
       created_at    TEXT NOT NULL,
       updated_at    TEXT NOT NULL
     )
-  `);
+  `),
 
   // ── B2B Entries ───────────────────────────────────────────────────────────
   // entry_type: corporate_order | vendor_purchase
   // garment_types: JSON array of garment type strings (for corporate orders)
   // status: pending | in_progress | completed | cancelled
-  await client.execute(`
+  client.execute(`
     CREATE TABLE IF NOT EXISTS b2b_entries (
       id             TEXT PRIMARY KEY,
       entry_type     TEXT NOT NULL,
@@ -234,18 +234,23 @@ async function initDatabase() {
       created_at     TEXT NOT NULL,
       updated_at     TEXT NOT NULL
     )
-  `);
+  `),
+
+  ];
+
+  // These tables are independent; run their DDL together to reduce cold-start latency.
+  await Promise.all(schemaTasks);
 
   // ── Calendar OAuth Tokens ─────────────────────────────────────────────────
   // One row per provider (google | apple | outlook).
   // tokens: JSON object { access_token, refresh_token, expiry_date, scope, … }
-  await client.execute(`
+  schemaTasks.push(client.execute(`
     CREATE TABLE IF NOT EXISTS calendar_tokens (
       provider   TEXT PRIMARY KEY,
       tokens     TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )
-  `);
+  `));
 
   // ── Seed default Work Hierarchy sections (once, only if table is empty) ──
   const hierarchyCheck = await client.execute(

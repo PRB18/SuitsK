@@ -2,16 +2,18 @@
 /**
  * index.js — Express application entry point (cloud version)
  *
- * Changes from the local version:
- *   - Binds to 0.0.0.0 (required for Render's reverse proxy)
- *   - Adds express-session (session-based vault unlock)
- *   - Adds /ping health endpoint (for UptimeRobot keep-alive)
- *   - Initialises Turso DB client on startup
+ * Performance optimisations applied:
+ *   - Gzip/deflate compression via `compression` middleware (reduces payload by ~70-80%)
+ *   - Long-lived cache headers for static assets (JS/CSS/images) — 1 year for versioned files
+ *   - ETag support for conditional GETs (304 responses avoid re-downloading unchanged files)
+ *   - Security headers (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection)
+ *   - /ping keep-alive endpoint for UptimeRobot (prevents Render cold starts)
  */
 
-const express = require('express');
-const path    = require('path');
-const session = require('express-session');
+const express      = require('express');
+const path         = require('path');
+const session      = require('express-session');
+const compression  = require('compression');
 
 const authRouter         = require('./auth');
 const suitsRouter        = require('./suits');
@@ -32,6 +34,23 @@ const HOST = '0.0.0.0'; // Render requires 0.0.0.0
 // Trust Render's reverse proxy so secure cookies work over HTTPS
 // ---------------------------------------------------------------------------
 app.set('trust proxy', 1);
+
+// ---------------------------------------------------------------------------
+// Gzip compression — reduces JS/CSS/JSON payloads by ~70-80%
+// Applied BEFORE static middleware so all responses are compressed
+// ---------------------------------------------------------------------------
+app.use(compression({ level: 6, threshold: 1024 }));  // level 6 = best speed/size tradeoff
+
+// ---------------------------------------------------------------------------
+// Security headers
+// ---------------------------------------------------------------------------
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
 // ---------------------------------------------------------------------------
 // Session middleware
@@ -61,9 +80,28 @@ app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 app.get('/ping', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
 // ---------------------------------------------------------------------------
-// Static files
+// Static files — with aggressive caching strategy
+//
+// Versioned assets (files with ?v=N in the URL query string, e.g. app.js?v=9)
+// are served with a 1-year cache. Since the query string changes on each deploy,
+// browsers always get the new version.
+//
+// HTML (index.html) is never cached so the browser always gets the latest
+// version string references.
 // ---------------------------------------------------------------------------
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  etag:         true,          // ETags enable 304 Not Modified responses
+  lastModified: true,          // Last-Modified header for conditional GETs
+  maxAge:       '1y',          // 1 year cache for versioned static assets
+  setHeaders(res, filePath) {
+    // Never cache index.html — it controls the version strings for all other assets
+    if (filePath.endsWith('index.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  },
+}));
 
 // ---------------------------------------------------------------------------
 // API routes

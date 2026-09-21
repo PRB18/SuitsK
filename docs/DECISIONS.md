@@ -1,3 +1,15 @@
+## Decision
+Run independent database schema creation statements concurrently during startup.
+
+## Why
+The application waits for database initialization before listening, so serialized `CREATE TABLE IF NOT EXISTS` calls add their network latency to every cold start. The schema tables do not depend on one another, so concurrent execution shortens time to first response without changing the seed ordering.
+
+## Alternatives considered
+Keeping the calls serial preserves correctness but increases cold-start latency. Moving schema creation to a separate migration process would add operational complexity for this deployment.
+
+## Status
+Implemented in `server/db.js`.
+
 # Architecture & Design Decisions Log
 
 This document records key technical decisions made for the Krishna Suits Custom project.  

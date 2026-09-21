@@ -34,7 +34,7 @@ function safe(str) { return typeof str === 'string' ? str.trim() : ''; }
 // ────────────────────────────────────────────────────────────────────────────
 
 // GET /api/schedule — list events (optional ?month=YYYY-MM or ?client_id=)
-router.get('/', async (req, res) => {
+router.get('/schedule', async (req, res) => {
   try {
     const db = getDb();
     let sql  = `SELECT e.*, c.name as client_name, c.client_ref
@@ -62,7 +62,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/schedule/upcoming — next 7 days
-router.get('/upcoming', async (req, res) => {
+router.get('/schedule/upcoming', async (req, res) => {
   try {
     const db    = getDb();
     const today = new Date().toISOString().split('T')[0];
@@ -81,7 +81,7 @@ router.get('/upcoming', async (req, res) => {
 });
 
 // POST /api/schedule — create event
-router.post('/', async (req, res) => {
+router.post('/schedule', async (req, res) => {
   const {
     client_id = '', project_id = '', event_type = 'other',
     title, description = '', event_date,
@@ -117,7 +117,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/schedule/:id
-router.put('/:id', async (req, res) => {
+router.put('/schedule/:id', async (req, res) => {
   try {
     const db = getDb();
     const existing = await db.execute({ sql: 'SELECT * FROM schedule_events WHERE id=?', args: [req.params.id] });
@@ -156,7 +156,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/schedule/:id
-router.delete('/:id', async (req, res) => {
+router.delete('/schedule/:id', async (req, res) => {
   try {
     const db = getDb();
     const result = await db.execute({ sql: 'DELETE FROM schedule_events WHERE id=?', args: [req.params.id] });

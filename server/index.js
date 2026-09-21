@@ -106,15 +106,14 @@ app.use(express.static(path.join(__dirname, '..', 'public'), {
 // ---------------------------------------------------------------------------
 app.use('/api/auth',         authRouter);
 app.use('/api/suits',        requireUnlocked, suitsRouter);
-app.use('/api/clients',      requireUnlocked, clientsRouter);
-app.use('/api/projects',     requireUnlocked, clientsRouter);   // /api/projects/:id routes
 app.use('/api/inventory',    requireUnlocked, inventoryRouter);
-app.use('/api/schedule',     requireUnlocked, scheduleRouter);
-app.use('/api/calendar',     requireUnlocked, scheduleRouter);   // /api/calendar/* sub-paths
-app.use('/api/hierarchy',    requireUnlocked, workshopRouter);
-app.use('/api/workshop',     requireUnlocked, workshopRouter);
 app.use('/api/shortcomings', requireUnlocked, shortcomingsRouter);
 app.use('/api/b2b',          requireUnlocked, b2bRouter);
+
+// Routers that handle multiple prefixes internally:
+app.use('/api', requireUnlocked, clientsRouter);   // handles /clients and /projects
+app.use('/api', requireUnlocked, scheduleRouter);  // handles /schedule and /calendar
+app.use('/api', requireUnlocked, workshopRouter);  // handles /hierarchy and /workshop
 
 // Catch unhandled /api/* routes
 app.all('/api/*', (req, res) => {

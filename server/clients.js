@@ -65,7 +65,7 @@ function safe(str) {
 // ────────────────────────────────────────────────────────────────────────────
 
 // GET /api/clients — lightweight list for Client DB screen
-router.get('/', async (req, res) => {
+router.get('/clients', async (req, res) => {
   try {
     const db = getDb();
     const result = await db.execute(
@@ -84,7 +84,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/clients — create new client
-router.post('/', async (req, res) => {
+router.post('/clients', async (req, res) => {
   const { name, phone, email = '', address = '', city = '', notes = '' } = req.body;
 
   if (!name || safe(name).length === 0)
@@ -125,7 +125,7 @@ router.post('/', async (req, res) => {
 });
 
 // GET /api/clients/:id — full profile: client + orders (with projects nested)
-router.get('/:id', async (req, res) => {
+router.get('/clients/:id', async (req, res) => {
   try {
     const db = getDb();
     const clientResult = await db.execute({
@@ -165,7 +165,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // PUT /api/clients/:id — update client fields
-router.put('/:id', async (req, res) => {
+router.put('/clients/:id', async (req, res) => {
   try {
     const db = getDb();
     const existing = await db.execute({
@@ -214,7 +214,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/clients/:id — cascade deletes orders + projects
-router.delete('/:id', async (req, res) => {
+router.delete('/clients/:id', async (req, res) => {
   try {
     const db = getDb();
     const result = await db.execute({
@@ -234,7 +234,7 @@ router.delete('/:id', async (req, res) => {
 // ────────────────────────────────────────────────────────────────────────────
 
 // GET /api/clients/:id/orders
-router.get('/:id/orders', async (req, res) => {
+router.get('/clients/:id/orders', async (req, res) => {
   try {
     const db = getDb();
     const result = await db.execute({
@@ -248,7 +248,7 @@ router.get('/:id/orders', async (req, res) => {
 });
 
 // POST /api/clients/:id/orders — create order for a client
-router.post('/:id/orders', async (req, res) => {
+router.post('/clients/:id/orders', async (req, res) => {
   const { order_date, trial_date = '', delivery_date = '', total_amount = 0, advance_paid = 0, notes = '' } = req.body;
   if (!order_date) return res.status(400).json({ error: 'order_date is required.' });
 
@@ -277,7 +277,7 @@ router.post('/:id/orders', async (req, res) => {
 });
 
 // PUT /api/clients/:id/orders/:orderId — update order
-router.put('/:id/orders/:orderId', async (req, res) => {
+router.put('/clients/:id/orders/:orderId', async (req, res) => {
   try {
     const db = getDb();
     const existing = await db.execute({ sql: 'SELECT * FROM orders WHERE id = ? AND client_id = ?', args: [req.params.orderId, req.params.id] });
@@ -310,7 +310,7 @@ router.put('/:id/orders/:orderId', async (req, res) => {
 });
 
 // POST /api/clients/:id/orders/:orderId/projects — add a garment to an order
-router.post('/:id/orders/:orderId/projects', async (req, res) => {
+router.post('/clients/:id/orders/:orderId/projects', async (req, res) => {
   const { garment_type, measurements = {}, suit_config_id = '' } = req.body;
   if (!garment_type) return res.status(400).json({ error: 'garment_type is required.' });
   if (!GARMENT_TYPES.includes(garment_type))

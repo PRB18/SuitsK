@@ -464,6 +464,41 @@ Object.assign(ICONS, {
  * @param {string} optionValue - The exact option string from TAILORING_SCHEMA
  * @returns {string|null} - SVG markup with currentColor for theme integration
  */
+
+const genericPlaceholder = (w, h, path) => \`<svg width="\${w}" height="\${h}" viewBox="0 0 \${w} \${h}"><g stroke="currentColor" stroke-width="1.5" fill="none">\${path}</g></svg>\`;
+
+const COLLAR_PLACEHOLDER = genericPlaceholder(40, 20, '<path d="M5 20 L20 5 L35 20"/>');
+const CUFF_PLACEHOLDER = genericPlaceholder(40, 20, '<rect x="5" y="5" width="30" height="10" rx="2"/><circle cx="20" cy="10" r="1" fill="currentColor" stroke="none"/>');
+const BELT_PLACEHOLDER = genericPlaceholder(30, 20, '<rect x="10" y="2" width="10" height="16" rx="1"/>');
+const WAIST_PLACEHOLDER = genericPlaceholder(40, 20, '<path d="M0 10 L40 10" stroke-dasharray="2 2"/>');
+const BPOCKET_PLACEHOLDER = genericPlaceholder(30, 20, '<path d="M5 5 L25 5 L15 15 Z"/>');
+
+const MISSING_MAP = {
+  // Collars
+  'Forward Point': COLLAR_PLACEHOLDER, 'Spread': COLLAR_PLACEHOLDER, 'Wide Spread': COLLAR_PLACEHOLDER,
+  'Button Down': COLLAR_PLACEHOLDER, 'Club': COLLAR_PLACEHOLDER, 'Cutaway': COLLAR_PLACEHOLDER,
+  'Tab': COLLAR_PLACEHOLDER, 'Wing': COLLAR_PLACEHOLDER, 'Mandarin': COLLAR_PLACEHOLDER,
+  'Grandad': COLLAR_PLACEHOLDER, 'Band': COLLAR_PLACEHOLDER, 'Hidden Button': COLLAR_PLACEHOLDER,
+  // Cuffs
+  'Barrel (1 Button)': CUFF_PLACEHOLDER, 'Barrel (2 Button)': CUFF_PLACEHOLDER, 'French': CUFF_PLACEHOLDER,
+  'Convertible': CUFF_PLACEHOLDER, 'Angled': CUFF_PLACEHOLDER, 'Rounded': CUFF_PLACEHOLDER, 'Square': CUFF_PLACEHOLDER,
+  // Belt loops
+  'Standard': BELT_PLACEHOLDER, 'LB Hook Square': BELT_PLACEHOLDER, 'LB Button': BELT_PLACEHOLDER,
+  // Waistband
+  'Buckle': WAIST_PLACEHOLDER, 'Elastic': WAIST_PLACEHOLDER, 'Gurkha': WAIST_PLACEHOLDER, 'Side Adjuster': WAIST_PLACEHOLDER,
+  // Back pockets
+  'None': '', 'Jetted': BPOCKET_PLACEHOLDER, 'Welt': BPOCKET_PLACEHOLDER, 'Flap': BPOCKET_PLACEHOLDER,
+  'Button': BPOCKET_PLACEHOLDER, 'Zip': BPOCKET_PLACEHOLDER, 'Patch': BPOCKET_PLACEHOLDER, 'Diagonal': BPOCKET_PLACEHOLDER,
+  // Pockets that were missed in icons.js
+  'Straight': genericPlaceholder(30,20,'<rect x="2" y="2" width="26" height="16"/>'),
+  'Diagonal': genericPlaceholder(30,20,'<rect x="2" y="4" width="26" height="16" transform="rotate(-5 15 10)"/>'),
+  'Patch': genericPlaceholder(30,20,'<rect x="4" y="2" width="22" height="16" rx="2"/>'),
+  'Flap Straight': genericPlaceholder(30,20,'<rect x="2" y="2" width="26" height="16"/><path d="M2 8 L28 8"/>'),
+  'Flap Diagonal': genericPlaceholder(30,20,'<g transform="rotate(-5 15 10)"><rect x="2" y="2" width="26" height="16"/><path d="M2 8 L28 8"/></g>'),
+  'Ticket': genericPlaceholder(30,20,'<rect x="4" y="4" width="16" height="10"/>'),
+  'Jetted': genericPlaceholder(30,20,'<path d="M4 10 L26 10 M4 12 L26 12"/>'),
+};
+
 export function getIcon(optionValue) {
-  return ICONS[optionValue] || null;
+  return ICONS[optionValue] || MISSING_MAP[optionValue] || null;
 }

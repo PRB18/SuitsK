@@ -13,10 +13,16 @@ const express = require('express');
 const path    = require('path');
 const session = require('express-session');
 
-const authRouter      = require('./auth');
-const suitsRouter     = require('./suits');
-const requireUnlocked = require('./middleware/requireUnlocked');
-const { initDatabase } = require('./db');
+const authRouter         = require('./auth');
+const suitsRouter        = require('./suits');
+const clientsRouter      = require('./clients');
+const inventoryRouter    = require('./inventory');
+const scheduleRouter     = require('./schedule');
+const workshopRouter     = require('./workshop');
+const shortcomingsRouter = require('./shortcomings');
+const b2bRouter          = require('./b2b');
+const requireUnlocked    = require('./middleware/requireUnlocked');
+const { initDatabase }   = require('./db');
 
 const app  = express();
 const PORT = process.env.PORT || 3737;
@@ -62,8 +68,17 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // ---------------------------------------------------------------------------
 // API routes
 // ---------------------------------------------------------------------------
-app.use('/api/auth',  authRouter);
-app.use('/api/suits', requireUnlocked, suitsRouter);
+app.use('/api/auth',         authRouter);
+app.use('/api/suits',        requireUnlocked, suitsRouter);
+app.use('/api/clients',      requireUnlocked, clientsRouter);
+app.use('/api/projects',     requireUnlocked, clientsRouter);   // /api/projects/:id routes
+app.use('/api/inventory',    requireUnlocked, inventoryRouter);
+app.use('/api/schedule',     requireUnlocked, scheduleRouter);
+app.use('/api/calendar',     requireUnlocked, scheduleRouter);   // /api/calendar/* sub-paths
+app.use('/api/hierarchy',    requireUnlocked, workshopRouter);
+app.use('/api/workshop',     requireUnlocked, workshopRouter);
+app.use('/api/shortcomings', requireUnlocked, shortcomingsRouter);
+app.use('/api/b2b',          requireUnlocked, b2bRouter);
 
 // Catch unhandled /api/* routes
 app.all('/api/*', (req, res) => {

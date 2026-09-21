@@ -1,0 +1,238 @@
+/**
+ * print.css — 2-page Measurement Card print stylesheet
+ *
+ * Strategy:
+ *   On screen: #print-root is invisible (visually-hidden, aria-hidden).
+ *   On print:  @media print hides everything EXCEPT #print-root.
+ *
+ * Usage: window.print() is called after print.js populates #print-root.
+ */
+
+/* ── On-screen: keep #print-root invisible ────────────────────────────────── */
+#print-root {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ── Print media ──────────────────────────────────────────────────────────── */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  /* Hide everything on screen except the print root */
+  body > *:not(#print-root) {
+    display: none !important;
+  }
+
+  #print-root {
+    position: static;
+    visibility: visible;
+    width: 100%;
+    font-family: 'Arial', 'Helvetica Neue', sans-serif;
+    font-size: 8pt;
+    color: #000;
+  }
+
+  /* Each page gets a page break after it */
+  .print-page {
+    page-break-after: always;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .print-page:last-child {
+    page-break-after: avoid;
+  }
+
+  /* ── Page 1: Top Row ─────────────────────────────────────────────────────── */
+  .mf-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1.5pt solid #000;
+    padding-bottom: 4pt;
+    margin-bottom: 4pt;
+  }
+
+  .mf-top-left { min-width: 110pt; }
+  .mf-top-center {
+    flex: 1;
+    text-align: center;
+  }
+  .mf-top-right { min-width: 110pt; }
+
+  .mf-shop-name {
+    font-size: 13pt;
+    font-weight: bold;
+    letter-spacing: 1pt;
+    text-transform: uppercase;
+  }
+  .mf-form-title {
+    font-size: 9pt;
+    letter-spacing: 0.5pt;
+    margin-top: 1pt;
+  }
+
+  .mf-meta-grid {
+    display: grid;
+    grid-template-columns: auto auto;
+    column-gap: 4pt;
+    row-gap: 1pt;
+    font-size: 7.5pt;
+  }
+  .mf-meta-label { font-weight: bold; }
+  .mf-meta-val   { border-bottom: 0.5pt solid #000; min-width: 24pt; }
+
+  /* Style/QTY table (top-right) */
+  .mf-style-qty {
+    border-collapse: collapse;
+    font-size: 6.5pt;
+    width: 100%;
+  }
+  .mf-style-qty th, .mf-style-qty td {
+    border: 0.5pt solid #000;
+    padding: 0.8pt 2pt;
+    text-align: center;
+  }
+  .mf-style-qty thead { background: #eee; }
+  .style-row-active td { background: #e8f0ff; font-weight: bold; }
+
+  /* ── Client info row ─────────────────────────────────────────────────────── */
+  .mf-client-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6pt 16pt;
+    font-size: 7.5pt;
+    margin-bottom: 4pt;
+    border-bottom: 0.5pt solid #888;
+    padding-bottom: 3pt;
+  }
+
+  /* ── Main measurement table ──────────────────────────────────────────────── */
+  .mf-main-table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .mf-main-table th,
+  .mf-main-table td {
+    border: 0.5pt solid #000;
+    padding: 1.2pt 2pt;
+    font-size: 6.5pt;
+    text-align: center;
+  }
+
+  .mf-col-header {
+    background: #1a1a2e;
+    color: #fff;
+    font-weight: bold;
+    font-size: 7pt;
+    text-align: center;
+  }
+
+  .mf-sub-header th {
+    background: #eee;
+    font-weight: bold;
+    font-size: 6pt;
+  }
+
+  .mf-label { text-align: left !important; font-size: 6pt; padding-left: 2pt !important; }
+  .mf-val   { min-width: 14pt; }
+  .wc-label { font-size: 5.5pt; }
+
+  .mf-sep, .mf-sep-head {
+    background: #ccc !important;
+    width: 2pt !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  /* ── Signature row ───────────────────────────────────────────────────────── */
+  .mf-signature-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16pt;
+    font-size: 8pt;
+  }
+  .mf-sig { display: flex; align-items: center; gap: 4pt; }
+  .mf-sig-line {
+    display: inline-block;
+    width: 120pt;
+    border-bottom: 0.5pt solid #000;
+  }
+
+  /* ── Page 2: Style Selection Sheet ──────────────────────────────────────── */
+  .style-sheet-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6pt;
+  }
+
+  .style-section {
+    border: 0.5pt solid #ccc;
+    padding: 4pt;
+    break-inside: avoid;
+  }
+
+  .style-section--full { grid-column: 1 / -1; }
+
+  .style-section-title {
+    font-size: 7.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+    border-bottom: 0.5pt solid #000;
+    margin-bottom: 3pt;
+    padding-bottom: 1pt;
+  }
+
+  .style-options-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4pt;
+  }
+
+  .style-opt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2pt;
+    min-width: 36pt;
+  }
+
+  .style-opt-label {
+    font-size: 5.5pt;
+    text-align: center;
+  }
+
+  .style-opt-svg svg {
+    display: block;
+  }
+
+  .style-note {
+    font-size: 7pt;
+    margin-top: 3pt;
+  }
+
+  .style-blank {
+    display: inline-block;
+    width: 80pt;
+    border-bottom: 0.5pt solid #000;
+  }
+
+  .style-notes-box {
+    min-height: 30pt;
+    border: 0.5pt solid #ccc;
+    padding: 3pt;
+    font-size: 7pt;
+  }
+
+  /* Print: hide browser chrome artifacts */
+  a { color: #000; text-decoration: none; }
+}

@@ -122,6 +122,8 @@ export function renderDashboardScreen(container) {
           <div class="loading-state">Loading your vault…</div>
         </div>
         <div id="analytics-panel-container"></div>
+        <div class="ds-section-label" style="margin-top: 2rem;">B2B Logistics</div>
+        <div id="b2b-panel-container"></div>
       </div>
 
       <!-- FAB -->
@@ -199,10 +201,13 @@ export function renderDashboardScreen(container) {
   };
   document.addEventListener('keydown', onDashboardKey);
 
-  // ── Load and render suits ────────────────────────────────────────────────
+  // ── Load and render suits & B2B ───────────────────────────────────────────
   const gridContainer = wrapper.querySelector('#suits-grid-container');
   const analyticsContainer = wrapper.querySelector('#analytics-panel-container');
+  const b2bContainer = wrapper.querySelector('#b2b-panel-container');
+  
   loadSuits(gridContainer, analyticsContainer, wrapper);
+  renderB2bPanel(b2bContainer);
 
   // ── Cleanup keyboard listener when screen is torn down ───────────────────
   const obs = new MutationObserver(() => {
@@ -759,3 +764,187 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+// ---------------------------------------------------------------------------
+// B2B Panel
+// ---------------------------------------------------------------------------
+async function renderB2bPanel(container) {
+  container.innerHTML = `
+    <div class="b2b-panel">
+      <div class="b2b-tabs" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+        <button class="btn btn-outline b2b-tab active" data-tab="corporate">Corporate Orders</button>
+        <button class="btn btn-outline b2b-tab" data-tab="vendor">Vendor Purchases</button>
+      </div>
+      <div id="b2b-content" style="min-height: 200px; position: relative;">
+        <div class="loading-state">Loading B2B data...</div>
+      </div>
+    </div>
+  `;
+
+  let currentTab = 'corporate';
+  const contentEl = container.querySelector('#b2b-content');
+  const tabs = container.querySelectorAll('.b2b-tab');
+
+  const loadData = async () => {
+    try {
+      const entries = await api.getB2B({ type: currentTab === 'corporate' ? 'corporate_order' : 'vendor_purchase' });
+      renderB2bContent(contentEl, entries, currentTab, loadData);
+    } catch (err) {
+      contentEl.innerHTML = `<div class="form-error" style="display:block;">Error loading B2B: ${escapeHtml(err.message)}</div>`;
+    }
+  };
+
+  tabs.forEach(t => t.addEventListener('click', (e) => {
+    tabs.forEach(btn => btn.classList.remove('active'));
+    e.target.classList.add('active');
+    currentTab = e.target.dataset.tab;
+    contentEl.innerHTML = '<div class="loading-state">Loading...</div>';
+    loadData();
+  }));
+
+  loadData();
+}
+
+function renderB2bContent(container, entries, type, reloadFn) {
+  if (type === 'corporate') {
+    container.innerHTML = `
+      <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
+        <button id="add-corp-btn" class="btn btn-primary">+ New Corporate Order</button>
+      </div>
+      ${entries.length === 0 ? '<div class="empty-state">No corporate orders found.</div>' : `
+        <div class="b2b-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+          ${entries.map(e => `
+            <div class="suit-card">
+              <div class="suit-card-inner">
+                <h3 class="suit-card-title">${escapeHtml(e.company_name)}</h3>
+                <div class="text-sm text-muted" style="margin-bottom: 8px;">Contact: ${escapeHtml(e.contact_person)}</div>
+                <div class="summary-badge"><span class="badge-label">Qty</span><span class="badge-value">${e.quantity} garments</span></div>
+                <div class="summary-badge"><span class="badge-label">Status</span><span class="badge-value">${escapeHtml(e.status)}</span></div>
+                <div class="summary-badge"><span class="badge-label">Due</span><span class="badge-value">${e.delivery_date ? new Date(e.delivery_date).toLocaleDateString() : 'N/A'}</span></div>
+                <div class="suit-card-actions" style="margin-top: 1rem;">
+                  <button class="btn btn-ghost btn-sm text-danger" onclick="deleteB2B('${e.id}')">Delete</button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `}
+    `;
+    container.querySelector('#add-corp-btn')?.addEventListener('click', () => showB2BModal('corporate', null, reloadFn));
+  } else {
+    container.innerHTML = `
+      <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
+        <button id="add-vendor-btn" class="btn btn-primary">+ New Purchase Order</button>
+      </div>
+      ${entries.length === 0 ? '<div class="empty-state">No vendor purchases found.</div>' : `
+        <table class="inventory-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--color-border);">
+              <th style="padding: 8px;">Vendor</th>
+              <th style="padding: 8px;">Items</th>
+              <th style="padding: 8px;">Order Date</th>
+              <th style="padding: 8px;">Expected</th>
+              <th style="padding: 8px;">Status</th>
+              <th style="padding: 8px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${entries.map(e => `
+              <tr style="border-bottom: 1px solid var(--color-border);">
+                <td style="padding: 8px;">${escapeHtml(e.vendor_name)}</td>
+                <td style="padding: 8px;">${escapeHtml(e.items_ordered)}</td>
+                <td style="padding: 8px;">${new Date(e.order_date).toLocaleDateString()}</td>
+                <td style="padding: 8px;">${e.delivery_date ? new Date(e.delivery_date).toLocaleDateString() : '—'}</td>
+                <td style="padding: 8px;"><span class="status-badge ${e.status === 'completed' ? 'status-ready' : 'status-pending'}">${escapeHtml(e.status)}</span></td>
+                <td style="padding: 8px;">
+                  <button class="btn btn-ghost btn-sm text-danger" onclick="deleteB2B('${e.id}')">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `}
+    `;
+    container.querySelector('#add-vendor-btn')?.addEventListener('click', () => showB2BModal('vendor', null, reloadFn));
+  }
+  
+  // Attach global delete handler for these inline onclicks
+  window.deleteB2B = async (id) => {
+    if (!confirm('Are you sure you want to delete this B2B entry?')) return;
+    try {
+      await api.deleteB2BEntry(id);
+      showToast('Deleted B2B entry', 'success');
+      reloadFn();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+}
+
+function showB2BModal(type, existingEntry = null, onSuccess) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'ks-modal-backdrop';
+  
+  const isCorp = type === 'corporate';
+  
+  backdrop.innerHTML = `
+    <div class="ks-modal" style="width: 500px; max-width: 90vw;">
+      <h3 class="ks-modal__title">${isCorp ? 'New Corporate Order' : 'New Vendor Purchase'}</h3>
+      <form id="b2b-form" style="display:flex; flex-direction:column; gap:1rem; margin-top:1rem;">
+        ${isCorp ? `
+          <div><label class="form-label">Company Name *</label><input type="text" id="b2b-company" class="form-input" required></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div><label class="form-label">Contact Person</label><input type="text" id="b2b-contact" class="form-input"></div>
+            <div><label class="form-label">Phone</label><input type="text" id="b2b-phone" class="form-input"></div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div><label class="form-label">Quantity</label><input type="number" id="b2b-qty" class="form-input"></div>
+            <div><label class="form-label">Delivery Date</label><input type="date" id="b2b-delivery" class="form-input"></div>
+          </div>
+        ` : `
+          <div><label class="form-label">Vendor Name *</label><input type="text" id="b2b-vendor" class="form-input" required></div>
+          <div><label class="form-label">Items Ordered *</label><input type="text" id="b2b-items" class="form-input" required></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div><label class="form-label">Order Date</label><input type="date" id="b2b-order" class="form-input" required value="${new Date().toISOString().split('T')[0]}"></div>
+            <div><label class="form-label">Expected Date</label><input type="date" id="b2b-delivery" class="form-input"></div>
+          </div>
+        `}
+        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1rem;">
+          <button type="button" class="btn btn-secondary" id="b2b-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.body.appendChild(backdrop);
+  
+  const close = () => backdrop.remove();
+  backdrop.querySelector('#b2b-cancel').addEventListener('click', close);
+  
+  backdrop.querySelector('#b2b-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+      entry_type: isCorp ? 'corporate_order' : 'vendor_purchase',
+      company_name: isCorp ? document.getElementById('b2b-company').value : '',
+      contact_person: isCorp ? document.getElementById('b2b-contact').value : '',
+      contact_phone: isCorp ? document.getElementById('b2b-phone').value : '',
+      quantity: isCorp ? parseInt(document.getElementById('b2b-qty').value || '0', 10) : 0,
+      vendor_name: !isCorp ? document.getElementById('b2b-vendor').value : '',
+      items_ordered: !isCorp ? document.getElementById('b2b-items').value : '',
+      order_date: !isCorp ? document.getElementById('b2b-order').value : new Date().toISOString().split('T')[0],
+      delivery_date: document.getElementById('b2b-delivery').value,
+      status: 'pending'
+    };
+    
+    try {
+      await api.createB2BEntry(data);
+      showToast('B2B Entry saved', 'success');
+      close();
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  });
+}
+

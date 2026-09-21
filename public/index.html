@@ -4,16 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Krishna Suits — Bespoke Tailoring Configurator</title>
-  <link rel="stylesheet" href="/styles/main.css?v=8">
+  <meta name="description" content="Congressional The Bespoke — Atelier management system for bespoke tailoring: client profiles, measurements, inventory, schedule, and workshop management.">
+  <link rel="stylesheet" href="/styles/main.css?v=9">
+  <link rel="stylesheet" href="/styles/print.css" media="print">
 </head>
 <body>
+  <!-- Dynamic screens mount here -->
   <div id="app" class="app-root">
-    <!-- Dynamic screens will mount here: LockScreen, Congressional Hub, Dashboard, Configurator -->
     <div class="initial-loading">
       <div class="initial-spinner"></div>
       <p>Initializing secure vault...</p>
     </div>
   </div>
-  <script type="module" src="/js/app.js?v=8"></script>
+
+  <!--
+    Print Root: Always in the DOM but visually hidden on-screen.
+    When window.print() is called, @media print shows ONLY this div.
+    JavaScript populates it with the 2-page measurement card before printing.
+  -->
+  <div id="print-root" aria-hidden="true"></div>
+
+  <script type="module" src="/js/app.js?v=9"></script>
 </body>
 </html>

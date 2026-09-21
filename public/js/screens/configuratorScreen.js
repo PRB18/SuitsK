@@ -504,15 +504,49 @@ function renderEmbroideryPanel(container) {
 }
 
 // ---------------------------------------------------------------------------
-// Step 6: Measurements (Unit toggle, 12 defaults, custom fields)
+// Step 6: Measurements (Exact Paper Form Replica)
 // ---------------------------------------------------------------------------
 function renderMeasurementsPanel(container) {
   const m = state.currentSuit.data.measurements;
   if (!m.values) m.values = {};
   if (!m.custom) m.custom = [];
 
+  const styleQty = state.currentSuit.data.styleQty || {
+    Jacket: '', Sherwani: '', Sadri: '', Waistcoat: '', Jodhpuri: '',
+    ShirtsKurta: '', Pant: '', SafariJkt: '', Denim: ''
+  };
+
   container.innerHTML = `
-    <div class="step-form-wrapper">
+    <div class="step-form-wrapper" style="max-width: 1000px;">
+      
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 2rem;">
+        <!-- Header Info (Visual replica, read-only here as it belongs to project/client) -->
+        <div style="flex:1;">
+          <div style="display:flex; gap: 1rem; margin-bottom: 1rem; font-weight:bold;">
+            <div>Meters: <input type="text" class="form-input" style="display:inline; width:60px; padding:2px;" data-field="meters" value="${m.values.meters || ''}"></div>
+            <div>Suit: <input type="text" class="form-input" style="display:inline; width:60px; padding:2px;" data-field="suit_meters" value="${m.values.suit_meters || ''}"></div>
+            <div>Shirt: <input type="text" class="form-input" style="display:inline; width:60px; padding:2px;" data-field="shirt_meters" value="${m.values.shirt_meters || ''}"></div>
+            <div>Pant: <input type="text" class="form-input" style="display:inline; width:60px; padding:2px;" data-field="pant_meters" value="${m.values.pant_meters || ''}"></div>
+          </div>
+          <p class="text-sm text-muted">Client & Order details are auto-filled from the Client Profile when printing.</p>
+        </div>
+
+        <!-- Style QTY -->
+        <div style="border:1px solid var(--color-border); padding: 8px;">
+          <table style="font-size: 0.85rem; border-collapse: collapse;">
+            <thead><tr><th style="text-align:left; padding-right:16px;">STYLE</th><th>QTY</th></tr></thead>
+            <tbody>
+              ${['Jacket','Sherwani','Sadri','Waistcoat','Jodhpuri','ShirtsKurta','Pant','SafariJkt','Denim'].map(style => `
+                <tr>
+                  <td>${style.replace('ShirtsKurta', 'Shirts/Kurta').replace('SafariJkt', 'Safari jkt')}</td>
+                  <td><input type="text" class="form-input style-qty-input" data-style="${style}" style="width:40px; padding:2px; text-align:center;" value="${styleQty[style] || ''}"></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="measurements-header-row">
         <span class="unit-toggle-label">Active Tailoring Unit:</span>
         <div class="unit-toggle-buttons">
@@ -521,48 +555,38 @@ function renderMeasurementsPanel(container) {
         </div>
       </div>
 
-      <div class="wizard-field-section">
-        <div class="wizard-field-header">
-          <div class="wizard-field-title">Standard Body Metrics</div>
-          <span class="wizard-field-current">${m.unit.toUpperCase()} Mode</span>
-        </div>
-        <div class="foundation-grid">
-          ${TAILORING_SCHEMA.measurements.defaultFields.map(f => `
-            <div class="form-group">
-              <label class="form-label" for="metric-${f.key}">${f.label} (${m.unit})</label>
-              <input
-                id="metric-${f.key}"
-                type="number" 
-                step="0.25" 
-                class="form-input measurement-default-input" 
-                data-metric="${f.key}" 
-                value="${m.values[f.key] ?? ''}" 
-                placeholder="0.0" 
-              />
-            </div>
-          `).join('')}
-        </div>
+      <!-- 4 Column Grid -->
+      <div style="overflow-x:auto;">
+        <table class="inventory-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:center;">
+          <thead>
+            <tr style="background:var(--color-surface-muted);">
+              <th colspan="3" style="border:1px solid var(--color-border); padding:4px;">SUIT / JODHPURI</th>
+              <th colspan="3" style="border:1px solid var(--color-border); padding:4px;">PANT</th>
+              <th colspan="3" style="border:1px solid var(--color-border); padding:4px;">SHIRT / KURTA</th>
+              <th colspan="1" style="border:1px solid var(--color-border); padding:4px;">WAISTCOAT</th>
+            </tr>
+            <tr>
+              <th style="border:1px solid var(--color-border); padding:4px;">Measurement</th>
+              <th style="border:1px solid var(--color-border); padding:4px; width:45px;">L</th>
+              <th style="border:1px solid var(--color-border); padding:4px; width:45px;">R</th>
+              
+              <th style="border:1px solid var(--color-border); padding:4px;">Measurement</th>
+              <th style="border:1px solid var(--color-border); padding:4px; width:45px;">L</th>
+              <th style="border:1px solid var(--color-border); padding:4px; width:45px;">R</th>
+              
+              <th style="border:1px solid var(--color-border); padding:4px;">Measurement</th>
+              <th style="border:1px solid var(--color-border); padding:4px; width:45px;">L</th>
+              <th style="border:1px solid var(--color-border); padding:4px; width:45px;">R</th>
+              
+              <th style="border:1px solid var(--color-border); padding:4px;">Measurement</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${renderMeasurementRows(m)}
+          </tbody>
+        </table>
       </div>
-
-      <div class="custom-measurements-section">
-        <div class="wizard-field-header">
-          <div class="wizard-field-title">Custom Measurement Fields</div>
-          <button type="button" id="add-custom-metric-btn" class="btn btn-secondary btn-sm">
-            + Add Custom Metric
-          </button>
-        </div>
-        <div id="custom-metrics-container">
-          ${m.custom.length === 0 ? `
-            <p class="text-secondary" style="font-size:0.875rem; font-style:italic;">No custom metrics added yet. Click "+ Add Custom Metric" to add specialized tailor measurements.</p>
-          ` : m.custom.map((cmField, idx) => `
-            <div class="custom-field-row" data-index="${idx}">
-              <input type="text" class="form-input custom-name-input" aria-label="Custom measurement ${idx + 1} name" placeholder="Measurement Label (e.g. Wrist, Calf)" value="${escapeHtml(cmField.name || '')}" />
-              <input type="number" step="0.25" class="form-input custom-val-input" aria-label="Custom measurement ${idx + 1} value (${m.unit})" placeholder="Value (${m.unit})" value="${cmField.value ?? ''}" />
-              <button type="button" class="btn btn-ghost btn-sm text-danger remove-custom-btn" data-index="${idx}">Remove</button>
-            </div>
-          `).join('')}
-        </div>
-      </div>
+      
     </div>
   `;
 
@@ -575,47 +599,89 @@ function renderMeasurementsPanel(container) {
     });
   });
 
-  // Default metric inputs
-  container.querySelectorAll('.measurement-default-input').forEach(input => {
+  // Inputs
+  container.querySelectorAll('input[data-field], input.meas-input').forEach(input => {
     input.addEventListener('input', (e) => {
-      const metric = e.target.dataset.metric;
-      m.values[metric] = e.target.value !== '' ? parseFloat(e.target.value) : null;
+      const key = e.target.dataset.field || e.target.dataset.key;
+      m.values[key] = e.target.value;
       state.updateDraftCategory('measurements', 'values', m.values);
     });
   });
 
-  // Custom metrics handlers
-  const addBtn = container.querySelector('#add-custom-metric-btn');
-  if (addBtn) {
-    addBtn.addEventListener('click', () => {
-      m.custom.push({ name: '', value: null });
-      state.updateDraftCategory('measurements', 'custom', m.custom);
-      renderMeasurementsPanel(container);
-    });
-  }
-
-  container.querySelectorAll('.custom-field-row').forEach(row => {
-    const idx = parseInt(row.dataset.index, 10);
-    const nameInput = row.querySelector('.custom-name-input');
-    const valInput = row.querySelector('.custom-val-input');
-    const removeBtn = row.querySelector('.remove-custom-btn');
-
-    nameInput.addEventListener('input', (e) => {
-      m.custom[idx].name = e.target.value;
-      state.updateDraftCategory('measurements', 'custom', m.custom);
-    });
-
-    valInput.addEventListener('input', (e) => {
-      m.custom[idx].value = e.target.value !== '' ? parseFloat(e.target.value) : null;
-      state.updateDraftCategory('measurements', 'custom', m.custom);
-    });
-
-    removeBtn.addEventListener('click', () => {
-      m.custom.splice(idx, 1);
-      state.updateDraftCategory('measurements', 'custom', m.custom);
-      renderMeasurementsPanel(container);
+  // Style QTY Inputs
+  container.querySelectorAll('.style-qty-input').forEach(input => {
+    input.addEventListener('input', (e) => {
+      const style = e.target.dataset.style;
+      if (!state.currentSuit.data.styleQty) state.currentSuit.data.styleQty = {};
+      state.currentSuit.data.styleQty[style] = e.target.value;
+      state.saveDraft();
     });
   });
+}
+
+function renderMeasurementRows(m) {
+  const suitFields = ['FRONT LENGTH','SLEEVE','CHEST','BELOW CHEST','HIPS','SHOULDER','BACK LENGTH','COLLAR','CROSS F','CROSS B','BICEPS','STOMACH','WRIST','H BACK','SHOULDER TO ELBOW','ELBOW TO WRIST','COLLAR TO STOMACH'];
+  const pantFields = ['FRONT LENGTH','LENGTH','WAIST','WAIST TO KNEE','THIGHS','KNEE','BOTTOM','CROTCH','INSEAM L','FLY','FRONT','BACK'];
+  const shirtFields = ['FRONT LENGTH','SLEEVE','STOMACH','BACK LENGTH','CHEST','BICEPS','HIPS','COLLAR','ELBOW L','WRIST','BACK LENGTH','COLLAR TO STOMACH','SHOULDER TO ELBOW','ELBOW TO WRIST','HALF SHOULDER'];
+  const wcFields = ['LENGTH','CHEST','STOMACH','SHOULDER','ARMHOLE','COLLAR','V SHAPE'];
+
+  const maxRows = Math.max(suitFields.length, pantFields.length, shirtFields.length, wcFields.length);
+  let rows = '';
+
+  for (let i = 0; i < maxRows; i++) {
+    rows += `<tr>`;
+    
+    // Suit
+    if (i < suitFields.length) {
+      const f = suitFields[i];
+      const kL = 'suit_'+f.replace(/ /g, '_')+'_L';
+      const kR = 'suit_'+f.replace(/ /g, '_')+'_R';
+      rows += `<td style="border:1px solid var(--color-border); padding:2px; text-align:left;">${f}</td>`;
+      rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kL}" value="${m.values[kL]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
+      rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kR}" value="${m.values[kR]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
+    } else {
+      rows += `<td colspan="3" style="border:1px solid var(--color-border);"></td>`;
+    }
+
+    // Pant
+    if (i < pantFields.length) {
+      const f = pantFields[i];
+      const kL = 'pant_'+f.replace(/ /g, '_')+'_L';
+      const kR = 'pant_'+f.replace(/ /g, '_')+'_R';
+      rows += `<td style="border:1px solid var(--color-border); padding:2px; text-align:left;">${f}</td>`;
+      rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kL}" value="${m.values[kL]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
+      rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kR}" value="${m.values[kR]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
+    } else {
+      rows += `<td colspan="3" style="border:1px solid var(--color-border);"></td>`;
+    }
+
+    // Shirt
+    if (i < shirtFields.length) {
+      const f = shirtFields[i];
+      const kL = 'shirt_'+f.replace(/ /g, '_')+'_L';
+      const kR = 'shirt_'+f.replace(/ /g, '_')+'_R';
+      rows += `<td style="border:1px solid var(--color-border); padding:2px; text-align:left;">${f}</td>`;
+      rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kL}" value="${m.values[kL]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
+      rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kR}" value="${m.values[kR]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
+    } else {
+      rows += `<td colspan="3" style="border:1px solid var(--color-border);"></td>`;
+    }
+
+    // Waistcoat
+    if (i < wcFields.length) {
+      const f = wcFields[i];
+      const k = 'wc_'+f.replace(/ /g, '_');
+      rows += `<td style="border:1px solid var(--color-border); padding:2px; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+        ${f}
+        <input type="text" class="meas-input" data-key="${k}" value="${m.values[k]||''}" style="width:40px; border:none; border-bottom:1px solid var(--color-border); background:transparent; text-align:center;">
+      </td>`;
+    } else {
+      rows += `<td style="border:1px solid var(--color-border);"></td>`;
+    }
+
+    rows += `</tr>`;
+  }
+  return rows;
 }
 
 // ---------------------------------------------------------------------------

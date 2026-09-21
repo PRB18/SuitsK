@@ -21,7 +21,7 @@ const MODULES = [
     roman: 'II',
     title: 'Client Database',
     subtitle: 'Full atelier roster',
-    route: '#dashboard',
+    route: '#client-db',
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
       <ellipse cx="12" cy="5" rx="9" ry="3"/>
       <path d="M3 5v5c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/>
@@ -82,15 +82,53 @@ const MODULES = [
     id: 'workshop-db',
     roman: 'VII',
     title: 'Workshop',
-    subtitle: 'Craftsmen & stations',
+    subtitle: 'Craftsmen & Kanban',
     route: '#workshop',
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
       <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.77 3.77z"/>
     </svg>`,
   },
+  {
+    id: 'shortcomings',
+    roman: 'VIII',
+    title: 'Shortcomings',
+    subtitle: 'Issue & QA tracking',
+    route: '#shortcomings',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>`,
+  },
+  {
+    id: 'dashboard',
+    roman: 'IX',
+    title: 'B2B Logistics',
+    subtitle: 'Vendor & Corporate',
+    route: '#dashboard',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+    </svg>`,
+  },
+  {
+    id: 'status-quo',
+    roman: 'X',
+    title: 'Status Quo',
+    subtitle: 'Live Overview',
+    route: '#status-quo',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>`,
+  },
 ];
 
-const IMPLEMENTED = ['#dashboard', '#configurator'];
+const IMPLEMENTED = [
+  '#dashboard', '#configurator', '#client-profile', '#client-db',
+  '#inventory', '#schedule', '#work-hierarchy', '#workshop',
+  '#shortcomings', '#status-quo'
+];
 
 export function renderCongressionalScreen(container) {
   const wrapper = document.createElement('div');
@@ -140,6 +178,11 @@ export function renderCongressionalScreen(container) {
         </div>
       </div>
 
+      <!-- Status Quo Strip -->
+      <div id="status-quo-widget" style="padding: 0 4rem 2rem 4rem;">
+        <div class="loading-state">Loading Status Quo...</div>
+      </div>
+
       <!-- Module Grid -->
       <div class="ctb-module-grid">
         ${MODULES.map(m => `
@@ -183,9 +226,69 @@ export function renderCongressionalScreen(container) {
 
   container.innerHTML = '';
   container.appendChild(wrapper);
+
+  // Load Status Quo
+  loadStatusQuoWidget(wrapper.querySelector('#status-quo-widget'));
 }
 
 function _pulse(el) {
   el.classList.add('ctb-soon');
   setTimeout(() => el.classList.remove('ctb-soon'), 1600);
+}
+
+import { api } from '../api.js';
+
+async function loadStatusQuoWidget(container) {
+  try {
+    // Use the exact 3 endpoints specified in the implementation plan (Phase 17)
+    const [workshopSummary, upcomingEvents, inventory] = await Promise.all([
+      api.getWorkshopSummary().catch(() => ({})),
+      api.getUpcomingEvents().catch(() => []),
+      api.getInventory().catch(() => []),
+    ]);
+
+    // Active projects = all non-delivered stages from workshop summary
+    const activeProjects = workshopSummary.total_active ?? 0;
+
+    // Overdue = workshop summary provides this
+    const overdueCount = workshopSummary.overdue ?? 0;
+
+    // Upcoming = events in the next 7 days from schedule
+    const upcomingCount = Array.isArray(upcomingEvents) ? upcomingEvents.length : 0;
+
+    // Low stock = items at or below their low_stock_alert threshold
+    const lowStock = Array.isArray(inventory)
+      ? inventory.filter(item => item.low_stock_alert > 0 && item.quantity <= item.low_stock_alert).length
+      : 0;
+
+    container.innerHTML = `
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; background: var(--color-surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--color-border);">
+        <div style="text-align:center; border-right: 1px solid var(--color-border); cursor:pointer;" id="sqw-active">
+          <div style="font-size: 2rem; color: var(--color-primary); font-family: var(--font-serif);">${activeProjects}</div>
+          <div class="text-sm text-muted" style="text-transform: uppercase; letter-spacing: 1px; margin-top:0.5rem;">Active Projects</div>
+        </div>
+        <div style="text-align:center; border-right: 1px solid var(--color-border); cursor:pointer;" id="sqw-overdue">
+          <div style="font-size: 2rem; color: ${overdueCount > 0 ? 'var(--color-danger)' : 'var(--color-text)'}; font-family: var(--font-serif);">${overdueCount}</div>
+          <div class="text-sm text-muted" style="text-transform: uppercase; letter-spacing: 1px; margin-top:0.5rem;">Overdue Deliveries</div>
+        </div>
+        <div style="text-align:center; border-right: 1px solid var(--color-border); cursor:pointer;" id="sqw-upcoming">
+          <div style="font-size: 2rem; color: ${upcomingCount > 0 ? 'var(--color-primary)' : 'var(--color-text)'}; font-family: var(--font-serif);">${upcomingCount}</div>
+          <div class="text-sm text-muted" style="text-transform: uppercase; letter-spacing: 1px; margin-top:0.5rem;">Events This Week</div>
+        </div>
+        <div style="text-align:center; cursor:pointer;" id="sqw-stock">
+          <div style="font-size: 2rem; color: ${lowStock > 0 ? 'var(--color-warning)' : 'var(--color-text)'}; font-family: var(--font-serif);">${lowStock}</div>
+          <div class="text-sm text-muted" style="text-transform: uppercase; letter-spacing: 1px; margin-top:0.5rem;">Low Stock Items</div>
+        </div>
+      </div>
+    `;
+
+    // Each tile navigates to its respective screen
+    document.getElementById('sqw-active')  ?.addEventListener('click', () => router.navigate('#workshop'));
+    document.getElementById('sqw-overdue') ?.addEventListener('click', () => router.navigate('#workshop'));
+    document.getElementById('sqw-upcoming')?.addEventListener('click', () => router.navigate('#schedule'));
+    document.getElementById('sqw-stock')   ?.addEventListener('click', () => router.navigate('#inventory'));
+
+  } catch (err) {
+    container.innerHTML = `<div class="form-error">Could not load status: ${err.message}</div>`;
+  }
 }

@@ -80,25 +80,23 @@ app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 app.get('/ping', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
 // ---------------------------------------------------------------------------
-// Static files — with aggressive caching strategy
+// Static files
 //
-// Versioned assets (files with ?v=N in the URL query string, e.g. app.js?v=9)
-// are served with a 1-year cache. Since the query string changes on each deploy,
-// browsers always get the new version.
-//
-// HTML (index.html) is never cached so the browser always gets the latest
-// version string references.
+// We use ETag and Last-Modified for efficient caching (304 Not Modified).
+// We DO NOT use maxAge: '1y' because native ES module imports (e.g. import './api.js')
+// don't have cache-buster query strings, so aggressive caching breaks updates.
 // ---------------------------------------------------------------------------
 app.use(express.static(path.join(__dirname, '..', 'public'), {
-  etag:         true,          // ETags enable 304 Not Modified responses
-  lastModified: true,          // Last-Modified header for conditional GETs
-  maxAge:       '1y',          // 1 year cache for versioned static assets
+  etag:         true,
+  lastModified: true,
+  maxAge:       0, // Force browser to re-verify ETag on every request
   setHeaders(res, filePath) {
-    // Never cache index.html — it controls the version strings for all other assets
-    if (filePath.endsWith('index.html')) {
+    if (filePath.endsWith('.html')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
+    } else {
+      res.setHeader('Cache-Control', 'no-cache'); // Requires re-validation with server (ETag)
     }
   },
 }));

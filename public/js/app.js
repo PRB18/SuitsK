@@ -1,22 +1,24 @@
 /**
  * app.js — Main application bootstrap & router setup
  *
- * Performance: all screen modules are LAZY-LOADED via dynamic import().
- * The browser only downloads a screen's JS the first time the user navigates to it.
- * On repeat visits, the file is served from the browser cache (Cache-Control: max-age=1y).
+ * Registers all 12 screen routes (4 existing + 8 new).
  */
 import { api }    from './api.js';
 import { state }  from './state.js';
 import { router } from './router.js';
 
-/** Wrap a dynamic import so the screen handler is lazy but cached after first load */
-function lazy(importFn) {
-  let mod = null;
-  return async (container) => {
-    if (!mod) mod = await importFn();
-    return mod.default(container);
-  };
-}
+import { renderLockScreen }          from './screens/lockScreen.js';
+import { renderCongressionalScreen } from './screens/congressionalScreen.js';
+import { renderDashboardScreen }     from './screens/dashboardScreen.js';
+import { renderConfiguratorScreen }  from './screens/configuratorScreen.js';
+import { renderClientDbScreen }      from './screens/clientDbScreen.js';
+import { renderClientProfileScreen } from './screens/clientProfileScreen.js';
+import { renderInventoryScreen }     from './screens/inventoryScreen.js';
+import { renderScheduleScreen }      from './screens/scheduleScreen.js';
+import { renderWorkHierarchyScreen } from './screens/workHierarchyScreen.js';
+import { renderWorkshopScreen }      from './screens/workshopScreen.js';
+import { renderShortcomingsScreen }  from './screens/shortcomingsScreen.js';
+import { renderStatusQuoScreen }     from './screens/statusQuoScreen.js';
 
 async function bootstrap() {
   const root = document.getElementById('app');
@@ -26,20 +28,20 @@ async function bootstrap() {
     const status = await api.getStatus();
     state.setStatus(status);
 
-    // 2. Register all routes — screens are lazy-loaded on first visit
+    // 2. Register all routes
     const routes = {
-      '#lock':           lazy(() => import('./screens/lockScreen.js').then(m => ({ default: m.renderLockScreen }))),
-      '#congressional':  lazy(() => import('./screens/congressionalScreen.js').then(m => ({ default: m.renderCongressionalScreen }))),
-      '#dashboard':      lazy(() => import('./screens/dashboardScreen.js').then(m => ({ default: m.renderDashboardScreen }))),
-      '#configurator':   lazy(() => import('./screens/configuratorScreen.js').then(m => ({ default: m.renderConfiguratorScreen }))),
-      '#client-db':      lazy(() => import('./screens/clientDbScreen.js').then(m => ({ default: m.renderClientDbScreen }))),
-      '#client-profile': lazy(() => import('./screens/clientProfileScreen.js').then(m => ({ default: m.renderClientProfileScreen }))),
-      '#inventory':      lazy(() => import('./screens/inventoryScreen.js').then(m => ({ default: m.renderInventoryScreen }))),
-      '#schedule':       lazy(() => import('./screens/scheduleScreen.js').then(m => ({ default: m.renderScheduleScreen }))),
-      '#work-hierarchy': lazy(() => import('./screens/workHierarchyScreen.js').then(m => ({ default: m.renderWorkHierarchyScreen }))),
-      '#workshop':       lazy(() => import('./screens/workshopScreen.js').then(m => ({ default: m.renderWorkshopScreen }))),
-      '#shortcomings':   lazy(() => import('./screens/shortcomingsScreen.js').then(m => ({ default: m.renderShortcomingsScreen }))),
-      '#status-quo':     lazy(() => import('./screens/statusQuoScreen.js').then(m => ({ default: m.renderStatusQuoScreen }))),
+      '#lock':           renderLockScreen,
+      '#congressional':  renderCongressionalScreen,
+      '#dashboard':      renderDashboardScreen,
+      '#configurator':   renderConfiguratorScreen,
+      '#client-db':      renderClientDbScreen,
+      '#client-profile': renderClientProfileScreen,
+      '#inventory':      renderInventoryScreen,
+      '#schedule':       renderScheduleScreen,
+      '#work-hierarchy': renderWorkHierarchyScreen,
+      '#workshop':       renderWorkshopScreen,
+      '#shortcomings':   renderShortcomingsScreen,
+      '#status-quo':     renderStatusQuoScreen,
     };
 
     // 3. Initialize router

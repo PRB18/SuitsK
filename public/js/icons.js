@@ -465,7 +465,7 @@ Object.assign(ICONS, {
  * @returns {string|null} - SVG markup with currentColor for theme integration
  */
 
-const genericPlaceholder = (w, h, path) => `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><g stroke="currentColor" stroke-width="1.5" fill="none">${path}</g></svg>`;
+const genericPlaceholder = (w, h, path) => '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '"><g stroke="currentColor" stroke-width="1.5" fill="none">' + path + '</g></svg>';
 
 const COLLAR_PLACEHOLDER = genericPlaceholder(40, 20, '<path d="M5 20 L20 5 L35 20"/>');
 const CUFF_PLACEHOLDER = genericPlaceholder(40, 20, '<rect x="5" y="5" width="30" height="10" rx="2"/><circle cx="20" cy="10" r="1" fill="currentColor" stroke="none"/>');

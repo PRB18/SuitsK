@@ -133,6 +133,36 @@ router.delete('/hierarchy/:id', async (req, res) => {
 // WORKSHOP KANBAN — /api/workshop/*
 // ────────────────────────────────────────────────────────────────────────────
 
+// GET /api/workshop/summary
+router.get('/workshop/summary', async (req, res) => {
+  try {
+    const db = getDb();
+    
+    // total active = count where status != 'delivered'
+    const totalRes = await db.execute(`SELECT COUNT(*) as count FROM projects WHERE status != 'delivered'`);
+    const total_active = totalRes.rows[0].count;
+    
+    // overdue = count where delivery_date < today AND status != 'delivered'
+    const overdueRes = await db.execute(`
+      SELECT COUNT(*) as count FROM projects p
+      JOIN orders o ON o.id = p.order_id
+      WHERE p.status != 'delivered' 
+      AND o.delivery_date < date('now')
+      AND o.delivery_date IS NOT NULL
+    `);
+    const overdue = overdueRes.rows[0].count;
+    
+    // ready = count where status = 'ready'
+    const readyRes = await db.execute(`SELECT COUNT(*) as count FROM projects WHERE status = 'ready'`);
+    const ready = readyRes.rows[0].count;
+
+    res.json({ total_active, overdue, ready });
+  } catch (err) {
+    console.error('[workshop] summary error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/workshop — all active projects with client + order info
 router.get('/workshop', async (req, res) => {
   try {

@@ -9,6 +9,7 @@
 
 async function request(url, options = {}) {
   const response = await fetch(url, {
+    credentials: 'same-origin', // Ensure session cookies are sent
     ...options,
     headers: {
       'Content-Type': 'application/json',

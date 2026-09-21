@@ -67,10 +67,11 @@ try {
     // button while the request is still in flight.
     await Promise.race([
       page.locator('.dashboard-wrapper').waitFor({ state: 'attached', timeout: 30000 }),
+      page.locator('.ctb-shell').waitFor({ state: 'attached', timeout: 30000 }),
       page.locator('#lock-submit-btn:not([disabled])').waitFor({ state: 'attached', timeout: 30000 }),
     ]).catch(() => { });
     await page.waitForTimeout(100);
-    if (await page.locator('.dashboard-wrapper').count()) {
+    if (await page.locator('.dashboard-wrapper').count() || await page.locator('.ctb-shell').count()) {
       unlocked = true;
       pass(`unlock-with-password (${pw})`);
       break;
@@ -87,7 +88,7 @@ try {
       if (res.ok() && body.ok) {
         await page.goto(BASE + '/#dashboard', { waitUntil: 'networkidle' });
         await page.waitForTimeout(500);
-        if (await page.locator('.dashboard-wrapper').count()) {
+        if (await page.locator('.dashboard-wrapper').count() || await page.locator('.ctb-shell').count()) {
           unlocked = true;
           pass(`unlock-api-fallback (${pw})`);
           break;
@@ -96,6 +97,12 @@ try {
     }
   }
   if (!unlocked) fail('unlock', 'could not unlock with known passwords');
+
+  // Unlock now lands on the Congressional hub; dashboard checks start there.
+  if (unlocked) {
+    await page.goto(BASE + '/#dashboard', { waitUntil: 'networkidle' });
+    await page.locator('.dashboard-wrapper').waitFor({ state: 'attached', timeout: 30000 });
+  }
 
   await overflowOk('dashboard');
 

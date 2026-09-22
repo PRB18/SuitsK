@@ -3703,3 +3703,237 @@ textarea:focus-visible, summary:focus-visible {
 .sq-table th, .sq-table td { padding: 12px 16px; border-bottom: 1px solid var(--color-border-subtle); }
 .sq-table th { font-weight: 600; color: var(--color-text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; background: #faf9f7; }
 #sq-logistics-filter { padding: 12px 16px; border-bottom: 1px solid var(--color-border-subtle); }
+
+/* ==========================================================================
+   MISSING GLOBAL UTILITIES — btn-icon, link, btn-link, badge system
+   ========================================================================== */
+
+/* Icon-only button — used by back-btn, close-btn, schedule nav, etc. */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  flex-shrink: 0;
+}
+.btn-icon:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-focus);
+}
+.btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-icon:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+/* Danger variant for delete icon buttons */
+.btn-icon--danger { color: var(--color-danger); border-color: transparent; }
+.btn-icon--danger:hover:not(:disabled) { background: var(--color-danger-light); color: var(--color-danger); border-color: var(--color-danger); }
+
+
+/* Inline text-only button (no border / background) */
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-accent);
+  font-family: var(--font-ui);
+  font-size: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+.btn-link:hover { color: var(--color-accent-hover); text-decoration: underline; }
+
+/* Anchor-style link (used in error messages, etc.) */
+.link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+.link:hover { color: var(--color-accent-hover); text-decoration: underline; }
+
+/* Status pill badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.badge--neutral { background: var(--color-surface-muted);    color: var(--color-text-secondary); }
+.badge--warning { background: #fff3cd;                       color: #856404; }
+.badge--info    { background: #cfe2ff;                       color: #084298; }
+.badge--success { background: #d1e7dd;                       color: #0a3622; }
+.badge--danger  { background: var(--color-danger-light);     color: var(--color-danger); }
+
+/* ==========================================================================
+   MODAL SYSTEM — .modal-overlay / .modal-panel / header / body / footer
+   ========================================================================== */
+
+/* Full-screen backdrop — always covers the entire viewport */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: ks-fade-in 0.18s ease;
+  overflow-y: auto;
+}
+
+/* Centred modal card */
+.modal-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-popover);
+  width: 100%;
+  max-width: 580px;
+  max-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
+  animation: ks-slide-up 0.22s ease;
+  overflow: hidden;
+}
+
+/* Modal header bar */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+/* Modal scrollable body */
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Modal footer with action buttons */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-muted);
+  flex-shrink: 0;
+}
+
+/* Close ✕ button inside modal header */
+.modal-close {
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  border-color: transparent;
+}
+
+/* Narrow modal for confirmations / short forms */
+.modal-panel--sm { max-width: 420px; }
+/* Wide modal for data-rich forms */
+.modal-panel--lg { max-width: 720px; }
+
+
+/* ==========================================================================
+   FORM LAYOUT — .form-grid / .form-field / .input / .required / .field-error
+   ========================================================================== */
+
+.form-grid   { display: grid; gap: 18px; }
+.form-grid-2 { grid-template-columns: 1fr 1fr; }
+
+/* Full-width field spanning all grid columns */
+.form-field       { display: flex; flex-direction: column; gap: 6px; }
+.form-field--full { grid-column: 1 / -1; }
+
+.form-field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+/* Red asterisk for required fields */
+.required { color: var(--color-danger); margin-left: 2px; }
+
+/* Base styled input / textarea */
+.input {
+  width: 100%;
+  padding: 9px 13px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 0.9375rem;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+  box-sizing: border-box;
+}
+.input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(139, 111, 71, 0.12);
+}
+.input::placeholder { color: var(--color-text-muted); }
+.input:disabled     { opacity: 0.55; cursor: not-allowed; background: var(--color-surface-muted); }
+
+/* Textarea extends .input */
+.textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+
+/* Inline validation / error message below an input */
+.field-error {
+  font-size: 0.82rem;
+  color: var(--color-danger);
+  padding: 5px 9px;
+  background: var(--color-danger-light);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(176, 0, 0, 0.15);
+  line-height: 1.4;
+}
+
+/* ── Responsive tweaks for small viewports ─────────────────────────────── */
+@media (max-width: 600px) {
+  .modal-panel  { max-width: 100%; border-radius: var(--radius-md); }
+  .modal-header { padding: 16px 18px; }
+  .modal-body   { padding: 18px; }
+  .modal-footer { padding: 12px 18px; }
+  .form-grid-2  { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   TEXT UTILITY CLASSES
+   ========================================================================== */
+.text-muted     { color: var(--color-text-muted) !important; }
+.text-secondary { color: var(--color-text-secondary) !important; }
+.text-primary   { color: var(--color-text-primary) !important; }
+.text-accent    { color: var(--color-accent) !important; }
+.text-success   { color: var(--color-success) !important; }
+.text-warning   { color: #856404 !important; }

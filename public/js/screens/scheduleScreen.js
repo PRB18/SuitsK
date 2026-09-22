@@ -46,9 +46,9 @@ export async function renderScheduleScreen(container) {
         <!-- Month grid -->
         <div class="sched-main">
           <div class="sched-month-nav">
-            <button class="btn-icon" id="sched-prev">‹</button>
+            <button class="btn-icon" id="sched-prev" aria-label="Previous month">&#8592;</button>
             <h2 class="sched-month-title" id="sched-month-title">—</h2>
-            <button class="btn-icon" id="sched-next">›</button>
+            <button class="btn-icon" id="sched-next" aria-label="Next month">&#8594;</button>
             <button class="btn btn-ghost btn-sm" id="sched-today">Today</button>
           </div>
           <div class="cal-grid" id="cal-grid"></div>

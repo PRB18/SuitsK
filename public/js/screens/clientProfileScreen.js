@@ -36,7 +36,15 @@ const STAGE_BADGE_CLS = {
 export async function renderClientProfileScreen(container) {
   const clientId = state.currentClientId;
   if (!clientId) {
-    container.innerHTML = `<div class="screen-wrapper"><p class="text-muted" style="padding:32px;">No client selected. <a class="link" href="#client-db">Go to Client Database</a></p></div>`;
+    container.innerHTML = `
+      <div class="screen-wrapper" style="display:flex; align-items:center; justify-content:center; min-height:60vh;">
+        <div class="empty-state" style="border:none; background:transparent;">
+          <div class="empty-icon">👤</div>
+          <h3>No Client Selected</h3>
+          <p>Please select a client from the Client Database to view their profile.</p>
+          <a class="btn btn-primary" href="#client-db">Go to Client Database</a>
+        </div>
+      </div>`;
     return;
   }
 

@@ -170,7 +170,7 @@ export function renderCongressionalScreen(container) {
           <em>Congressional</em><br>
           <span class="ctb-hero-title-plain">The Bespoke</span>
         </h1>
-        <p class="ctb-hero-sub">Seven pillars of the craft. Select a module below.</p>
+        <p class="ctb-hero-sub">Ten pillars of the craft. Select a module below.</p>
         <div class="ctb-hero-rule">
           <span class="ctb-hero-rule-line"></span>
           <span class="ctb-hero-rule-gem">◆</span>

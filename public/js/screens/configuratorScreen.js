@@ -624,7 +624,7 @@ function renderMeasurementsPanel(container) {
       state.saveDraft();
     });
   });
-}
+
   // Print Button
   const printBtn = container.querySelector('#meas-print-btn');
   if (printBtn) {
@@ -635,8 +635,8 @@ function renderMeasurementsPanel(container) {
       printMeasurementCard(fakeClient, fakeProject);
     });
   }
-
-function renderMeasurementRows(m) {
+}
+  function renderMeasurementRows(m) {
   const suitFields = ['FRONT LENGTH','SLEEVE','CHEST','BELOW CHEST','HIPS','SHOULDER','BACK LENGTH','COLLAR','CROSS F','CROSS B','BICEPS','STOMACH','WRIST','H BACK','SHOULDER TO ELBOW','ELBOW TO WRIST','COLLAR TO STOMACH'];
   const pantFields = ['FRONT LENGTH','LENGTH','WAIST','WAIST TO KNEE','THIGHS','KNEE','BOTTOM','CROTCH','INSEAM L','FLY','FRONT','BACK'];
   const shirtFields = ['FRONT LENGTH','SLEEVE','STOMACH','BACK LENGTH','CHEST','BICEPS','HIPS','COLLAR','ELBOW L','WRIST','BACK LENGTH','COLLAR TO STOMACH','SHOULDER TO ELBOW','ELBOW TO WRIST','HALF SHOULDER'];

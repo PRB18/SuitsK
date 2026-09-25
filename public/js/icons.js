@@ -477,6 +477,27 @@ function measurementGarmentIcon(kind) {
   </svg>`;
 }
 
+export function getMeasurementIcon(category, measurement) {
+  const key = String(measurement || '').toLowerCase();
+  const isPant = category === 'pant';
+  const isWaistcoat = category === 'waistcoat';
+  const isSleeve = key.includes('sleeve') || key.includes('elbow') || key.includes('wrist');
+  const isHorizontal = key.includes('chest') || key.includes('stomach') || key.includes('hips') || key.includes('waist') || key.includes('thighs') || key.includes('knee') || key.includes('bottom') || key.includes('biceps') || key.includes('collar');
+  const line = isSleeve
+    ? '<path d="M31 18 L39 29" class="measurement-mark"/><path d="M38 27 L40 31" class="measurement-mark"/>'
+    : isHorizontal
+      ? '<path d="M13 24 H35" class="measurement-mark"/><path d="M13 21 V27 M35 21 V27" class="measurement-mark"/>'
+      : '<path d="M24 11 V37" class="measurement-mark"/><path d="M21 12 H27 M21 36 H27" class="measurement-mark"/>';
+  const body = isPant
+    ? '<path d="M16 8 H32 L31 18 L28 39 H23 L21 24 L19 39 H14 L17 18Z"/>'
+    : isWaistcoat
+      ? '<path d="M24 8 L16 13 L12 39 H36 L32 13 L24 8Z"/><path d="M16 13 L24 22 L32 13"/>'
+      : '<path d="M24 8 L16 13 L10 18 V39 H38 V18 L32 13 L24 8Z"/><path d="M16 13 L24 21 L32 13"/>';
+  return `<svg class="measurement-metric-icon" width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">${body}${line}</g>
+  </svg>`;
+}
+
 const MISSING_MAP = {
   // Collars
   'Forward Point': COLLAR_PLACEHOLDER, 'Spread': COLLAR_PLACEHOLDER, 'Wide Spread': COLLAR_PLACEHOLDER,

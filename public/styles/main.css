@@ -802,6 +802,30 @@ body {
   white-space: nowrap;
 }
 
+.measurement-label-cell {
+  min-width: 116px;
+  vertical-align: middle;
+}
+
+.measurement-label-icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  margin-right: 4px;
+  vertical-align: middle;
+  color: var(--color-accent);
+}
+
+.measurement-metric-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.measurement-metric-icon .measurement-mark {
+  stroke: var(--color-accent);
+  stroke-width: 1.7;
+}
+
 /* Save Panel */
 .save-panel-content {
   max-width: 640px;

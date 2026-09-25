@@ -17,7 +17,7 @@ import { state } from '../state.js';
 import { router } from '../router.js';
 import { TAILORING_SCHEMA, TOOLTIP_DESCRIPTIONS } from '../schema.js';
 import { showToast } from '../toast.js';
-import { getIcon, getMeasurementIcon } from '../icons.js';
+import { getIcon } from '../icons.js';
 
 // ── Styled Tooltip DOM ────────────────────────────────────────────────────────
 // Single floating tooltip element reused across all option cards.
@@ -567,10 +567,10 @@ function renderMeasurementsPanel(container) {
         <table class="inventory-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:center;">
           <thead>
             <tr style="background:var(--color-surface-muted);">
-              <th colspan="3" class="measurement-group-heading" style="border:1px solid var(--color-border); padding:4px;">${getIcon('measurement-suit')}<span>SUIT / JODHPURI</span></th>
-              <th colspan="3" class="measurement-group-heading" style="border:1px solid var(--color-border); padding:4px;">${getIcon('measurement-trouser')}<span>PANT</span></th>
-              <th colspan="3" class="measurement-group-heading" style="border:1px solid var(--color-border); padding:4px;">${getIcon('measurement-shirt')}<span>SHIRT / KURTA</span></th>
-              <th colspan="1" class="measurement-group-heading" style="border:1px solid var(--color-border); padding:4px;">${getIcon('measurement-waistcoat')}<span>WAISTCOAT</span></th>
+              <th colspan="3" style="border:1px solid var(--color-border); padding:4px;">SUIT / JODHPURI</th>
+              <th colspan="3" style="border:1px solid var(--color-border); padding:4px;">PANT</th>
+              <th colspan="3" style="border:1px solid var(--color-border); padding:4px;">SHIRT / KURTA</th>
+              <th colspan="1" style="border:1px solid var(--color-border); padding:4px;">WAISTCOAT</th>
             </tr>
             <tr>
               <th style="border:1px solid var(--color-border); padding:4px;">Measurement</th>
@@ -653,7 +653,7 @@ function renderMeasurementsPanel(container) {
       const f = suitFields[i];
       const kL = 'suit_'+f.replace(/ /g, '_')+'_L';
       const kR = 'suit_'+f.replace(/ /g, '_')+'_R';
-      rows += `<td class="measurement-label-cell" style="border:1px solid var(--color-border); padding:2px; text-align:left;"><span class="measurement-label-icon">${getMeasurementIcon('suit', f)}</span><span>${f}</span></td>`;
+      rows += `<td style="border:1px solid var(--color-border); padding:2px; text-align:left;">${f}</td>`;
       rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kL}" value="${m.values[kL]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
       rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kR}" value="${m.values[kR]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
     } else {
@@ -665,7 +665,7 @@ function renderMeasurementsPanel(container) {
       const f = pantFields[i];
       const kL = 'pant_'+f.replace(/ /g, '_')+'_L';
       const kR = 'pant_'+f.replace(/ /g, '_')+'_R';
-      rows += `<td class="measurement-label-cell" style="border:1px solid var(--color-border); padding:2px; text-align:left;"><span class="measurement-label-icon">${getMeasurementIcon('pant', f)}</span><span>${f}</span></td>`;
+      rows += `<td style="border:1px solid var(--color-border); padding:2px; text-align:left;">${f}</td>`;
       rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kL}" value="${m.values[kL]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
       rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kR}" value="${m.values[kR]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
     } else {
@@ -677,7 +677,7 @@ function renderMeasurementsPanel(container) {
       const f = shirtFields[i];
       const kL = 'shirt_'+f.replace(/ /g, '_')+'_L';
       const kR = 'shirt_'+f.replace(/ /g, '_')+'_R';
-      rows += `<td class="measurement-label-cell" style="border:1px solid var(--color-border); padding:2px; text-align:left;"><span class="measurement-label-icon">${getMeasurementIcon('shirt', f)}</span><span>${f}</span></td>`;
+      rows += `<td style="border:1px solid var(--color-border); padding:2px; text-align:left;">${f}</td>`;
       rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kL}" value="${m.values[kL]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
       rows += `<td style="border:1px solid var(--color-border); padding:0;"><input type="text" class="meas-input" data-key="${kR}" value="${m.values[kR]||''}" style="width:100%; border:none; background:transparent; text-align:center;"></td>`;
     } else {
@@ -688,8 +688,8 @@ function renderMeasurementsPanel(container) {
     if (i < wcFields.length) {
       const f = wcFields[i];
       const k = 'wc_'+f.replace(/ /g, '_');
-      rows += `<td class="measurement-label-cell" style="border:1px solid var(--color-border); padding:2px; text-align:left;">
-        <span class="measurement-label-icon">${getMeasurementIcon('waistcoat', f)}</span><span>${f}</span>
+      rows += `<td style="border:1px solid var(--color-border); padding:2px; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+        ${f}
         <input type="text" class="meas-input" data-key="${k}" value="${m.values[k]||''}" style="width:40px; border:none; border-bottom:1px solid var(--color-border); background:transparent; text-align:center;">
       </td>`;
     } else {

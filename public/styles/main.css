@@ -782,6 +782,26 @@ body {
   color: #FFFFFF;
 }
 
+.measurement-group-heading {
+  vertical-align: middle;
+  color: var(--color-text);
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+}
+
+.measurement-group-heading .measurement-garment-icon {
+  display: block;
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 2px;
+  color: var(--color-accent);
+}
+
+.measurement-group-heading span {
+  display: block;
+  white-space: nowrap;
+}
+
 /* Save Panel */
 .save-panel-content {
   max-width: 640px;

@@ -567,10 +567,10 @@ function renderMeasurementsPanel(container) {
         <table class="inventory-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:center;">
           <thead>
             <tr style="background:var(--color-surface-muted);">
-              <th colspan="3" style="border:1px solid var(--color-border); padding:4px;">SUIT / JODHPURI</th>
-              <th colspan="3" style="border:1px solid var(--color-border); padding:4px;">PANT</th>
-              <th colspan="3" style="border:1px solid var(--color-border); padding:4px;">SHIRT / KURTA</th>
-              <th colspan="1" style="border:1px solid var(--color-border); padding:4px;">WAISTCOAT</th>
+              <th colspan="3" class="measurement-group-heading" style="border:1px solid var(--color-border); padding:4px;">${getIcon('measurement-suit')}<span>SUIT / JODHPURI</span></th>
+              <th colspan="3" class="measurement-group-heading" style="border:1px solid var(--color-border); padding:4px;">${getIcon('measurement-trouser')}<span>PANT</span></th>
+              <th colspan="3" class="measurement-group-heading" style="border:1px solid var(--color-border); padding:4px;">${getIcon('measurement-shirt')}<span>SHIRT / KURTA</span></th>
+              <th colspan="1" class="measurement-group-heading" style="border:1px solid var(--color-border); padding:4px;">${getIcon('measurement-waistcoat')}<span>WAISTCOAT</span></th>
             </tr>
             <tr>
               <th style="border:1px solid var(--color-border); padding:4px;">Measurement</th>

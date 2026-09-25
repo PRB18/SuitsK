@@ -447,6 +447,36 @@ const BELT_PLACEHOLDER = genericPlaceholder(30, 20, '<rect x="10" y="2" width="1
 const WAIST_PLACEHOLDER = genericPlaceholder(40, 20, '<path d="M0 10 L40 10" stroke-dasharray="2 2"/>');
 const BPOCKET_PLACEHOLDER = genericPlaceholder(30, 20, '<path d="M5 5 L25 5 L15 15 Z"/>');
 
+function measurementGarmentIcon(kind) {
+  const drawings = {
+    suit: `
+      <path d="M24 8 L12 16 L7 39 H41 L36 16 L24 8Z"/>
+      <path d="M24 8 L18 15 L24 24 L30 15 L24 8Z"/>
+      <path d="M18 15 L14 23 L20 27 M30 15 L34 23 L28 27"/>
+      <path d="M24 24 V39 M20 30 H22 M26 30 H28"/>
+    `,
+    trouser: `
+      <path d="M11 8 H37 L34 18 L30 39 H23 L21 23 L19 39 H12 L15 18Z"/>
+      <path d="M11 8 H37 M24 9 V17 M21 23 L28 20"/>
+      <path d="M15 18 L10 39 M34 18 L39 39" stroke-dasharray="2 2"/>
+    `,
+    shirt: `
+      <path d="M24 8 L17 12 L10 16 V39 H38 V16 L31 12 L24 8Z"/>
+      <path d="M17 12 L24 20 L31 12 M24 20 V39 M20 25 H28"/>
+      <path d="M10 16 L6 22 M38 16 L42 22"/>
+    `,
+    waistcoat: `
+      <path d="M24 8 L16 13 L12 39 H36 L32 13 L24 8Z"/>
+      <path d="M16 13 L24 22 L32 13 M24 22 V39"/>
+      <circle cx="21" cy="27" r="1"/><circle cx="21" cy="32" r="1"/>
+      <circle cx="27" cy="27" r="1"/><circle cx="27" cy="32" r="1"/>
+    `,
+  };
+  return `<svg class="measurement-garment-icon" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">${drawings[kind] || drawings.suit}</g>
+  </svg>`;
+}
+
 const MISSING_MAP = {
   // Collars
   'Forward Point': COLLAR_PLACEHOLDER, 'Spread': COLLAR_PLACEHOLDER, 'Wide Spread': COLLAR_PLACEHOLDER,
@@ -472,6 +502,13 @@ const MISSING_MAP = {
   'Ticket': genericPlaceholder(30,20,'<rect x="4" y="4" width="16" height="10"/>'),
   'Jetted': genericPlaceholder(30,20,'<path d="M4 10 L26 10 M4 12 L26 12"/>'),
 };
+
+Object.assign(ICONS, {
+  'measurement-suit': measurementGarmentIcon('suit'),
+  'measurement-trouser': measurementGarmentIcon('trouser'),
+  'measurement-shirt': measurementGarmentIcon('shirt'),
+  'measurement-waistcoat': measurementGarmentIcon('waistcoat'),
+});
 
 export function getIcon(optionValue) {
   return ICONS[optionValue] || MISSING_MAP[optionValue] || null;

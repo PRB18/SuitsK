@@ -1,14 +1,13 @@
 ﻿/**
  * configuratorScreen.js — Bespoke suit configurator wizard (Stage 4)
- * 
+ *
  * Fully wired to canonical TAILORING_SCHEMA across all 7 steps:
-import { printMeasurementCard } from '../print.js';
  * 1. Jacket (14 fields: lapels, buttons, vents, pockets, body shapes, colors, fabric)
  * 2. Shirt (5 fields: collar, cuff, pocket count, pocket shape, placket)
  * 3. Trouser (6 fields: pleats, back pockets, belt loops, waistband, gurkha, coin pocket)
  * 4. Waistcoat (3 fields: style [Option B], piping, lining)
  * 5. Embroidery (4 fields: shirt, pant, jacket locations, thread color)
- * 6. Measurements (unit toggle, 12 standard tailoring metrics, custom dynamic fields)
+ * 6. Measurements (unit toggle, paper-form grid — linked to client profile when set)
  * 7. Save Suit (naming, notes, visual summary breakdown, vault commit)
  */
 
@@ -18,6 +17,7 @@ import { router } from '../router.js';
 import { TAILORING_SCHEMA, TOOLTIP_DESCRIPTIONS } from '../schema.js';
 import { showToast } from '../toast.js';
 import { getIconForOption } from '../icons.js';
+import { printMeasurementCard } from '../print.js';
 
 // ── Styled Tooltip DOM ────────────────────────────────────────────────────────
 // Single floating tooltip element reused across all option cards.
@@ -105,12 +105,23 @@ const PRESET_PALETTE = [
   '#E2DDD6'  // Cream Lining
 ];
 
-export function renderConfiguratorScreen(container) {
+export async function renderConfiguratorScreen(container) {
   if (!state.currentSuit) {
     state.startNewSuit();
   }
 
+  // Link measurements + style sheet to a client profile whenever one is in context.
+  await ensureClientLinkage();
+
+  // Avoid stacking listeners / DOM when re-entering after linking a client.
+  if (container._wizardKeydown) {
+    document.removeEventListener('keydown', container._wizardKeydown);
+    container._wizardKeydown = null;
+  }
+  container.innerHTML = '';
+
   const isEditing = Boolean(state.currentSuit.id);
+  const linked = state.linkedClientInfo;
 
   const wrapper = document.createElement('div');
   wrapper.className = 'configurator-wrapper';
@@ -142,6 +153,29 @@ export function renderConfiguratorScreen(container) {
         </div>
       </div>
     </header>
+
+    ${linked ? `
+      <div class="client-link-banner" id="client-link-banner" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.65rem 1.25rem;background:var(--color-surface);border-bottom:1px solid var(--color-border);">
+        <div style="display:flex;align-items:center;gap:0.75rem;min-width:0;">
+          <span style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--color-text-secondary);white-space:nowrap;">Linked Client</span>
+          <strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(linked.name)}</strong>
+          <span class="badge badge--neutral">${escapeHtml(linked.client_ref || '')}</span>
+          <span class="text-muted" style="font-size:0.8rem;">Measurements & style stay on this profile</span>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-shrink:0;">
+          <button type="button" class="btn btn-ghost btn-sm" id="wizard-open-client">Open Profile</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="wizard-change-client">Change</button>
+        </div>
+      </div>
+    ` : `
+      <div class="client-link-banner client-link-banner--warn" id="client-link-banner" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.65rem 1.25rem;background:#FFF8E8;border-bottom:1px solid var(--color-border);">
+        <div style="min-width:0;">
+          <strong>No client linked</strong>
+          <span class="text-muted" style="margin-left:0.5rem;font-size:0.85rem;">Pick a client so measurements and style interconnect with Workshop & Profile.</span>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="wizard-pick-client">Link Client</button>
+      </div>
+    `}
 
     <!-- Stepper Navigation Bar -->
     <nav class="wizard-stepper-nav">
@@ -204,6 +238,21 @@ export function renderConfiguratorScreen(container) {
 
   container.appendChild(wrapper);
 
+  // Client link controls
+  wrapper.querySelector('#wizard-open-client')?.addEventListener('click', () => {
+    if (state.currentClientId) router.navigateTo('#client-profile', { id: state.currentClientId });
+  });
+  const pickClient = () => openClientPickerModal(async (client) => {
+    state.setCurrentClientId(client.id);
+    state.setLinkedClientInfo({ id: client.id, name: client.name, client_ref: client.client_ref });
+    if (state.currentSuit) state.currentSuit.clientId = client.id;
+    await hydrateMeasurementsFromClient(client.id);
+    // Re-render so banner + measurement values refresh
+    await renderConfiguratorScreen(container);
+  });
+  wrapper.querySelector('#wizard-pick-client')?.addEventListener('click', pickClient);
+  wrapper.querySelector('#wizard-change-client')?.addEventListener('click', pickClient);
+
   // Hook up event listeners
   const panelContainer = wrapper.querySelector('#wizard-panel-container');
   const stepButtons = wrapper.querySelectorAll('.step-nav-item');
@@ -215,8 +264,12 @@ export function renderConfiguratorScreen(container) {
 
   backVaultBtn.addEventListener('click', () => {
     hideTooltip();
-    // Draft stays in memory until save or lock — no blocking confirm (cancel felt like a dead button).
-    router.navigate('#dashboard');
+    // Prefer returning to the linked client profile when one is in context.
+    if (state.currentClientId) {
+      router.navigateTo('#client-profile', { id: state.currentClientId });
+    } else {
+      router.navigate('#dashboard');
+    }
   });
 
   // Keyboard shortcuts — Rule 2: efficient shortcuts for power users
@@ -230,7 +283,11 @@ export function renderConfiguratorScreen(container) {
     if (e.key === 'Escape') {
       if (inInput) { e.target.blur(); return; }
       hideTooltip();
-      router.navigate('#dashboard');
+      if (state.currentClientId) {
+        router.navigateTo('#client-profile', { id: state.currentClientId });
+      } else {
+        router.navigate('#dashboard');
+      }
       return;
     }
 
@@ -261,6 +318,7 @@ export function renderConfiguratorScreen(container) {
     }
   };
   document.addEventListener('keydown', onWizardKeydown);
+  container._wizardKeydown = onWizardKeydown;
 
   quickSaveBtn.addEventListener('click', () => {
     goToStep(6);
@@ -521,7 +579,7 @@ function renderMeasurementsPanel(container) {
     <div class="step-form-wrapper" style="max-width: 1000px;">
       
       <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 2rem;">
-        <!-- Header Info (Visual replica, read-only here as it belongs to project/client) -->
+        <!-- Header Info -->
         <div style="flex:1;">
           <div style="display:flex; gap: 1rem; margin-bottom: 1rem; font-weight:bold;">
             <div>Meters: <input type="text" class="form-input" style="display:inline; width:60px; padding:2px;" data-field="meters" value="${m.values.meters || ''}"></div>
@@ -529,7 +587,9 @@ function renderMeasurementsPanel(container) {
             <div>Shirt: <input type="text" class="form-input" style="display:inline; width:60px; padding:2px;" data-field="shirt_meters" value="${m.values.shirt_meters || ''}"></div>
             <div>Pant: <input type="text" class="form-input" style="display:inline; width:60px; padding:2px;" data-field="pant_meters" value="${m.values.pant_meters || ''}"></div>
           </div>
-          <p class="text-sm text-muted">Client & Order details are auto-filled from the Client Profile when printing.</p>
+          <p class="text-sm text-muted">${state.linkedClientInfo
+            ? `Linked to <strong>${escapeHtml(state.linkedClientInfo.name)}</strong> (${escapeHtml(state.linkedClientInfo.client_ref || '')}). Saving updates this client's measurement profile.`
+            : 'Link a client (banner above) so these measurements stay on their profile and feed Workshop garments.'}</p>
         </div>
 
         <!-- Style QTY -->
@@ -629,10 +689,16 @@ function renderMeasurementsPanel(container) {
   const printBtn = container.querySelector('#meas-print-btn');
   if (printBtn) {
     printBtn.addEventListener('click', async () => {
-      // Fake client and project object to pass to print function
-      const fakeClient = { name: 'New Client / Draft', client_ref: state.currentSuit.name || 'Draft Suit', phone: '' };
-      const fakeProject = { garment_type: 'Bespoke Suit', measurements: m, suitConfig: state.currentSuit.data };
-      printMeasurementCard(fakeClient, fakeProject);
+      const linked = state.linkedClientInfo;
+      const client = linked
+        ? { name: linked.name, client_ref: linked.client_ref, phone: linked.phone || '' }
+        : { name: 'Unlinked Draft', client_ref: state.currentSuit.name || 'Draft Suit', phone: '' };
+      const project = {
+        garment_type: 'Bespoke Suit',
+        measurements: m.values || {},
+        suitConfig: state.currentSuit.data,
+      };
+      printMeasurementCard(client, project);
     });
   }
 }
@@ -878,25 +944,57 @@ async function handleFinalSave() {
   }
 
   try {
+    const clientId = state.currentClientId || state.currentSuit.clientId || '';
+    let saved;
     if (suit.id) {
-      await api.updateSuit(suit.id, {
+      saved = await api.updateSuit(suit.id, {
         name,
         notes: suit.notes || '',
-        data: suit.data
+        data: suit.data,
+        client_id: clientId,
       });
     } else {
-      await api.createSuit({
+      saved = await api.createSuit({
         name,
         notes: suit.notes || '',
-        data: suit.data
+        data: suit.data,
+        client_id: clientId,
       });
+    }
+
+    // Keep active garment project connected to this style sheet + measurements.
+    if (state.currentProjectId && saved?.id) {
+      try {
+        await api.updateProject(state.currentProjectId, {
+          suit_config_id: saved.id,
+          measurements: suit.data?.measurements?.values || {},
+        });
+      } catch (linkErr) {
+        console.warn('[configurator] project link failed:', linkErr);
+      }
+    }
+
+    // Explicitly push measurements to client profile when linked (suits API also syncs).
+    if (clientId && suit.data?.measurements) {
+      try {
+        await api.updateClientMeasurements(clientId, {
+          unit: suit.data.measurements.unit || 'in',
+          values: suit.data.measurements.values || {},
+        });
+      } catch (measErr) {
+        console.warn('[configurator] client measurement sync failed:', measErr);
+      }
     }
 
     const suits = await api.getSuits();
     state.setSuits(suits);
-    showToast('Suit saved to encrypted vault.', 'success');
+    showToast(clientId ? 'Saved — linked to client profile.' : 'Suit saved to encrypted vault.', 'success');
     state.currentSuit = null;
-    router.navigate('#dashboard');
+    if (clientId) {
+      router.navigateTo('#client-profile', { id: clientId });
+    } else {
+      router.navigate('#dashboard');
+    }
   } catch (err) {
     const msg = 'Failed to save suit to encrypted vault: ' + err.message;
     if (errorEl) {
@@ -911,6 +1009,141 @@ async function handleFinalSave() {
       confirmBtn.innerHTML = prevLabel;
     }
   }
+}
+
+/** Load client profile + measurement values into the current draft when linked. */
+async function ensureClientLinkage() {
+  const clientId = state.currentClientId || state.currentSuit?.clientId || '';
+  if (!clientId) {
+    state.setLinkedClientInfo(null);
+    return;
+  }
+  try {
+    const client = await api.getClient(clientId);
+    state.setCurrentClientId(client.id);
+    state.setLinkedClientInfo({
+      id: client.id,
+      name: client.name,
+      client_ref: client.client_ref,
+      phone: client.phone || '',
+    });
+    if (state.currentSuit) state.currentSuit.clientId = client.id;
+
+    // Prefer client measurement profile when the draft measurements are empty.
+    const draftVals = state.currentSuit?.data?.measurements?.values || {};
+    const hasDraftVals = Object.keys(draftVals).some(k => draftVals[k] !== '' && draftVals[k] != null);
+    if (!hasDraftVals && client.measurement) {
+      applyClientMeasurementToDraft(client.measurement);
+    } else if (!state.currentSuit?.name && client.name) {
+      // Helpful default name when starting from a client profile.
+      if (!state.currentSuit.id) {
+        state.currentSuit.name = `${client.name} — Style Sheet`;
+      }
+    }
+  } catch (err) {
+    console.warn('[configurator] ensureClientLinkage failed:', err);
+    state.setLinkedClientInfo(null);
+  }
+}
+
+async function hydrateMeasurementsFromClient(clientId) {
+  try {
+    const meas = await api.getClientMeasurements(clientId);
+    applyClientMeasurementToDraft(meas);
+  } catch (_) {
+    /* no profile yet — leave draft as-is */
+  }
+}
+
+function applyClientMeasurementToDraft(measurement) {
+  if (!state.currentSuit?.data?.measurements || !measurement) return;
+  const values = measurement.values
+    || (typeof measurement.values_json === 'string'
+      ? (() => { try { return JSON.parse(measurement.values_json || '{}'); } catch { return {}; } })()
+      : (measurement.values_json || {}));
+  state.currentSuit.data.measurements.unit = measurement.unit || state.currentSuit.data.measurements.unit || 'in';
+  state.currentSuit.data.measurements.values = { ...(values || {}) };
+}
+
+function openClientPickerModal(onPick) {
+  const existing = document.getElementById('wizard-client-picker');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'wizard-client-picker';
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'flex';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.innerHTML = `
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2 class="modal-title">Link a Client</h2>
+        <button class="btn-icon modal-close" id="wcp-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="search" id="wcp-search" class="input" placeholder="Search clients…" style="margin-bottom:0.75rem;">
+        <div id="wcp-list" class="table-loading">Loading clients…</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="wcp-cancel">Cancel</button>
+        <button class="btn btn-primary" id="wcp-new">New Client</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  overlay.querySelector('#wcp-close').addEventListener('click', close);
+  overlay.querySelector('#wcp-cancel').addEventListener('click', close);
+  overlay.querySelector('#wcp-new').addEventListener('click', () => {
+    close();
+    router.navigate('#client-db');
+  });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  let clients = [];
+  const listEl = overlay.querySelector('#wcp-list');
+  const renderList = (q = '') => {
+    const filtered = clients.filter(c => {
+      if (!q) return true;
+      const s = q.toLowerCase();
+      return (c.name || '').toLowerCase().includes(s)
+        || (c.client_ref || '').toLowerCase().includes(s)
+        || (c.phone || '').toLowerCase().includes(s);
+    });
+    if (filtered.length === 0) {
+      listEl.innerHTML = '<p class="text-muted">No clients found.</p>';
+      return;
+    }
+    listEl.innerHTML = filtered.map(c => `
+      <button type="button" class="cdb-row" data-id="${c.id}" style="display:flex;width:100%;text-align:left;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-surface);cursor:pointer;margin-bottom:6px;">
+        <div>
+          <div style="font-weight:600;">${escapeHtml(c.name)}</div>
+          <div class="text-muted" style="font-size:0.8rem;">${escapeHtml(c.client_ref || '')}${c.city ? ' · ' + escapeHtml(c.city) : ''}</div>
+        </div>
+        <span class="badge badge--neutral">${escapeHtml(c.phone || '')}</span>
+      </button>
+    `).join('');
+    listEl.querySelectorAll('[data-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const client = clients.find(c => c.id === btn.dataset.id);
+        close();
+        if (client) await onPick(client);
+      });
+    });
+  };
+
+  api.getClients().then(rows => {
+    clients = rows || [];
+    renderList();
+  }).catch(err => {
+    listEl.innerHTML = `<p class="form-error" style="display:block;">${escapeHtml(err.message)}</p>`;
+  });
+
+  overlay.querySelector('#wcp-search').addEventListener('input', (e) => {
+    renderList(e.target.value.trim());
+  });
 }
 
 // ---------------------------------------------------------------------------

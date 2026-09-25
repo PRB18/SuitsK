@@ -52,11 +52,18 @@ function makeSummary(dataJson) {
 router.get('/', async (req, res) => {
   try {
     const db     = getDb();
-    const result = await db.execute('SELECT id, name, notes, updated_at, data FROM suits ORDER BY updated_at DESC');
+    const clientFilter = typeof req.query.client_id === 'string' ? req.query.client_id.trim() : '';
+    const result = clientFilter
+      ? await db.execute({
+          sql: 'SELECT id, name, notes, client_id, updated_at, data FROM suits WHERE client_id = ? ORDER BY updated_at DESC',
+          args: [clientFilter],
+        })
+      : await db.execute('SELECT id, name, notes, client_id, updated_at, data FROM suits ORDER BY updated_at DESC');
     res.json(result.rows.map(r => ({
       id:        r.id,
       name:      r.name,
       notes:     r.notes,
+      clientId:  r.client_id || '',
       updatedAt: r.updated_at,
       summary:   makeSummary(r.data),
     })));
@@ -80,6 +87,7 @@ router.get('/:id', async (req, res) => {
       id:        row.id,
       name:      row.name,
       notes:     row.notes,
+      clientId:  row.client_id || '',
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       data:      JSON.parse(row.data),
@@ -94,7 +102,8 @@ router.get('/:id', async (req, res) => {
 // POST /api/suits — create
 // ---------------------------------------------------------------------------
 router.post('/', async (req, res) => {
-  const { name, notes = '', data = {} } = req.body;
+  const { name, notes = '', data = {}, client_id = '', clientId = '' } = req.body;
+  const linkedClientId = String(client_id || clientId || '').trim();
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     return res.status(400).json({ error: 'Suit name is required.' });
@@ -102,15 +111,27 @@ router.post('/', async (req, res) => {
 
   try {
     const db = getDb();
+    if (linkedClientId) {
+      const clientCheck = await db.execute({ sql: 'SELECT id FROM clients WHERE id = ?', args: [linkedClientId] });
+      if (clientCheck.rows.length === 0) {
+        return res.status(400).json({ error: 'Linked client not found.' });
+      }
+    }
+
     const id = uuidv4();
     const ts = now();
 
     await db.execute({
-      sql:  'INSERT INTO suits (id, name, notes, created_at, updated_at, data) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [id, name.trim(), notes, ts, ts, JSON.stringify(data)],
+      sql:  'INSERT INTO suits (id, name, notes, client_id, created_at, updated_at, data) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      args: [id, name.trim(), notes, linkedClientId, ts, ts, JSON.stringify(data)],
     });
 
-    res.status(201).json({ id, name: name.trim(), notes, createdAt: ts, updatedAt: ts, data });
+    // Keep client measurement profile in sync with this style sheet.
+    if (linkedClientId && data?.measurements) {
+      await syncClientMeasurements(db, linkedClientId, data.measurements, ts);
+    }
+
+    res.status(201).json({ id, name: name.trim(), notes, clientId: linkedClientId, createdAt: ts, updatedAt: ts, data });
   } catch (err) {
     console.error('[suits] POST / error:', err);
     res.status(500).json({ error: err.message });
@@ -128,7 +149,7 @@ router.put('/:id', async (req, res) => {
 
     if (!row) return res.status(404).json({ error: 'Suit not found.' });
 
-    const { name, notes, data } = req.body;
+    const { name, notes, data, client_id, clientId } = req.body;
 
     if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0)) {
       return res.status(400).json({ error: 'Suit name cannot be empty.' });
@@ -138,13 +159,27 @@ router.put('/:id', async (req, res) => {
     const newName  = name  !== undefined ? name.trim()         : row.name;
     const newNotes = notes !== undefined ? notes               : row.notes;
     const newData  = data  !== undefined ? JSON.stringify(data) : row.data;
+    const newClientId = (client_id !== undefined || clientId !== undefined)
+      ? String(client_id || clientId || '').trim()
+      : (row.client_id || '');
+
+    if (newClientId) {
+      const clientCheck = await db.execute({ sql: 'SELECT id FROM clients WHERE id = ?', args: [newClientId] });
+      if (clientCheck.rows.length === 0) {
+        return res.status(400).json({ error: 'Linked client not found.' });
+      }
+    }
 
     await db.execute({
-      sql:  'UPDATE suits SET name = ?, notes = ?, data = ?, updated_at = ? WHERE id = ?',
-      args: [newName, newNotes, newData, ts, req.params.id],
+      sql:  'UPDATE suits SET name = ?, notes = ?, client_id = ?, data = ?, updated_at = ? WHERE id = ?',
+      args: [newName, newNotes, newClientId, newData, ts, req.params.id],
     });
 
-    res.json({ id: req.params.id, name: newName, notes: newNotes, updatedAt: ts, data: JSON.parse(newData) });
+    if (newClientId && data?.measurements) {
+      await syncClientMeasurements(db, newClientId, data.measurements, ts);
+    }
+
+    res.json({ id: req.params.id, name: newName, notes: newNotes, clientId: newClientId, updatedAt: ts, data: JSON.parse(newData) });
   } catch (err) {
     console.error('[suits] PUT /:id error:', err);
     res.status(500).json({ error: err.message });
@@ -167,18 +202,57 @@ router.post('/:id/duplicate', async (req, res) => {
     const newName = (req.body.name && req.body.name.trim())
       ? req.body.name.trim()
       : row.name + ' (copy)';
+    const clientId = row.client_id || '';
 
     await db.execute({
-      sql:  'INSERT INTO suits (id, name, notes, created_at, updated_at, data) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [newId, newName, row.notes, ts, ts, row.data],
+      sql:  'INSERT INTO suits (id, name, notes, client_id, created_at, updated_at, data) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      args: [newId, newName, row.notes, clientId, ts, ts, row.data],
     });
 
-    res.status(201).json({ id: newId, name: newName, notes: row.notes, createdAt: ts, updatedAt: ts, data: JSON.parse(row.data) });
+    res.status(201).json({ id: newId, name: newName, notes: row.notes, clientId, createdAt: ts, updatedAt: ts, data: JSON.parse(row.data) });
   } catch (err) {
     console.error('[suits] POST /:id/duplicate error:', err);
     res.status(500).json({ error: err.message });
   }
 });
+
+/** Upsert client_measurements from a suit draft's measurements block. */
+async function syncClientMeasurements(db, clientId, measurements, ts) {
+  const unit = (measurements && measurements.unit) || 'in';
+  const values = (measurements && typeof measurements.values === 'object' && measurements.values)
+    ? measurements.values
+    : {};
+  const existing = await db.execute({
+    sql: 'SELECT id FROM client_measurements WHERE client_id = ?',
+    args: [clientId],
+  });
+  if (existing.rows.length === 0) {
+    await db.execute({
+      sql: `INSERT INTO client_measurements (id, client_id, unit, values_json, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+      args: [uuidv4(), clientId, unit, JSON.stringify(values), ts, ts],
+    });
+  } else {
+    await db.execute({
+      sql: 'UPDATE client_measurements SET unit = ?, values_json = ?, updated_at = ? WHERE client_id = ?',
+      args: [unit, JSON.stringify(values), ts, clientId],
+    });
+  }
+
+  // Keep active workshop garments on the same body numbers.
+  const projects = await db.execute({
+    sql: `SELECT id, measurements FROM projects WHERE client_id = ? AND status != 'delivered'`,
+    args: [clientId],
+  });
+  for (const row of projects.rows) {
+    let current = {};
+    try { current = JSON.parse(row.measurements || '{}'); } catch { current = {}; }
+    await db.execute({
+      sql: 'UPDATE projects SET measurements = ?, updated_at = ? WHERE id = ?',
+      args: [JSON.stringify({ ...current, ...values }), ts, row.id],
+    });
+  }
+}
 
 // ---------------------------------------------------------------------------
 // DELETE /api/suits/:id

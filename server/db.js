@@ -40,12 +40,13 @@ async function initDatabase() {
 
   client = createClient({ url, authToken: token });
 
-  // ── Original suits table (unchanged) ────────────────────────────────────
+  // ── Suits (style configs); client_id links a config to a client profile ─
   const schemaTasks = [client.execute(`
     CREATE TABLE IF NOT EXISTS suits (
       id         TEXT PRIMARY KEY,
       name       TEXT NOT NULL,
       notes      TEXT NOT NULL DEFAULT '',
+      client_id  TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       data       TEXT NOT NULL DEFAULT '{}'
@@ -263,16 +264,20 @@ async function initDatabase() {
   await Promise.all(schemaTasks);
   await client.execute(`CREATE UNIQUE INDEX IF NOT EXISTS clients_phone_unique ON clients(phone) WHERE phone IS NOT NULL AND phone != ''`);
 
+  // ── Additive migrations for existing vaults ──────────────────────────────
+  await ensureColumn(client, 'suits', 'client_id', `TEXT NOT NULL DEFAULT ''`);
+  await backfillClientMeasurements(client);
+
   // ── Calendar OAuth Tokens ─────────────────────────────────────────────────
   // One row per provider (google | apple | outlook).
   // tokens: JSON object { access_token, refresh_token, expiry_date, scope, … }
-  schemaTasks.push(client.execute(`
+  await client.execute(`
     CREATE TABLE IF NOT EXISTS calendar_tokens (
       provider   TEXT PRIMARY KEY,
       tokens     TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )
-  `));
+  `);
 
   // ── Seed default Work Hierarchy sections (once, only if table is empty) ──
   const hierarchyCheck = await client.execute(
@@ -298,6 +303,34 @@ async function initDatabase() {
 
   console.log('[db] Connected to Turso — schema ready (11 tables).');
   return client;
+}
+
+async function ensureColumn(db, table, column, definition) {
+  const info = await db.execute(`PRAGMA table_info(${table})`);
+  const exists = info.rows.some(row => row.name === column);
+  if (!exists) {
+    await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    console.log(`[db] Migrated ${table}: added column ${column}`);
+  }
+}
+
+/** Every client must own a measurement profile row (source of truth for body data). */
+async function backfillClientMeasurements(db) {
+  const missing = await db.execute(`
+    SELECT c.id FROM clients c
+    LEFT JOIN client_measurements m ON m.client_id = c.id
+    WHERE m.id IS NULL
+  `);
+  if (missing.rows.length === 0) return;
+  const ts = new Date().toISOString();
+  for (const row of missing.rows) {
+    await db.execute({
+      sql: `INSERT INTO client_measurements (id, client_id, unit, values_json, created_at, updated_at)
+            VALUES (?, ?, 'in', '{}', ?, ?)`,
+      args: [uuidv4(), row.id, ts, ts],
+    });
+  }
+  console.log(`[db] Backfilled measurement profiles for ${missing.rows.length} client(s).`);
 }
 
 /**

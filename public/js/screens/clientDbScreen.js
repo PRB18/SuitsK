@@ -282,9 +282,13 @@ export async function renderClientDbScreen(container) {
     saveBtn.disabled = true;
     saveBtn.textContent = 'Creating…';
     try {
-      await api.createClient({ name, phone, email, city, address, notes });
-      showToast(`Client ${name} created!`, 'success');
+      const created = await api.createClient({ name, phone, email, city, address, notes });
+      showToast(`Client ${name} created — measurement profile linked.`, 'success');
       closeModal();
+      if (created?.id) {
+        router.navigateTo('#client-profile', { id: created.id });
+        return;
+      }
       await loadClients();
     } catch (err) {
       if (err.status === 409 && err.data?.existing) {

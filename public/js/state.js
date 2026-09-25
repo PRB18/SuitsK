@@ -15,6 +15,7 @@ class AppState {
     this.currentClientId = null;  // set when navigating to #client-profile
     this.currentOrderId  = null;  // set when navigating with a specific order context
     this.currentProjectId= null;  // set when opening a project in the configurator
+    this.linkedClientInfo = null; // { id, name, client_ref } for banner UI
     this.listeners      = new Set();
   }
 
@@ -56,15 +57,21 @@ class AppState {
     this.notify('project_changed', id);
   }
 
+  /** Optional metadata for the linked client (name/ref) shown in configurator. */
+  setLinkedClientInfo(info) {
+    this.linkedClientInfo = info || null;
+  }
+
   clearClientContext() {
     this.currentClientId  = null;
     this.currentOrderId   = null;
     this.currentProjectId = null;
+    this.linkedClientInfo = null;
   }
 
   // ── Configurator suit wizard ───────────────────────────────────────────────
   startNewSuit() {
-    this.currentSuit = { id: null, name: '', notes: '', data: createEmptyDraft() };
+    this.currentSuit = { id: null, name: '', notes: '', clientId: this.currentClientId || '', data: createEmptyDraft() };
     this.currentStep = 0;
     this.notify('suit_started', this.currentSuit);
   }
@@ -81,7 +88,13 @@ class AppState {
       embroidery:  { ...emptyDraft.embroidery,   ...(suit.data?.embroidery  || {}) },
       measurements:{ ...emptyDraft.measurements, ...(suit.data?.measurements|| {}) },
     };
-    this.currentSuit = { id: suit.id, name: suit.name, notes: suit.notes || '', data: mergedData };
+    this.currentSuit = {
+      id: suit.id,
+      name: suit.name,
+      notes: suit.notes || '',
+      clientId: suit.clientId || suit.client_id || this.currentClientId || '',
+      data: mergedData,
+    };
     this.currentStep = 0;
     this.notify('suit_editing', this.currentSuit);
   }

@@ -133,30 +133,35 @@ router.delete('/hierarchy/:id', async (req, res) => {
 // WORKSHOP KANBAN — /api/workshop/*
 // ────────────────────────────────────────────────────────────────────────────
 
-// GET /api/workshop/summary
+// GET /api/workshop/summary — counts + overdue for Status Quo / Workshop strip
 router.get('/workshop/summary', async (req, res) => {
   try {
     const db = getDb();
-    
-    // total active = count where status != 'delivered'
-    const totalRes = await db.execute(`SELECT COUNT(*) as count FROM projects WHERE status != 'delivered'`);
-    const total_active = totalRes.rows[0].count;
-    
-    // overdue = count where delivery_date < today AND status != 'delivered'
-    const overdueRes = await db.execute(`
-      SELECT COUNT(*) as count FROM projects p
-      JOIN orders o ON o.id = p.order_id
-      WHERE p.status != 'delivered' 
-      AND o.delivery_date < date('now')
-      AND o.delivery_date IS NOT NULL
+    const result = await db.execute(`
+      SELECT status, COUNT(*) as cnt FROM projects GROUP BY status
     `);
-    const overdue = overdueRes.rows[0].count;
-    
-    // ready = count where status = 'ready'
-    const readyRes = await db.execute(`SELECT COUNT(*) as count FROM projects WHERE status = 'ready'`);
-    const ready = readyRes.rows[0].count;
 
-    res.json({ total_active, overdue, ready });
+    const summary = {};
+    for (const row of result.rows) summary[row.status] = Number(row.cnt);
+
+    // Compute overdue: projects with delivery_date in the past and not delivered
+    const today = new Date().toISOString().split('T')[0];
+    const overdueResult = await db.execute({
+      sql:  `SELECT COUNT(*) as cnt FROM projects p
+             JOIN orders o ON o.id = p.order_id
+             WHERE o.delivery_date != '' AND o.delivery_date < ? AND p.status != 'delivered'`,
+      args: [today],
+    });
+    summary.overdue = Number(overdueResult.rows[0]?.cnt ?? 0);
+
+    // Total active (not delivered)
+    const activeResult = await db.execute(
+      `SELECT COUNT(*) as cnt FROM projects WHERE status != 'delivered'`
+    );
+    summary.total_active = Number(activeResult.rows[0]?.cnt ?? 0);
+    summary.ready = Number(summary.ready || 0);
+
+    res.json(summary);
   } catch (err) {
     console.error('[workshop] summary error:', err);
     res.status(500).json({ error: err.message });
@@ -185,39 +190,6 @@ router.get('/workshop', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('[workshop] GET error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /api/workshop/summary — count per status for Status Quo widget
-router.get('/workshop/summary', async (req, res) => {
-  try {
-    const db = getDb();
-    const result = await db.execute(`
-      SELECT status, COUNT(*) as cnt FROM projects GROUP BY status
-    `);
-
-    const summary = {};
-    for (const row of result.rows) summary[row.status] = Number(row.cnt);
-
-    // Compute overdue: projects with delivery_date in the past and not delivered
-    const today = new Date().toISOString().split('T')[0];
-    const overdueResult = await db.execute({
-      sql:  `SELECT COUNT(*) as cnt FROM projects p
-             JOIN orders o ON o.id = p.order_id
-             WHERE o.delivery_date != '' AND o.delivery_date < ? AND p.status != 'delivered'`,
-      args: [today],
-    });
-    summary.overdue = Number(overdueResult.rows[0]?.cnt ?? 0);
-
-    // Total active (not delivered)
-    const activeResult = await db.execute(
-      `SELECT COUNT(*) as cnt FROM projects WHERE status != 'delivered'`
-    );
-    summary.total_active = Number(activeResult.rows[0]?.cnt ?? 0);
-
-    res.json(summary);
-  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

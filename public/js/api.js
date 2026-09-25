@@ -40,13 +40,18 @@ export const api = {
   async backupVault()       { return request('/api/auth/backup', { method: 'POST' }); },
 
   // ── Suits (existing configurator) ────────────────────────────────────────
-  async getSuits()                  { return request('/api/suits'); },
-  async getSuit(id)                 { return request(`/api/suits/${encodeURIComponent(id)}`); },
-  async createSuit({ name, notes = '', data = {} }) {
-    return request('/api/suits', { method: 'POST', body: JSON.stringify({ name, notes, data }) });
+  async getSuits(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/api/suits${qs ? '?' + qs : ''}`);
   },
-  async updateSuit(id, { name, notes, data }) {
-    return request(`/api/suits/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify({ name, notes, data }) });
+  async getSuit(id)                 { return request(`/api/suits/${encodeURIComponent(id)}`); },
+  async createSuit({ name, notes = '', data = {}, client_id = '', clientId = '' }) {
+    return request('/api/suits', { method: 'POST', body: JSON.stringify({ name, notes, data, client_id: client_id || clientId || '' }) });
+  },
+  async updateSuit(id, { name, notes, data, client_id, clientId }) {
+    const body = { name, notes, data };
+    if (client_id !== undefined || clientId !== undefined) body.client_id = client_id || clientId || '';
+    return request(`/api/suits/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(body) });
   },
   async duplicateSuit(id, name) {
     return request(`/api/suits/${encodeURIComponent(id)}/duplicate`, { method: 'POST', body: JSON.stringify({ name }) });

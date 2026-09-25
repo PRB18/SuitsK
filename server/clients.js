@@ -186,7 +186,27 @@ router.get('/clients/:id', async (req, res) => {
       args: [req.params.id],
     });
     const measurement = measurementResult.rows[0] || null;
-    res.json({ ...client, orders, visits: visitsResult.rows, measurement: measurement ? { ...measurement, values: JSON.parse(measurement.values_json || '{}') } : null });
+    // Prefer parsed `values`; keep values_json for older UI paths.
+    const measurementPayload = measurement
+      ? {
+          ...measurement,
+          values: (() => { try { return JSON.parse(measurement.values_json || '{}'); } catch { return {}; } })(),
+        }
+      : null;
+
+    // Linked style configs for this client (suits vault ↔ client).
+    const suitsResult = await db.execute({
+      sql: 'SELECT id, name, notes, updated_at FROM suits WHERE client_id = ? ORDER BY updated_at DESC',
+      args: [req.params.id],
+    });
+
+    res.json({
+      ...client,
+      orders,
+      visits: visitsResult.rows,
+      measurement: measurementPayload,
+      suits: suitsResult.rows,
+    });
   } catch (err) {
     console.error('[clients] GET /:id error:', err);
     res.status(500).json({ error: err.message });
@@ -217,9 +237,28 @@ router.put('/clients/:id/measurements', async (req, res) => {
     } else {
       await db.execute({ sql: 'UPDATE client_measurements SET unit=?, values_json=?, updated_at=? WHERE client_id=?', args: [unit, JSON.stringify(values), ts, req.params.id] });
     }
+    await pushMeasurementsToActiveProjects(db, req.params.id, values, ts);
     res.json({ client_id: req.params.id, unit, values, updated_at: ts });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
+
+/** Merge client body measurements into every non-delivered garment for that client. */
+async function pushMeasurementsToActiveProjects(db, clientId, values, ts) {
+  if (!values || typeof values !== 'object') return;
+  const projects = await db.execute({
+    sql: `SELECT id, measurements FROM projects WHERE client_id = ? AND status != 'delivered'`,
+    args: [clientId],
+  });
+  for (const row of projects.rows) {
+    let current = {};
+    try { current = JSON.parse(row.measurements || '{}'); } catch { current = {}; }
+    const merged = { ...current, ...values };
+    await db.execute({
+      sql: 'UPDATE projects SET measurements = ?, updated_at = ? WHERE id = ?',
+      args: [JSON.stringify(merged), ts, row.id],
+    });
+  }
+}
 
 // POST /api/clients/:id/visits — add a dated client visit
 router.post('/clients/:id/visits', async (req, res) => {
@@ -397,14 +436,27 @@ router.post('/clients/:id/orders/:orderId/projects', async (req, res) => {
     const orderCheck = await db.execute({ sql: 'SELECT id FROM orders WHERE id = ? AND client_id = ?', args: [req.params.orderId, req.params.id] });
     if (orderCheck.rows.length === 0) return res.status(404).json({ error: 'Order not found.' });
 
+    // Seed garment measurements from the client's linked measurement profile when caller
+    // did not supply any values — keeps body data connected across sections.
+    let seeded = measurements && typeof measurements === 'object' ? measurements : {};
+    if (!seeded || Object.keys(seeded).length === 0) {
+      const meas = await db.execute({
+        sql: 'SELECT values_json FROM client_measurements WHERE client_id = ?',
+        args: [req.params.id],
+      });
+      if (meas.rows.length > 0) {
+        try { seeded = JSON.parse(meas.rows[0].values_json || '{}'); } catch { seeded = {}; }
+      }
+    }
+
     const id = uuidv4();
     const ts = now();
     await db.execute({
       sql:  `INSERT INTO projects (id, order_id, client_id, garment_type, status, suit_config_id, measurements, created_at, updated_at)
              VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)`,
-      args: [id, req.params.orderId, req.params.id, garment_type, safe(suit_config_id), JSON.stringify(measurements), ts, ts],
+      args: [id, req.params.orderId, req.params.id, garment_type, safe(suit_config_id), JSON.stringify(seeded), ts, ts],
     });
-    res.status(201).json({ id, order_id: req.params.orderId, client_id: req.params.id, garment_type, status: 'pending', suit_config_id: safe(suit_config_id), measurements, created_at: ts, updated_at: ts });
+    res.status(201).json({ id, order_id: req.params.orderId, client_id: req.params.id, garment_type, status: 'pending', suit_config_id: safe(suit_config_id), measurements: seeded, created_at: ts, updated_at: ts });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -427,15 +479,43 @@ router.put('/projects/:projectId', async (req, res) => {
       return res.status(400).json({ error: `Invalid status. Must be one of: ${PROJECT_STAGES.join(', ')}` });
 
     const ts = now();
+    const nextMeasurements = measurements !== undefined ? JSON.stringify(measurements) : row.measurements;
     await db.execute({
       sql:  `UPDATE projects SET status=?, measurements=?, suit_config_id=?, updated_at=? WHERE id=?`,
       args: [
         status        !== undefined ? status                         : row.status,
-        measurements  !== undefined ? JSON.stringify(measurements)   : row.measurements,
+        nextMeasurements,
         suit_config_id!== undefined ? safe(suit_config_id)           : row.suit_config_id,
         ts, req.params.projectId,
       ],
     });
+
+    // Keep the client measurement profile connected when garment measurements change.
+    if (measurements !== undefined && row.client_id) {
+      const existingMeas = await db.execute({
+        sql: 'SELECT id, values_json, unit FROM client_measurements WHERE client_id = ?',
+        args: [row.client_id],
+      });
+      let merged = {};
+      let unit = 'in';
+      if (existingMeas.rows.length > 0) {
+        try { merged = JSON.parse(existingMeas.rows[0].values_json || '{}'); } catch { merged = {}; }
+        unit = existingMeas.rows[0].unit || 'in';
+      }
+      merged = { ...merged, ...(measurements || {}) };
+      if (existingMeas.rows.length === 0) {
+        await db.execute({
+          sql: `INSERT INTO client_measurements (id, client_id, unit, values_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+          args: [uuidv4(), row.client_id, unit, JSON.stringify(merged), ts, ts],
+        });
+      } else {
+        await db.execute({
+          sql: 'UPDATE client_measurements SET values_json=?, updated_at=? WHERE client_id=?',
+          args: [JSON.stringify(merged), ts, row.client_id],
+        });
+      }
+    }
+
     const updated = await db.execute({ sql: 'SELECT * FROM projects WHERE id = ?', args: [req.params.projectId] });
     const p = updated.rows[0];
     res.json({ ...p, measurements: JSON.parse(p.measurements || '{}') });

@@ -254,29 +254,34 @@ export async function renderClientProfileScreen(container) {
         ${clientData.phone ? `<div class="cpr-contact-row"><span class="cpr-contact-icon">📞</span><a href="tel:${escHtml(clientData.phone)}">${escHtml(clientData.phone)}</a></div>` : ''}
         ${clientData.email ? `<div class="cpr-contact-row"><span class="cpr-contact-icon">✉️</span><a href="mailto:${escHtml(clientData.email)}">${escHtml(clientData.email)}</a></div>` : ''}
         ${clientData.address || clientData.city ? `<div class="cpr-contact-row"><span class="cpr-contact-icon">📍</span>${escHtml([clientData.address, clientData.city].filter(Boolean).join(', '))}</div>` : ''}
-        ${clientData.phone ? `<div class="cpr-contact-row"><span class="cpr-contact-icon">📞</span><a href="tel:${escHtml(clientData.phone)}">${escHtml(clientData.phone)}</a></div>` : ''}
         ${clientData.notes ? `<div class="cpr-contact-row cpr-notes"><span class="cpr-contact-icon">📝</span>${escHtml(clientData.notes)}</div>` : ''}
       </div>
 
       <section class="cpr-section cpr-profile-tools">
         <div class="cpr-section-header">
           <h2>Body Measurements</h2>
-          <div style="display:flex;gap:0.5rem;">
-            <button class="btn btn-primary btn-sm" id="cpr-edit-measurements">Edit Measurements</button>
-            <button class="btn btn-ghost btn-sm" id="cpr-open-measurements">Open in Configurator</button>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" id="cpr-edit-measurements">Edit on Style Sheet</button>
+            <button class="btn btn-ghost btn-sm" id="cpr-open-measurements">Full Configurator</button>
           </div>
         </div>
-        ${clientData.measurement && clientData.measurement.values_json ? (() => {
-          const vals = typeof clientData.measurement.values_json === 'string'
-            ? JSON.parse(clientData.measurement.values_json || '{}')
-            : (clientData.measurement.values_json || {});
-          const unit = clientData.measurement.unit || 'in';
-          const CORE = [
-            ['Chest','chest'], ['Waist','waist'], ['Hip','hip'], ['Shoulder','shoulder'],
-            ['Neck','neck'], ['Sleeve Length','sleeve_length'], ['Inseam','inseam'], ['Height','height'],
+        ${(() => {
+          const meas = clientData.measurement;
+          if (!meas) return '<p class="text-muted">No measurement profile yet — created automatically with this client. Click Edit to fill the paper-form sheet.</p>';
+          const vals = meas.values
+            || (typeof meas.values_json === 'string' ? (() => { try { return JSON.parse(meas.values_json || '{}'); } catch { return {}; } })() : (meas.values_json || {}));
+          const unit = meas.unit || 'in';
+          const HIGHLIGHT = [
+            ['Chest', 'suit_CHEST_L'], ['Waist', 'pant_WAIST_L'], ['Shoulder', 'suit_SHOULDER_L'],
+            ['Sleeve', 'suit_SLEEVE_L'], ['Collar', 'suit_COLLAR_L'], ['Hips', 'suit_HIPS_L'],
+            ['Shirt Chest', 'shirt_CHEST_L'], ['Pant Length', 'pant_LENGTH_L'],
           ];
-          const filled = CORE.filter(([,k]) => vals[k]);
-          return filled.length > 0
+          const filled = HIGHLIGHT.filter(([, k]) => vals[k]);
+          const anyFilled = Object.keys(vals).some(k => vals[k] !== '' && vals[k] != null);
+          if (!anyFilled) {
+            return '<p class="text-muted">Measurement profile linked — no values entered yet. Use <strong>Edit on Style Sheet</strong> to fill the same grid as the paper order form.</p>';
+          }
+          return (filled.length
             ? '<div class="cpr-meas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.5rem;margin-top:0.5rem;">' +
               filled.map(([label, key]) =>
                 '<div class="cpr-meas-cell" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:6px;padding:0.5rem;text-align:center;">' +
@@ -284,12 +289,24 @@ export async function renderClientProfileScreen(container) {
                 '<div style="font-weight:600;font-size:1rem;">' + vals[key] + '</div>' +
                 '<div style="font-size:0.65rem;color:var(--color-text-secondary);">' + unit + '</div>' +
                 '</div>'
-              ).join('') + '</div>' +
-              '<p class="text-muted" style="margin-top:0.35rem;font-size:0.75rem;">Last updated ' + fmtDate(clientData.measurement.updated_at) + '</p>'
-            : '<p class="text-muted">Measurement profile exists but no values entered yet. Click Edit Measurements to add them.</p>';
-        })() : '<p class="text-muted">No measurement profile yet. Click Edit Measurements to add them.</p>'}
-        <div id="cpr-meas-editor" style="display:none; margin-top:1rem; background:var(--color-surface); border:1px solid var(--color-border); border-radius:8px; padding:1rem;"></div>
+              ).join('') + '</div>'
+            : '<p class="text-muted">' + Object.keys(vals).filter(k => vals[k]).length + ' measurement fields on file.</p>') +
+            '<p class="text-muted" style="margin-top:0.35rem;font-size:0.75rem;">Last updated ' + fmtDate(meas.updated_at) + ' · Linked to this client profile</p>';
+        })()}
       </section>
+
+      ${(clientData.suits && clientData.suits.length) ? `
+      <section class="cpr-section">
+        <div class="cpr-section-header"><h2>Linked Style Sheets</h2></div>
+        <div class="cpr-visits">
+          ${clientData.suits.map(s => `
+            <div class="cpr-visit-row" style="cursor:pointer;" data-suit-id="${s.id}">
+              <strong>${escHtml(s.name)}</strong>
+              <span class="text-muted">${fmtDate(s.updated_at)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </section>` : ''}
 
       <section class="cpr-section">
         <div class="cpr-section-header"><h2>Client Visits</h2><button class="btn btn-primary btn-sm" id="cpr-add-visit">+ Add Visit</button></div>
@@ -322,85 +339,39 @@ export async function renderClientProfileScreen(container) {
     // Bind new order button
     document.getElementById('cpr-new-order').addEventListener('click', openOrderModal);
     document.getElementById('cpr-add-visit').addEventListener('click', openVisitModal);
-    document.getElementById('cpr-open-measurements').addEventListener('click', () => {
-      state.startNewSuit();
-      router.navigateTo('#configurator', { client_id: clientId });
-    });
 
-    // ── Inline Measurement Editor ────────────────────────────────────────────
-    const measEditorEl = document.getElementById('cpr-meas-editor');
-    let measEditorOpen = false;
-    const MEAS_BASE_FIELDS = [
-      ['Chest',        'chest'],        ['Waist',        'waist'],
-      ['Hip',          'hip'],          ['Shoulder',     'shoulder'],
-      ['Neck',         'neck'],         ['Sleeve Length','sleeve_length'],
-      ['Shirt Length', 'shirt_length'], ['Inseam',       'inseam'],
-      ['Outseam',      'outseam'],      ['Thigh',        'thigh'],
-      ['Knee',         'knee'],         ['Bottom',       'bottom'],
-      ['Height',       'height'],       ['Weight',       'weight'],
-    ];
-    document.getElementById('cpr-edit-measurements').addEventListener('click', async () => {
-      if (measEditorOpen) {
-        measEditorEl.style.display = 'none';
-        measEditorOpen = false;
-        document.getElementById('cpr-edit-measurements').textContent = 'Edit Measurements';
-        return;
+    const openLinkedConfigurator = (step = 0) => {
+      state.setCurrentClientId(clientId);
+      state.startNewSuit();
+      // Prefer editing an existing linked style sheet when available
+      const linkedSuit = (clientData.suits || [])[0];
+      const go = () => {
+        state.setStep(step);
+        router.navigateTo('#configurator', { client_id: clientId });
+      };
+      if (linkedSuit) {
+        api.getSuit(linkedSuit.id).then(suit => {
+          state.editSuit(suit);
+          state.setCurrentClientId(clientId);
+          go();
+        }).catch(() => go());
+      } else {
+        go();
       }
-      measEditorOpen = true;
-      document.getElementById('cpr-edit-measurements').textContent = 'Close Editor';
-      let existingVals = {};
-      let existingUnit = 'in';
-      try {
-        const m = await api.getClientMeasurements(clientId);
-        existingVals = m.values || {};
-        existingUnit = m.unit || 'in';
-      } catch (_) { /* No measurements yet — use empty */ }
-      measEditorEl.innerHTML =
-        '<h4 style="margin:0 0 0.75rem;">Base Measurements</h4>' +
-        '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem;">' +
-        '<label style="font-size:0.8rem;">Unit:</label>' +
-        '<select id="cpr-meas-unit" class="input" style="width:80px;">' +
-        '<option value="in"' + (existingUnit === 'in' ? ' selected' : '') + '>in</option>' +
-        '<option value="cm"' + (existingUnit === 'cm' ? ' selected' : '') + '>cm</option>' +
-        '</select></div>' +
-        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.5rem;">' +
-        MEAS_BASE_FIELDS.map(([label, key]) =>
-          '<div><label style="font-size:0.75rem;color:var(--color-text-secondary);">' + label + '</label>' +
-          '<input type="number" class="input" id="cpr-mf-' + key + '" placeholder="0" step="0.1" min="0" value="' + (existingVals[key] || '') + '" style="width:100%;margin-top:2px;"></div>'
-        ).join('') +
-        '</div>' +
-        '<div style="display:flex;gap:0.5rem;margin-top:1rem;justify-content:flex-end;">' +
-        '<button class="btn btn-ghost btn-sm" id="cpr-meas-cancel">Cancel</button>' +
-        '<button class="btn btn-primary btn-sm" id="cpr-meas-save">Save Measurements</button>' +
-        '</div>';
-      measEditorEl.style.display = 'block';
-      document.getElementById('cpr-meas-cancel').addEventListener('click', () => {
-        measEditorEl.style.display = 'none';
-        measEditorOpen = false;
-        document.getElementById('cpr-edit-measurements').textContent = 'Edit Measurements';
-      });
-      document.getElementById('cpr-meas-save').addEventListener('click', async () => {
-        const saveBtn = document.getElementById('cpr-meas-save');
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Saving...';
-        const unit = document.getElementById('cpr-meas-unit').value;
-        const values = {};
-        MEAS_BASE_FIELDS.forEach(([, key]) => {
-          const v = document.getElementById('cpr-mf-' + key)?.value;
-          if (v) values[key] = parseFloat(v);
-        });
+    };
+
+    document.getElementById('cpr-edit-measurements').addEventListener('click', () => openLinkedConfigurator(5));
+    document.getElementById('cpr-open-measurements').addEventListener('click', () => openLinkedConfigurator(0));
+
+    document.querySelectorAll('[data-suit-id]').forEach(row => {
+      row.addEventListener('click', async () => {
         try {
-          await api.updateClientMeasurements(clientId, { unit, values });
-          showToast('Measurements saved.', 'success');
-          measEditorEl.style.display = 'none';
-          measEditorOpen = false;
-          document.getElementById('cpr-edit-measurements').textContent = 'Edit Measurements';
-          // Reload the screen to reflect updated values
-          await renderClientProfileScreen(container);
+          const suit = await api.getSuit(row.dataset.suitId);
+          state.setCurrentClientId(clientId);
+          state.editSuit(suit);
+          router.navigateTo('#configurator', { client_id: clientId });
         } catch (err) {
-          showToast('Save failed: ' + err.message, 'error');
-          saveBtn.disabled = false;
-          saveBtn.textContent = 'Save Measurements';
+          showToast('Could not open style sheet: ' + err.message, 'error');
         }
       });
     });
@@ -419,20 +390,20 @@ export async function renderClientProfileScreen(container) {
       } else if (action === 'open-configurator') {
         const project = findProject(projectId);
         btn.addEventListener('click', () => {
+          state.setCurrentClientId(clientId);
           state.setCurrentProjectId(projectId);
           state.setCurrentOrderId(project.order_id);
           if (project.suit_config_id) {
-            // Edit existing suit config
             api.getSuit(project.suit_config_id).then(suit => {
               state.editSuit(suit);
-              router.navigate('#configurator');
+              router.navigateTo('#configurator', { client_id: clientId, project_id: projectId, order_id: project.order_id });
             }).catch(() => {
               state.startNewSuit();
-              router.navigate('#configurator');
+              router.navigateTo('#configurator', { client_id: clientId, project_id: projectId, order_id: project.order_id });
             });
           } else {
             state.startNewSuit();
-            router.navigate('#configurator');
+            router.navigateTo('#configurator', { client_id: clientId, project_id: projectId, order_id: project.order_id });
           }
         });
       } else if (action === 'print-meas') {
@@ -442,6 +413,21 @@ export async function renderClientProfileScreen(container) {
         });
       } else if (action === 'complete-order') {
         btn.addEventListener('click', () => completeOrder(orderId));
+      } else if (action === 'move-phase') {
+        btn.addEventListener('change', async () => {
+          const newStatus = btn.value;
+          const project = findProject(projectId);
+          if (!project || newStatus === project.status) return;
+          const prev = project.status;
+          try {
+            await api.updateProjectStatus(projectId, newStatus);
+            showToast(`Moved to ${STAGE_LABELS[newStatus]}.`, 'success');
+            await load();
+          } catch (err) {
+            showToast('Phase move failed: ' + err.message, 'error');
+            btn.value = prev;
+          }
+        });
       }
     });
   }
@@ -479,6 +465,9 @@ export async function renderClientProfileScreen(container) {
 
   function renderProjectChip(project, orderId) {
     const stageCls = STAGE_BADGE_CLS[project.status] || 'badge--neutral';
+    const stageOptions = PROJECT_STAGES.map(s =>
+      `<option value="${s}"${s === project.status ? ' selected' : ''}>${STAGE_LABELS[s] || s}</option>`
+    ).join('');
     return `
       <div class="project-chip-wrap">
         <div class="project-chip" data-project-id="${project.id}">
@@ -489,6 +478,8 @@ export async function renderClientProfileScreen(container) {
             <button class="btn-link btn-xs" data-garment-action="open-configurator" data-project-id="${project.id}" data-order-id="${orderId}" title="Open in configurator">⚙️</button>
             <button class="btn-link btn-xs" data-garment-action="print-meas" data-project-id="${project.id}" data-order-id="${orderId}" title="Print measurement card">🖨</button>
           </div>
+          <label class="text-muted" style="font-size:0.65rem;display:block;margin-top:0.35rem;">Move phase</label>
+          <select class="input" style="font-size:0.75rem;padding:2px 6px;height:28px;width:100%;" data-garment-action="move-phase" data-project-id="${project.id}" data-order-id="${orderId}" aria-label="Move ${escHtml(project.garment_type)} to another workshop phase">${stageOptions}</select>
         </div>
       </div>
     `;
@@ -511,7 +502,16 @@ export async function renderClientProfileScreen(container) {
     if (!project) return;
     activeMeasProject = project;
     measPanelTitle.textContent = `${project.garment_type} Measurements`;
-    renderMeasPanelBody(project.measurements || {}, false);
+    let meas = project.measurements || {};
+    // Fall back to linked client profile when garment has no values yet.
+    if (Object.keys(meas).length === 0 && clientData.measurement) {
+      meas = clientData.measurement.values
+        || (typeof clientData.measurement.values_json === 'string'
+          ? (() => { try { return JSON.parse(clientData.measurement.values_json || '{}'); } catch { return {}; } })()
+          : {})
+        || {};
+    }
+    renderMeasPanelBody(meas, false);
     measOverlay.style.display = 'flex';
     measOverlay.setAttribute('aria-hidden', 'false');
   }

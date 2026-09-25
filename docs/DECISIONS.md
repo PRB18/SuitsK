@@ -1,3 +1,10 @@
+## 2026-09-25: Client is the hub — measurements, style sheets, and workshop projects interconnect
+
+- **Decision:** Every client owns a `client_measurements` row (created on client create + backfilled). Suits gain `client_id`. Saving a style sheet syncs measurements to the client profile and can attach `suit_config_id` to the active garment project. New garments seed measurements from the client profile. Workshop and Client Profile both expose phase moves for a client's garment projects.
+- **Why:** The paper order form is one sheet per client (style + body). Treating measurements and clients as separate entities broke that model; updates did not flow into Workshop garments.
+- **Alternatives considered:** Keep measurements only inside suit JSON or only on projects (rejected: a client can exist before any order; body data must live on the person).
+- **Status:** Implemented across API + configurator + profile + workshop UI.
+
 ## 2026-09-25: Client records own measurement profiles and visits
 
 - **Decision:** Create an additive `client_measurements` row when a client is created and store dated client visits in `client_visits`.

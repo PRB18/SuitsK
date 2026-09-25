@@ -249,8 +249,8 @@ export async function renderWorkshopScreen(container) {
           </button>` : '<div class="kanban-card-done" style="flex:1;text-align:center;">✓ Complete</div>'}
         </div>
         <div style="display:flex; gap:0.3rem; margin-top:0.35rem; align-items:center;">
-          <label style="font-size:0.7rem; color:var(--color-text-secondary); white-space:nowrap;">Jump to:</label>
-          <select class="input" style="font-size:0.75rem; padding:2px 6px; height:28px; flex:1;" data-action="quick-move" data-id="${p.id}">${stageOptions}</select>
+          <label style="font-size:0.7rem; color:var(--color-text-secondary); white-space:nowrap;" for="ws-jump-${p.id}">Move phase:</label>
+          <select id="ws-jump-${p.id}" class="input" style="font-size:0.75rem; padding:2px 6px; height:28px; flex:1;" data-action="quick-move" data-id="${p.id}" aria-label="Move ${escHtml(p.garment_type)} for ${escHtml(p.client_name)} to another phase">${stageOptions}</select>
         </div>
       </div>
     `;

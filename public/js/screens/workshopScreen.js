@@ -86,10 +86,22 @@ export async function renderWorkshopScreen(container) {
         <div class="modal-footer"><button class="btn btn-ghost" id="ws-edit-cancel">Cancel</button><button class="btn btn-primary" id="ws-edit-save">Save Changes</button></div>
       </div>
     </div>
+
+    <!-- Workshop Sections Editor -->
+    <div class="modal-overlay" id="ws-sections-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="ws-sections-title">
+      <div class="modal-panel" id="ws-sections-panel">
+        <div class="modal-header">
+          <h2 class="modal-title" id="ws-sections-title">Edit Workshop Sections</h2>
+          <button class="btn-icon modal-close" id="ws-sections-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body" id="ws-sections-body"><div class="table-loading">Loading sections…</div></div>
+        <div class="modal-footer"><button class="btn btn-ghost" id="ws-sections-cancel">Cancel</button><button class="btn btn-primary" id="ws-sections-save">Save Sections</button></div>
+      </div>
+    </div>
   `;
 
   document.getElementById('ws-back').addEventListener('click', () => router.navigate('#congressional'));
-  document.getElementById('ws-edit-sections').addEventListener('click', () => router.navigate('#work-hierarchy'));
+  document.getElementById('ws-edit-sections').addEventListener('click', openSectionsEditor);
 
   async function load() {
     try {
@@ -239,6 +251,48 @@ export async function renderWorkshopScreen(container) {
       showToast('Workshop project updated.', 'success');
       await load();
     } catch (err) { showToast('Update failed: ' + err.message, 'error'); }
+    finally { button.disabled = false; }
+  });
+
+  async function openSectionsEditor() {
+    const modal = document.getElementById('ws-sections-modal');
+    const body = document.getElementById('ws-sections-body');
+    modal.style.display = 'flex';
+    body.innerHTML = '<div class="table-loading">Loading sections…</div>';
+    try {
+      const sections = await api.getHierarchy();
+      body.innerHTML = sections.length
+        ? sections.map(section => `
+            <div class="ws-section-edit-row" data-section-id="${section.id}">
+              <div class="form-field"><label>Section name</label><input class="input ws-section-name" value="${escHtml(section.section_name)}"></div>
+              <div class="form-field"><label>Personnel <span class="optional">(comma separated)</span></label><input class="input ws-section-personnel" value="${escHtml((section.personnel || []).join(', '))}"></div>
+            </div>`).join('')
+        : '<p class="text-muted">No workshop sections found.</p>';
+    } catch (err) {
+      body.innerHTML = `<p class="form-error" style="display:block;">Failed to load sections: ${escHtml(err.message)}</p>`;
+    }
+  }
+
+  function closeSectionsEditor() {
+    document.getElementById('ws-sections-modal').style.display = 'none';
+  }
+
+  document.getElementById('ws-sections-close').addEventListener('click', closeSectionsEditor);
+  document.getElementById('ws-sections-cancel').addEventListener('click', closeSectionsEditor);
+  document.getElementById('ws-sections-save').addEventListener('click', async () => {
+    const button = document.getElementById('ws-sections-save');
+    const rows = [...document.querySelectorAll('#ws-sections-body .ws-section-edit-row')];
+    button.disabled = true;
+    try {
+      await Promise.all(rows.flatMap(row => {
+        const sectionId = row.dataset.sectionId;
+        const name = row.querySelector('.ws-section-name').value.trim();
+        const personnel = row.querySelector('.ws-section-personnel').value.split(',').map(value => value.trim()).filter(Boolean);
+        return [api.updateSection(sectionId, { section_name: name }), api.updatePersonnel(sectionId, personnel)];
+      }));
+      closeSectionsEditor();
+      showToast('Workshop sections updated.', 'success');
+    } catch (err) { showToast('Section update failed: ' + err.message, 'error'); }
     finally { button.disabled = false; }
   });
 

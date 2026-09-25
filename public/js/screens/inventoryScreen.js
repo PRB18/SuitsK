@@ -155,7 +155,7 @@ export async function renderInventoryScreen(container) {
   let activeItemId = null;
   let itemType   = 'fabric';
 
-  document.getElementById('inv-back').addEventListener('click', () => router.navigate('#congressional'));
+  document.getElementById('inv-back').addEventListener('click', () => router.backToHub());
 
   async function load() {
     try {

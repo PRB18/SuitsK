@@ -223,7 +223,7 @@ export async function renderClientDbScreen(container) {
   });
 
   // ── Back button ────────────────────────────────────────────────────────────
-  document.getElementById('cdb-back').addEventListener('click', () => router.navigate('#congressional'));
+  document.getElementById('cdb-back').addEventListener('click', () => router.backToHub());
 
   // ── Modal ──────────────────────────────────────────────────────────────────
   const overlay = document.getElementById('cdb-modal-overlay');

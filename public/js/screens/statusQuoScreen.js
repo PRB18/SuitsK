@@ -58,7 +58,7 @@ export async function renderStatusQuoScreen(container) {
     </div>
   `;
 
-  document.getElementById('sq-back').addEventListener('click', () => router.navigate('#congressional'));
+  document.getElementById('sq-back').addEventListener('click', () => router.backToHub());
   document.getElementById('sq-goto-inv').addEventListener('click', () => router.navigate('#inventory'));
   document.getElementById('sq-goto-ws').addEventListener('click',  () => router.navigate('#workshop'));
   document.getElementById('sq-goto-dash').addEventListener('click',() => router.navigate('#b2b'));

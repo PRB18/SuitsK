@@ -32,7 +32,7 @@ export async function renderWorkHierarchyScreen(container) {
     </div>
   `;
 
-  document.getElementById('hier-back').addEventListener('click', () => router.navigate('#congressional'));
+  document.getElementById('hier-back').addEventListener('click', () => router.backToHub());
   document.getElementById('hier-add-section').addEventListener('click', addSection);
 
   async function load() {

@@ -133,7 +133,7 @@ export async function renderScheduleScreen(container) {
     </div>
   `;
 
-  document.getElementById('sched-back').addEventListener('click', () => router.navigate('#congressional'));
+  document.getElementById('sched-back').addEventListener('click', () => router.backToHub());
 
   // ── Load data ──────────────────────────────────────────────────────────────
   async function load() {

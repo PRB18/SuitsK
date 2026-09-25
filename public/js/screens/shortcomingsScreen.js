@@ -125,7 +125,7 @@ export async function renderShortcomingsScreen(container) {
     </div>
   `;
 
-  document.getElementById('sc-back').addEventListener('click', () => router.navigate('#congressional'));
+  document.getElementById('sc-back').addEventListener('click', () => router.backToHub());
 
   async function load() {
     try {

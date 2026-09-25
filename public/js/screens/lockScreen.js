@@ -121,7 +121,8 @@ export function renderLockScreen(container) {
       const suits = await api.getSuits();
       state.setSuits(suits);
 
-      router.navigate('#congressional');
+      // Replace so #lock is not left in history (prevents lock↔hub back-loop)
+      router.navigate('#congressional', { replace: true });
     } catch (err) {
       showError(err.message || 'Operation failed. Please try again.');
       submitBtn.disabled = false;

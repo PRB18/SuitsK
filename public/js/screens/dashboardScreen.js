@@ -30,58 +30,7 @@ export function renderDashboardScreen(container) {
   wrapper.className = 'dashboard-wrapper';
 
   wrapper.innerHTML = `
-    <!-- ── Dark Sidebar ─────────────────────────────────────────── -->
-    <aside class="ds-sidebar">
-      <div class="ds-sidebar-brand">
-        <div class="ds-sidebar-brand-mark">CTB</div>
-        <div class="ds-sidebar-title">Client Database</div>
-        <div class="ds-sidebar-sub">Bespoke Vault</div>
-      </div>
-
-      <div class="ds-sidebar-actions">
-        <button id="back-to-hub-btn" class="ds-sidebar-btn" aria-label="Back to Atelier Hub">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          Atelier Hub
-        </button>
-
-        <button id="new-suit-btn" class="ds-sidebar-btn primary" aria-label="Configure new suit (N)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          New Suit
-        </button>
-
-        <button id="lock-vault-btn" class="ds-sidebar-btn" aria-label="Lock vault">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          Lock Vault
-        </button>
-
-        <button id="backup-vault-btn" class="ds-sidebar-btn" aria-label="Create encrypted backup">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>
-          </svg>
-          Backup Vault
-        </button>
-
-        <button id="shortcut-help-btn" class="ds-sidebar-btn" aria-label="Keyboard shortcuts">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-          Shortcuts
-        </button>
-      </div>
-
-      <div class="ds-sidebar-footer">
-        <div class="ds-vault-dot"></div>
-        SQLCipher Encrypted
-      </div>
-    </aside>
-
-    <!-- ── Main Content ──────────────────────────────────────────── -->
+    <!-- ── Main Content (global sidebar is in shell.js) ──────────── -->
     <div class="ds-content">
 
       <!-- Top bar -->
@@ -90,10 +39,15 @@ export function renderDashboardScreen(container) {
           <div class="ds-top-heading">Suit Collection</div>
           <div class="ds-top-sub">Your bespoke configurations, encrypted at rest</div>
         </div>
-        <span id="suit-count-badge" class="vault-status-badge" aria-live="polite">
-          <span class="status-dot"></span>
-          <span id="suit-count-text">— suits</span>
-        </span>
+        <div class="ds-top-actions">
+          <button id="new-suit-btn" class="btn btn-primary btn-sm" aria-label="Configure new suit (N)">New Suit</button>
+          <button id="backup-vault-btn" class="btn btn-ghost btn-sm" aria-label="Create encrypted backup">Backup</button>
+          <button id="shortcut-help-btn" class="btn btn-ghost btn-sm" aria-label="Keyboard shortcuts">Shortcuts</button>
+          <span id="suit-count-badge" class="vault-status-badge" aria-live="polite">
+            <span class="status-dot"></span>
+            <span id="suit-count-text">— suits</span>
+          </span>
+        </div>
       </div>
 
       <!-- Stats strip -->
@@ -146,17 +100,6 @@ export function renderDashboardScreen(container) {
 
   wrapper.querySelector('#new-suit-btn').addEventListener('click', openNewSuit);
   wrapper.querySelector('#fab-new-suit').addEventListener('click', openNewSuit);
-  wrapper.querySelector('#back-to-hub-btn').addEventListener('click', () => router.navigate('#congressional'));
-
-  wrapper.querySelector('#lock-vault-btn').addEventListener('click', async () => {
-    try {
-      await api.lock();
-      state.setStatus({ firstRun: false, unlocked: false });
-      router.navigate('#lock');
-    } catch (err) {
-      showToast('Error locking vault: ' + err.message, 'error');
-    }
-  });
 
   wrapper.querySelector('#backup-vault-btn').addEventListener('click', async (event) => {
     const button = event.currentTarget;

@@ -1,3 +1,10 @@
+## 2026-09-25: Persistent sidebar shell + history-safe back navigation
+
+- **Decision:** Mount a persistent atelier shell (`shell.js` + shared `navConfig.js`) for all unlocked routes so the sidebar survives hash changes. Auth redirects and “Back to Hub” use `history.replaceState` / `router.backToHub()` instead of pushing another `#congressional` entry.
+- **Why:** “Back” buttons called `router.navigate('#congressional')`, which stacked hub→page→hub in history. Browser Back then ping-ponged between the same two pages. Rebuilding the full sidebar on every route was also unnecessary work.
+- **Alternatives considered:** Rely only on `history.back()` (rejected: mixes badly with auth hash guards); keep per-screen sidebars (rejected: forces a trip through the hub to change modules).
+- **Status:** Implemented in `router.js`, `shell.js`, `navConfig.js`, screen Back handlers, and hub/dashboard layout CSS.
+
 ## 2026-09-25: Client is the hub — measurements, style sheets, and workshop projects interconnect
 
 - **Decision:** Every client owns a `client_measurements` row (created on client create + backfilled). Suits gain `client_id`. Saving a style sheet syncs measurements to the client profile and can attach `suit_config_id` to the active garment project. New garments seed measurements from the client profile. Workshop and Client Profile both expose phase moves for a client's garment projects.

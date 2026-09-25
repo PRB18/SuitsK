@@ -54,7 +54,7 @@ export async function renderClientProfileScreen(container) {
         </div>
       </div>`;
 
-    document.getElementById('cpr-pick-back').addEventListener('click', () => router.navigate('#congressional'));
+    document.getElementById('cpr-pick-back').addEventListener('click', () => router.backToHub());
     document.getElementById('cpr-new-btn').addEventListener('click', () => router.navigate('#client-db'));
 
     try {
@@ -227,7 +227,7 @@ export async function renderClientProfileScreen(container) {
   let activeMeasProject = null;
 
   document.getElementById('cpr-back').addEventListener('click', () => {
-    window.history.back();
+    router.back('#client-db');
   });
 
   // ── Load client ────────────────────────────────────────────────────────────

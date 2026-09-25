@@ -1,13 +1,16 @@
 /**
  * app.js — Main application bootstrap & router setup
  *
- * Registers all 12 screen routes (4 existing + 8 new).
+ * Registers all screen routes and wires the persistent atelier shell.
  */
 import { api }    from './api.js';
 import { state }  from './state.js';
 import { router } from './router.js';
+import { configureShell } from './shell.js';
+import { showToast } from './toast.js';
 
 import { renderLockScreen }          from './screens/lockScreen.js';
+
 import { renderCongressionalScreen } from './screens/congressionalScreen.js';
 import { renderDashboardScreen }     from './screens/dashboardScreen.js';
 import { renderConfiguratorScreen }  from './screens/configuratorScreen.js';
@@ -24,11 +27,23 @@ async function bootstrap() {
   const root = document.getElementById('app');
 
   try {
-    // 1. Check vault status
     const status = await api.getStatus();
     state.setStatus(status);
 
-    // 2. Register all routes
+    configureShell({
+      navigate: (hash, opts) => router.navigate(hash, opts),
+      onLockVault: async () => {
+        try {
+          await api.lock();
+          state.setStatus({ firstRun: false, unlocked: false });
+          router.navigate('#lock', { replace: true });
+        } catch (err) {
+          showToast('Error locking vault: ' + err.message, 'error');
+          throw err;
+        }
+      },
+    });
+
     const routes = {
       '#lock':           renderLockScreen,
       '#congressional':  renderCongressionalScreen,
@@ -45,7 +60,6 @@ async function bootstrap() {
       '#status-quo':     renderStatusQuoScreen,
     };
 
-    // 3. Initialize router
     router.init(root, routes);
 
   } catch (err) {

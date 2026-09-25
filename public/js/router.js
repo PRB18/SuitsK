@@ -3,14 +3,19 @@
  *
  * Supports query parameters in hash: #client-profile?id=UUID
  * The route handler is called with parsed { params } object.
+ *
+ * Auth redirects and "back to hub" use history.replaceState so the browser
+ * back button cannot ping-pong between two hashes (classic SPA loop).
  */
 import { state } from './state.js';
+import { ensureShell, teardownShell, setActiveNav } from './shell.js';
 
 class Router {
   constructor() {
     this.routes       = {};
     this.currentRoute = null;
     this.rootElement  = null;
+    this._rendering   = false;
 
     window.addEventListener('hashchange', () => this.handleRoute());
   }
@@ -27,9 +32,21 @@ class Router {
     this.handleRoute();
   }
 
-  navigate(hash) {
+  /**
+   * @param {string} hash
+   * @param {{ replace?: boolean }} [opts]
+   */
+  navigate(hash, opts = {}) {
     const target = hash.startsWith('#') ? hash : `#${hash}`;
+    const replace = !!opts.replace;
+
     if (window.location.hash === target) {
+      this.handleRoute();
+      return;
+    }
+
+    if (replace) {
+      history.replaceState(null, '', target);
       this.handleRoute();
     } else {
       window.location.hash = target;
@@ -37,16 +54,29 @@ class Router {
   }
 
   /** Navigate to a route with query params, e.g. navigateTo('#client-profile', { id: 'abc' }) */
-  navigateTo(base, params = {}) {
+  navigateTo(base, params = {}, opts = {}) {
     const qs = Object.keys(params).length
       ? '?' + new URLSearchParams(params).toString()
       : '';
     const target = (base.startsWith('#') ? base : `#${base}`) + qs;
-    if (window.location.hash === target) {
-      this.handleRoute();
-    } else {
-      window.location.hash = target;
-    }
+    this.navigate(target, opts);
+  }
+
+  /**
+   * Leave the current screen without stacking hub in history.
+   * Prefer replace so browser Back cannot bounce between the same two pages.
+   */
+  backToHub() {
+    this.navigate('#congressional', { replace: true });
+  }
+
+  /**
+   * Leave nested screens without stacking history.
+   * Always replace — pairing history.back() with navigate() was the ping-pong loop.
+   */
+  back(fallback = '#congressional') {
+    const fb = fallback.startsWith('#') ? fallback : `#${fallback}`;
+    this.navigate(fb, { replace: true });
   }
 
   /** Parse query params from the hash portion, e.g. #route?id=abc → { id: 'abc' } */
@@ -62,29 +92,54 @@ class Router {
   }
 
   handleRoute() {
-    const rawHash  = window.location.hash || '#congressional';
-    const qi       = rawHash.indexOf('?');
-    const cleanHash = qi === -1 ? rawHash : rawHash.slice(0, qi);
+    if (this._rendering) return;
+    this._rendering = true;
 
-    // Auth guard
-    if (!state.status.unlocked) {
-      if (cleanHash !== '#lock') { window.location.hash = '#lock'; return; }
-    } else {
-      if (cleanHash === '#lock') { window.location.hash = '#congressional'; return; }
-    }
+    try {
+      let rawHash   = window.location.hash || '#congressional';
+      let qi        = rawHash.indexOf('?');
+      let cleanHash = qi === -1 ? rawHash : rawHash.slice(0, qi);
 
-    // Parse query params and inject client/order context into state
-    const params = this.getParams();
-    if (params.client_id) state.setCurrentClientId(params.client_id);
-    if (cleanHash === '#client-profile') { state.setCurrentClientId(params.id || null); }
-    if (params.order_id)  state.setCurrentOrderId(params.order_id);
-    if (params.project_id) state.setCurrentProjectId(params.project_id);
+      // Auth guard — always replace (never push) to prevent lock↔hub loops
+      if (!state.status.unlocked) {
+        if (cleanHash !== '#lock') {
+          history.replaceState(null, '', '#lock');
+          cleanHash = '#lock';
+        }
+      } else if (cleanHash === '#lock') {
+        history.replaceState(null, '', '#congressional');
+        cleanHash = '#congressional';
+      }
 
-    const handler = this.routes[cleanHash] || this.routes['#congressional'];
-    if (handler && this.rootElement) {
+      // Parse query params and inject client/order context into state
+      const params = this.getParams();
+      if (params.client_id) state.setCurrentClientId(params.client_id);
+      if (cleanHash === '#client-profile') { state.setCurrentClientId(params.id || null); }
+      if (params.order_id)  state.setCurrentOrderId(params.order_id);
+      if (params.project_id) state.setCurrentProjectId(params.project_id);
+
+      const handler = this.routes[cleanHash] || this.routes['#congressional'];
+      if (!handler || !this.rootElement) return;
+
       this.currentRoute = cleanHash;
-      this.rootElement.innerHTML = '';
-      handler(this.rootElement);
+
+      // Lock: full-bleed, no sidebar. Unlocked: persistent shell, swap main only.
+      if (cleanHash === '#lock') {
+        teardownShell(this.rootElement);
+        handler(this.rootElement);
+        return;
+      }
+
+      const main = ensureShell(this.rootElement);
+      main.innerHTML = '';
+      setActiveNav(cleanHash);
+      handler(main);
+      // Focus main for a11y without scrolling the page harshly
+      if (typeof main.focus === 'function') {
+        try { main.focus({ preventScroll: true }); } catch { /* ignore */ }
+      }
+    } finally {
+      this._rendering = false;
     }
   }
 }

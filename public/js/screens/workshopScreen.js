@@ -111,7 +111,7 @@ export async function renderWorkshopScreen(container) {
     </div>
   `;
 
-  document.getElementById('ws-back').addEventListener('click', () => router.navigate('#congressional'));
+  document.getElementById('ws-back').addEventListener('click', () => router.backToHub());
   document.getElementById('ws-edit-sections').addEventListener('click', openSectionsEditor);
 
   async function load() {

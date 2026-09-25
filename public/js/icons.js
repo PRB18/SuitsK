@@ -488,42 +488,45 @@ export function getIcon(optionValue) {
 
 function garmentOptionIcon(field, value) {
   const normalized = String(value).toLowerCase();
-  const stroke = 'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"';
+  const stroke = 'stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"';
+  const accent = 'stroke="#C9A87A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"';
   let drawing = '';
 
   if (field === 'collarStyle') {
     const collar = normalized.includes('band') || normalized.includes('mandarin')
-      ? '<path d="M20 11 H36 V18 H20Z"/>'
-      : normalized.includes('wing') || normalized.includes('tuxedo')
-        ? '<path d="M24 11 L16 16 L21 22 M32 11 L40 16 L35 22"/>'
+      ? '<path d="M18 18 H30 V31 H18Z"/><path d="M30 18 H36 V31 H30Z"/>'
+      : normalized.includes('tuxedo')
+        ? '<path d="M18 18 L24 27 L30 18 M30 18 L36 23 L32 29"/>'
         : normalized.includes('cutaway')
-          ? '<path d="M24 11 L11 18 L22 24 M32 11 L45 18 L34 24"/>'
+          ? '<path d="M18 18 L8 25 L23 30 M30 18 L40 25 L25 30"/>'
           : normalized.includes('club')
-            ? '<path d="M24 11 L18 18 Q18 24 24 21 M32 11 L38 18 Q38 24 32 21"/>'
-            : '<path d="M24 11 L18 20 L24 25 L28 19 M32 11 L38 20 L32 25 L28 19"/>';
-    drawing = `<path d="M24 7 L16 12 L10 18 V40 H38 V18 L32 12Z"/>${collar}`;
+            ? '<path d="M18 18 L13 25 Q16 32 23 28 M30 18 L35 25 Q32 32 25 28"/>'
+            : normalized.includes('snap') || normalized.includes('tab')
+              ? '<path d="M18 18 L23 28 H25 L30 18 M23 27 H31"/>'
+              : '<path d="M18 18 L23 29 L25 29 L30 18 M23 29 L19 35 M25 29 L29 35"/>';
+    drawing = `<path d="M12 13 H36 L42 20 L29 39 H19 L6 20Z"/><path d="M12 13 L24 21 L36 13"/>${collar}`;
   } else if (field === 'cuffStyle') {
     const buttonCount = normalized.includes('3') ? 3 : normalized.includes('2') ? 2 : 1;
-    const buttons = Array.from({ length: buttonCount }, (_, index) => `<circle cx="${29 + index * 5}" cy="26" r="1.6"/>`).join('');
-    drawing = `<path d="M10 17 H42 V33 H10Z"/><path d="M16 17 V33 M36 17 V33"/>${buttons}${normalized.includes('french') ? '<path d="M10 17 L6 22 L10 28"/>' : ''}`;
+    const buttons = Array.from({ length: buttonCount }, (_, index) => `<circle cx="${27 + index * 5}" cy="25" r="1.35"/>`).join('');
+    drawing = `<path d="M9 17 L39 13 L42 29 L12 35Z"/><path d="M14 18 L17 32"/>${buttons}${normalized.includes('french') ? '<path d="M9 17 L5 22 L12 35"/>' : ''}`;
   } else if (field === 'pocketCount') {
     const pockets = normalized.includes('two') ? '<path d="M13 26 H21 V33 H13Z M27 26 H35 V33 H27Z"/>' : normalized.includes('one') ? '<path d="M27 26 H35 V33 H27Z"/>' : '';
-    drawing = `<path d="M24 7 L16 12 L10 18 V40 H38 V18 L32 12Z"/>${pockets}`;
+    drawing = `<path d="M24 7 L16 12 L10 18 V40 H38 V18 L32 12Z"/><path d="M16 12 L24 20 L32 12"/>${pockets}`;
   } else if (field === 'pocketShape') {
     const index = Number(normalized.replace(/\D/g, '')) || 1;
     const pocket = index % 3 === 0 ? 'M14 24 Q24 20 34 24 V34 Q24 38 14 34Z' : index % 2 === 0 ? 'M14 24 H34 L32 35 H16Z' : 'M14 24 H34 V34 H14Z';
-    drawing = `<path d="M24 7 L16 12 L10 18 V40 H38 V18 L32 12Z"/><path d="${pocket}"/>`;
+    drawing = `<path d="M24 7 L16 12 L10 18 V40 H38 V18 L32 12Z"/><path d="M16 12 L24 20 L32 12"/><path d="${pocket}" ${accent}/>`;
   } else if (field === 'placketStyle') {
     const concealed = normalized.includes('concealed');
     drawing = `<path d="M24 7 L16 12 L10 18 V40 H38 V18 L32 12Z"/><path d="M24 14 V40"/>${concealed ? '<path d="M20 14 V40"/>' : normalized.includes('french') ? '<path d="M28 14 V40"/>' : '<path d="M24 18 H26 M24 24 H26 M24 30 H26"/>'}`;
   } else if (field === 'pleatStyle') {
     const pleats = normalized.includes('2') ? '<path d="M22 15 L20 24 M26 15 L24 24 M28 15 L30 24"/>' : normalized.includes('1') ? '<path d="M24 15 L22 24 M28 15 L30 24"/>' : '';
-    drawing = `<path d="M14 9 H34 L32 17 L29 40 H24 L22 24 L20 40 H15 L17 17Z"/>${pleats}`;
+    drawing = `<path d="M14 9 H34 L32 17 L29 40 H24 L22 24 L20 40 H15 L17 17Z"/>${pleats}<path d="M14 9 H34" ${accent}/>`;
   } else if (field === 'backPocketStyle') {
     const pocket = normalized.includes('cross') ? '<path d="M17 26 L31 34 M31 26 L17 34"/>' : normalized === 'l' || normalized.includes('l with') ? '<path d="M17 24 V34 H31"/>' : normalized.includes('double') ? '<path d="M16 27 H32 M16 31 H32"/>' : normalized.includes('side') ? '<path d="M29 24 V35"/>' : '<path d="M16 25 H32 V33 H16Z"/>';
-    drawing = `<path d="M12 9 H36 L34 40 H14Z"/>${pocket}`;
+    drawing = `<path d="M12 9 H36 L34 40 H14Z"/><path d="M12 16 H36"/>${pocket}`;
   } else if (field === 'beltLoopStyle') {
-    drawing = `<path d="M12 12 H36 V20 H12Z"/><path d="M16 12 V27 M24 12 V27 M32 12 V27"/>${normalized.includes('button') ? '<circle cx="24" cy="31" r="2"/>' : normalized.includes('hook') ? '<path d="M28 27 H34 V32 H30"/>' : ''}`;
+    drawing = `<path d="M12 12 H36 V20 H12Z"/><path d="M16 12 V29 M24 12 V29 M32 12 V29"/>${normalized.includes('button') ? '<circle cx="24" cy="33" r="1.8"/>' : normalized.includes('hook') ? '<path d="M28 29 H34 V34 H30"/>' : ''}`;
   } else if (field === 'waistbandStyle') {
     drawing = normalized.includes('elastic')
       ? '<path d="M12 14 H36 V23 H12Z"/><path d="M16 16 V21 M20 16 V21 M24 16 V21 M28 16 V21 M32 16 V21"/>'

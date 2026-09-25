@@ -1,4 +1,4 @@
-/**
+﻿/**
  * icons.js — Bespoke Vector Line-Art Icon Library for Krishna Suits
  *
  * Stage 5 (Revised): Open line-art illustrations inspired by Savile Row & premium
@@ -334,23 +334,58 @@ function pocketIcon(label, rounded = false, slanted = false, flap = false) {
 }
 
 function shapeIcon(label, shape) {
-  const path = shape === 'Erect'
-    ? 'M18 52 Q22 25 35 18 Q48 25 52 52'
+  // Side-profile body posture silhouette matching tailor reference chart
+  // Each shows: head circle, spine curve, body outline from side view
+  const bodyPath = shape === 'Erect'
+    // Erect: chest puffed forward, head slightly back (military posture)
+    ? `<circle cx="35" cy="13" r="5" stroke-width="1.8"/>
+       <path d="M35 18 Q38 28 38 38 Q37 46 35 52" stroke-width="2" stroke-linecap="round"/>
+       <path d="M25 22 Q18 30 18 40 Q19 48 24 52 L46 52 Q51 48 52 40 Q52 30 45 22 Q42 20 38 18" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+       <path d="M38 18 Q44 25 44 35" stroke-width="2.2" stroke-linecap="round"/>`
     : shape === 'Hunched'
-      ? 'M18 48 Q22 32 35 28 Q48 32 52 48'
-      : 'M18 52 Q22 20 35 20 Q48 20 52 52';
-  return jacketLineIcon(label, label.toUpperCase(), `<path d="${path}" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`);
+    // Hunched: forward lean, curved spine, head drooped
+    ? `<circle cx="30" cy="13" r="5" stroke-width="1.8"/>
+       <path d="M31 18 Q28 28 30 38 Q32 46 35 52" stroke-width="2" stroke-linecap="round"/>
+       <path d="M21 24 Q15 32 17 42 Q19 50 25 52 L47 52 Q50 48 49 40 Q47 31 42 24 Q38 20 33 18" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+       <path d="M31 18 Q26 26 27 36" stroke-width="2.2" stroke-linecap="round"/>`
+    // Normal: upright natural posture
+    : `<circle cx="35" cy="13" r="5" stroke-width="1.8"/>
+       <path d="M35 18 Q35 28 35 38 Q35 46 35 52" stroke-width="2" stroke-linecap="round"/>
+       <path d="M24 22 Q18 30 18 40 Q19 48 24 52 L46 52 Q51 48 52 40 Q52 30 46 22 Q42 20 40 18" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return `
+    <svg width="44" height="50" viewBox="0 0 70 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="1" y="1" width="68" height="60" rx="2" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35"/>
+      <g stroke="currentColor" fill="none">${bodyPath}</g>
+      <text x="35" y="70" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">${label.toUpperCase()}</text>
+    </svg>
+  `;
 }
 
 function stomachIcon(label, amount) {
-  const path = amount === 'Large'
-    ? 'M24 21 Q15 35 24 52 Q35 59 46 52 Q55 35 46 21'
+  // Front-facing body silhouette with varying stomach protrusion
+  const bodyPath = amount === 'Large'
+    ? `<circle cx="35" cy="13" r="5" stroke-width="1.8"/>
+       <path d="M26 20 Q16 24 14 36 Q12 46 18 52 L52 52 Q58 46 56 36 Q54 24 44 20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+       <path d="M22 35 Q18 41 20 50 L50 50 Q52 41 48 35 Q44 27 35 26 Q26 27 22 35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+       <line x1="35" y1="20" x2="35" y2="52" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="2 2"/>`
     : amount === 'Slight'
-      ? 'M27 21 Q22 35 27 51 Q35 56 43 51 Q48 35 43 21'
-      : 'M30 21 Q28 35 30 50 H40 Q42 35 40 21';
-  return jacketLineIcon(label, label.toUpperCase(), `<path d="${path}" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`);
+    ? `<circle cx="35" cy="13" r="5" stroke-width="1.8"/>
+       <path d="M27 20 Q18 24 17 36 Q16 46 21 52 L49 52 Q54 46 53 36 Q52 24 43 20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+       <path d="M25 35 Q22 41 23 50 L47 50 Q48 41 45 35 Q42 28 35 27 Q28 28 25 35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+       <line x1="35" y1="20" x2="35" y2="52" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="2 2"/>`
+    // Flat
+    : `<circle cx="35" cy="13" r="5" stroke-width="1.8"/>
+       <path d="M28 20 Q20 24 19 36 Q19 46 23 52 L47 52 Q51 46 51 36 Q50 24 42 20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+       <path d="M27 34 Q27 42 28 50 L42 50 Q43 42 43 34 Q43 28 35 27 Q27 28 27 34" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+       <line x1="35" y1="20" x2="35" y2="52" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="2 2"/>`;
+  return `
+    <svg width="44" height="50" viewBox="0 0 70 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="1" y="1" width="68" height="60" rx="2" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35"/>
+      <g stroke="currentColor" fill="none">${bodyPath}</g>
+      <text x="35" y="70" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">${label.toUpperCase()}</text>
+    </svg>
+  `;
 }
-
 Object.assign(ICONS, {
   '1 Button Suit': buttonIcon('1 Button Suit', 1),
   '2 Button Suit': buttonIcon('2 Button Suit', 2),

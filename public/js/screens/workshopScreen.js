@@ -66,6 +66,25 @@ export async function renderWorkshopScreen(container) {
         </div>
       </div>
     </div>
+
+    <!-- Project Edit Modal -->
+    <div class="modal-overlay" id="ws-edit-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="ws-edit-title">
+      <div class="modal-panel modal-panel--sm">
+        <div class="modal-header">
+          <h2 class="modal-title" id="ws-edit-title">Edit Workshop Project</h2>
+          <button class="btn-icon modal-close" id="ws-edit-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted" id="ws-edit-project-label"></p>
+          <div class="form-field"><label for="ws-edit-status">Stage</label><select id="ws-edit-status" class="input">${STAGES.map(stage => `<option value="${stage}">${STAGE_LABELS[stage]}</option>`).join('')}</select></div>
+          <div class="form-grid form-grid-2">
+            <div class="form-field"><label for="ws-edit-trial">Trial Date</label><input type="date" id="ws-edit-trial" class="input"></div>
+            <div class="form-field"><label for="ws-edit-delivery">Delivery Date</label><input type="date" id="ws-edit-delivery" class="input"></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-ghost" id="ws-edit-cancel">Cancel</button><button class="btn btn-primary" id="ws-edit-save">Save Changes</button></div>
+      </div>
+    </div>
   `;
 
   document.getElementById('ws-back').addEventListener('click', () => router.navigate('#congressional'));
@@ -151,6 +170,9 @@ export async function renderWorkshopScreen(container) {
     board.querySelectorAll('[data-action="view-client"]').forEach(btn => {
       btn.addEventListener('click', () => router.navigateTo('#client-profile', { id: btn.dataset.clientId }));
     });
+    board.querySelectorAll('[data-action="edit-project"]').forEach(btn => {
+      btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+    });
   }
 
   function renderCard(p) {
@@ -173,6 +195,7 @@ export async function renderWorkshopScreen(container) {
           <span class="kanban-card-ref">${escHtml(p.client_ref)} · ${escHtml(p.order_ref)}</span>
         </div>
         ${p.delivery_date ? `<div class="kanban-card-date">Delivery: ${fmtDate(p.delivery_date)}</div>` : ''}
+        <button class="btn btn-ghost btn-sm kanban-edit-btn" data-action="edit-project" data-id="${p.id}">✎ Edit</button>
         ${nextStage ? `
           <button class="btn btn-primary btn-sm kanban-move-btn" data-action="move-stage" data-id="${p.id}" data-current="${p.status}">
             → ${STAGE_LABELS[nextStage]}
@@ -180,6 +203,42 @@ export async function renderWorkshopScreen(container) {
       </div>
     `;
   }
+
+  let editingProject = null;
+
+  function openEditModal(projectId) {
+    editingProject = allProjects.find(project => project.id === projectId);
+    if (!editingProject) return;
+    document.getElementById('ws-edit-project-label').textContent = `${editingProject.garment_type} · ${editingProject.client_name} · ${editingProject.order_ref}`;
+    document.getElementById('ws-edit-status').value = editingProject.status;
+    document.getElementById('ws-edit-trial').value = editingProject.trial_date || '';
+    document.getElementById('ws-edit-delivery').value = editingProject.delivery_date || '';
+    document.getElementById('ws-edit-modal').style.display = 'flex';
+  }
+
+  function closeEditModal() {
+    editingProject = null;
+    document.getElementById('ws-edit-modal').style.display = 'none';
+  }
+
+  document.getElementById('ws-edit-close').addEventListener('click', closeEditModal);
+  document.getElementById('ws-edit-cancel').addEventListener('click', closeEditModal);
+  document.getElementById('ws-edit-save').addEventListener('click', async () => {
+    if (!editingProject) return;
+    const button = document.getElementById('ws-edit-save');
+    const status = document.getElementById('ws-edit-status').value;
+    const trial_date = document.getElementById('ws-edit-trial').value;
+    const delivery_date = document.getElementById('ws-edit-delivery').value;
+    button.disabled = true;
+    try {
+      await api.updateProject(editingProject.id, { status });
+      await api.updateOrder(editingProject.client_id, editingProject.order_id, { trial_date, delivery_date });
+      closeEditModal();
+      showToast('Workshop project updated.', 'success');
+      await load();
+    } catch (err) { showToast('Update failed: ' + err.message, 'error'); }
+    finally { button.disabled = false; }
+  });
 
   // ── Move Stage Modal ───────────────────────────────────────────────────────
   let pendingMoveId = null;

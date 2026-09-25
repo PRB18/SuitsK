@@ -213,7 +213,8 @@ export function renderCongressionalScreen(container) {
   wrapper.querySelectorAll('[data-route]').forEach(el => {
     el.addEventListener('click', () => {
       const route = el.dataset.route;
-      if (IMPLEMENTED.includes(route)) {
+      const cleanRoute = route.split('?')[0];
+      if (IMPLEMENTED.includes(cleanRoute)) {
         router.navigate(route);
       } else {
         _pulse(el);

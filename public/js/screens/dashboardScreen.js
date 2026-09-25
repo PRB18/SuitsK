@@ -208,6 +208,9 @@ export function renderDashboardScreen(container) {
   
   loadSuits(gridContainer, analyticsContainer, wrapper);
   renderB2bPanel(b2bContainer);
+  if (window.location.hash.includes('section=b2b')) {
+    setTimeout(() => b2bContainer.scrollIntoView({ behavior: 'auto', block: 'start' }), 0);
+  }
 
   // ── Cleanup keyboard listener when screen is torn down ───────────────────
   const obs = new MutationObserver(() => {

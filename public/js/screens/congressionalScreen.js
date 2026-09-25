@@ -105,7 +105,7 @@ const MODULES = [
     roman: 'IX',
     title: 'B2B Logistics',
     subtitle: 'Vendor & Corporate',
-    route: '#dashboard',
+    route: '#dashboard?section=b2b',
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
       <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
@@ -166,10 +166,7 @@ export function renderCongressionalScreen(container) {
       <!-- Hero -->
       <div class="ctb-hero">
         <div class="ctb-hero-eyebrow">✦ &nbsp; Atelier Management System &nbsp; ✦</div>
-        <h1 class="ctb-hero-title">
-          <em>Congressional</em><br>
-          <span class="ctb-hero-title-plain">The Bespoke</span>
-        </h1>
+        <h1 class="ctb-hero-title"><em>Congressional</em> <span class="ctb-hero-title-plain">The Bespoke</span></h1>
         <p class="ctb-hero-sub">Ten pillars of the craft. Select a module below.</p>
         <div class="ctb-hero-rule">
           <span class="ctb-hero-rule-line"></span>

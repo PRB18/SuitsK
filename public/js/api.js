@@ -65,6 +65,13 @@ export const api = {
   async deleteClient(id) {
     return request(`/api/clients/${encodeURIComponent(id)}`, { method: 'DELETE' });
   },
+  async getClientMeasurements(id) { return request(`/api/clients/${encodeURIComponent(id)}/measurements`); },
+  async updateClientMeasurements(id, data) {
+    return request(`/api/clients/${encodeURIComponent(id)}/measurements`, { method: 'PUT', body: JSON.stringify(data) });
+  },
+  async addClientVisit(id, data) {
+    return request(`/api/clients/${encodeURIComponent(id)}/visits`, { method: 'POST', body: JSON.stringify(data) });
+  },
 
   // ── Orders ────────────────────────────────────────────────────────────────
   async getOrders(clientId) {

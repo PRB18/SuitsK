@@ -53,6 +53,7 @@ export async function renderWorkHierarchyScreen(container) {
         <div class="hier-card-header">
           <span class="drag-handle" title="Drag to reorder">⠿</span>
           <span class="hier-section-name" data-id="${sec.id}" contenteditable="true" spellcheck="false">${escHtml(sec.section_name)}</span>
+          <button class="btn-icon hier-edit-section" data-id="${sec.id}" title="Edit section name" aria-label="Edit section name">✎</button>
           <button class="btn-icon btn-icon--danger hier-del-section" data-id="${sec.id}" title="Delete section">🗑</button>
         </div>
         <div class="hier-personnel-list" data-section-id="${sec.id}">
@@ -128,6 +129,20 @@ export async function renderWorkHierarchyScreen(container) {
           sec.personnel = updated;
           renderGrid();
         } catch (err) { showToast('Failed: ' + err.message, 'error'); }
+      });
+    });
+
+    grid.querySelectorAll('.hier-edit-section').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const name = grid.querySelector(`.hier-section-name[data-id="${btn.dataset.id}"]`);
+        if (!name) return;
+        name.focus();
+        const range = document.createRange();
+        range.selectNodeContents(name);
+        range.collapse(false);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
       });
     });
 

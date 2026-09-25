@@ -60,13 +60,34 @@ async function initDatabase() {
       id          TEXT PRIMARY KEY,
       client_ref  TEXT NOT NULL UNIQUE,
       name        TEXT NOT NULL,
-      phone       TEXT NOT NULL UNIQUE,
+      phone       TEXT DEFAULT NULL,
       email       TEXT NOT NULL DEFAULT '',
       address     TEXT NOT NULL DEFAULT '',
       city        TEXT NOT NULL DEFAULT '',
       notes       TEXT NOT NULL DEFAULT '',
       created_at  TEXT NOT NULL,
       updated_at  TEXT NOT NULL
+    )
+  `),
+
+  client.execute(`
+    CREATE TABLE IF NOT EXISTS client_measurements (
+      id          TEXT PRIMARY KEY,
+      client_id   TEXT NOT NULL UNIQUE REFERENCES clients(id) ON DELETE CASCADE,
+      unit        TEXT NOT NULL DEFAULT 'in',
+      values_json TEXT NOT NULL DEFAULT '{}',
+      created_at  TEXT NOT NULL,
+      updated_at  TEXT NOT NULL
+    )
+  `),
+
+  client.execute(`
+    CREATE TABLE IF NOT EXISTS client_visits (
+      id          TEXT PRIMARY KEY,
+      client_id   TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      visit_date  TEXT NOT NULL,
+      purpose     TEXT NOT NULL DEFAULT '',
+      created_at  TEXT NOT NULL
     )
   `),
 
@@ -240,6 +261,7 @@ async function initDatabase() {
 
   // These tables are independent; run their DDL together to reduce cold-start latency.
   await Promise.all(schemaTasks);
+  await client.execute(`CREATE UNIQUE INDEX IF NOT EXISTS clients_phone_unique ON clients(phone) WHERE phone IS NOT NULL AND phone != ''`);
 
   // ── Calendar OAuth Tokens ─────────────────────────────────────────────────
   // One row per provider (google | apple | outlook).

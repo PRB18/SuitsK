@@ -90,6 +90,12 @@ Client-side state management for the suit vault and current draft configuration.
 
 ### Key Behaviors
 
+**Client measurement ownership:**
+- Creating a client also creates one blank `client_measurements` record.
+- `GET /api/clients/:id` returns the linked measurement profile and dated `client_visits`.
+- `PUT /api/clients/:id/measurements` replaces the client-level measurement values; garment-project measurements remain available for order-specific overrides.
+- `POST /api/clients/:id/visits` records a visit date and purpose.
+
 **Draft Persistence:**
 - `currentSuit` stays in memory during wizard navigation.
 - No auto-save to database — suit is only persisted on explicit "Save" action.

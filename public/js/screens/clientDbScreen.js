@@ -55,13 +55,14 @@ export async function renderClientDbScreen(container) {
               <th>Client Name</th>
               <th>Phone</th>
               <th>City</th>
+              <th>Added</th>
               <th>Order Status</th>
               <th>Last Updated</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="cdb-tbody">
-            <tr><td colspan="7" class="table-loading">Loading clients…</td></tr>
+            <tr><td colspan="8" class="table-loading">Loading clients…</td></tr>
           </tbody>
         </table>
       </div>
@@ -89,7 +90,7 @@ export async function renderClientDbScreen(container) {
               <input type="text" id="cdb-f-name" class="input" placeholder="Muhammad Ahmed" autocomplete="name">
             </div>
             <div class="form-field">
-              <label for="cdb-f-phone">Phone Number <span class="required">*</span></label>
+              <label for="cdb-f-phone">Phone Number <span class="optional">(optional)</span></label>
               <input type="tel" id="cdb-f-phone" class="input" placeholder="+92-300-1234567" autocomplete="tel">
               <div class="field-error" id="cdb-phone-error" style="display:none;"></div>
             </div>
@@ -161,7 +162,7 @@ export async function renderClientDbScreen(container) {
     count.textContent = `${filtered.length} client${filtered.length !== 1 ? 's' : ''}`;
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No clients match your search.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No clients match your search.</td></tr>';
       empty.style.display = allClients.length === 0 ? 'flex' : 'none';
       table.style.display = allClients.length === 0 ? 'none' : '';
       return;
@@ -179,6 +180,7 @@ export async function renderClientDbScreen(container) {
           <td class="client-name-cell"><strong>${escHtml(c.name)}</strong></td>
           <td>${escHtml(c.phone)}</td>
           <td>${escHtml(c.city || '—')}</td>
+          <td class="text-muted">${formatDate(c.created_at)}</td>
           <td>${statusBadge}</td>
           <td class="text-muted">${updatedAgo}</td>
           <td>
@@ -274,7 +276,6 @@ export async function renderClientDbScreen(container) {
     const notes   = document.getElementById('cdb-f-notes').value.trim();
 
     if (!name) { showToast('Full name is required.', 'error'); return; }
-    if (!phone) { showToast('Phone number is required.', 'error'); return; }
     if (phoneError.style.display !== 'none') { showToast('Please resolve the duplicate phone number first.', 'error'); return; }
 
     const saveBtn = document.getElementById('cdb-save');
@@ -342,6 +343,12 @@ function timeAgo(isoString) {
   const d = Math.floor(h / 24);
   if (d < 30) return `${d}d ago`;
   return new Date(isoString).toLocaleDateString('en-PK', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function formatDate(isoString) {
+  if (!isoString) return '—';
+  const date = new Date(isoString);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function escHtml(str) {

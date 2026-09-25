@@ -60,6 +60,16 @@ function safe(str) {
   return typeof str === 'string' ? str.trim() : '';
 }
 
+function displayPhone(phone) {
+  return typeof phone === 'string' && phone.startsWith('__NO_PHONE__') ? '' : (phone || '');
+}
+
+async function supportsNullPhone(db) {
+  const result = await db.execute('PRAGMA table_info(clients)');
+  const phoneColumn = result.rows.find(column => column.name === 'phone');
+  return phoneColumn ? Number(phoneColumn.notnull) === 0 : true;
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // CLIENT ROUTES
 // ────────────────────────────────────────────────────────────────────────────
@@ -69,7 +79,9 @@ router.get('/clients', async (req, res) => {
   try {
     const db = getDb();
     const result = await db.execute(
-      `SELECT c.id, c.client_ref, c.name, c.phone, c.email, c.city, c.updated_at,
+            `SELECT c.id, c.client_ref, c.name,
+              CASE WHEN c.phone LIKE '__NO_PHONE__%' THEN '' ELSE COALESCE(c.phone, '') END AS phone,
+              c.email, c.city, c.created_at, c.updated_at,
               (SELECT o.status FROM orders o WHERE o.client_id = c.id
                ORDER BY o.created_at DESC LIMIT 1) AS latest_order_status,
               (SELECT o.id FROM orders o WHERE o.client_id = c.id
@@ -89,35 +101,42 @@ router.post('/clients', async (req, res) => {
 
   if (!name || safe(name).length === 0)
     return res.status(400).json({ error: 'Client name is required.' });
-  if (!phone || safe(phone).length === 0)
-    return res.status(400).json({ error: 'Phone number is required.' });
-
   try {
     const db = getDb();
 
     // Uniqueness check — return the existing client's ref so frontend can link to it
-    const existing = await db.execute({
-      sql:  'SELECT id, client_ref, name FROM clients WHERE phone = ?',
-      args: [safe(phone)],
-    });
-    if (existing.rows.length > 0) {
-      return res.status(409).json({
-        error: `A client with this phone number already exists.`,
-        existing: existing.rows[0],
+    if (safe(phone)) {
+      const existing = await db.execute({
+        sql:  'SELECT id, client_ref, name FROM clients WHERE phone = ?',
+        args: [safe(phone)],
       });
+      if (existing.rows.length > 0) {
+        return res.status(409).json({
+          error: `A client with this phone number already exists.`,
+          existing: existing.rows[0],
+        });
+      }
     }
 
     const id         = uuidv4();
     const ts         = now();
     const client_ref = await generateClientRef(db);
+    const normalizedPhone = safe(phone) || null;
+    const storedPhone = normalizedPhone || (await supportsNullPhone(db) ? null : `__NO_PHONE__${id}`);
 
     await db.execute({
       sql:  `INSERT INTO clients (id, client_ref, name, phone, email, address, city, notes, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [id, client_ref, safe(name), safe(phone), safe(email), safe(address), safe(city), safe(notes), ts, ts],
+      args: [id, client_ref, safe(name), storedPhone, safe(email), safe(address), safe(city), safe(notes), ts, ts],
     });
 
-    res.status(201).json({ id, client_ref, name: safe(name), phone: safe(phone), email: safe(email), address: safe(address), city: safe(city), notes: safe(notes), created_at: ts, updated_at: ts });
+    await db.execute({
+      sql: `INSERT INTO client_measurements (id, client_id, unit, values_json, created_at, updated_at)
+            VALUES (?, ?, 'in', '{}', ?, ?)`,
+      args: [uuidv4(), id, ts, ts],
+    });
+
+    res.status(201).json({ id, client_ref, name: safe(name), phone: normalizedPhone || '', email: safe(email), address: safe(address), city: safe(city), notes: safe(notes), created_at: ts, updated_at: ts, measurement_linked: true });
   } catch (err) {
     console.error('[clients] POST / error:', err);
     res.status(500).json({ error: err.message });
@@ -136,6 +155,7 @@ router.get('/clients/:id', async (req, res) => {
       return res.status(404).json({ error: 'Client not found.' });
 
     const client = clientResult.rows[0];
+    client.phone = displayPhone(client.phone);
 
     // Fetch all orders for this client
     const ordersResult = await db.execute({
@@ -157,11 +177,62 @@ router.get('/clients/:id', async (req, res) => {
       orders.push({ ...order, projects });
     }
 
-    res.json({ ...client, orders });
+    const measurementResult = await db.execute({
+      sql: 'SELECT id, unit, values_json, created_at, updated_at FROM client_measurements WHERE client_id = ?',
+      args: [req.params.id],
+    });
+    const visitsResult = await db.execute({
+      sql: 'SELECT id, visit_date, purpose, created_at FROM client_visits WHERE client_id = ? ORDER BY visit_date DESC, created_at DESC',
+      args: [req.params.id],
+    });
+    const measurement = measurementResult.rows[0] || null;
+    res.json({ ...client, orders, visits: visitsResult.rows, measurement: measurement ? { ...measurement, values: JSON.parse(measurement.values_json || '{}') } : null });
   } catch (err) {
     console.error('[clients] GET /:id error:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// GET /api/clients/:id/measurements — client-level measurement profile
+router.get('/clients/:id/measurements', async (req, res) => {
+  try {
+    const db = getDb();
+    const result = await db.execute({ sql: 'SELECT * FROM client_measurements WHERE client_id=?', args: [req.params.id] });
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Measurement profile not found.' });
+    const row = result.rows[0];
+    res.json({ ...row, values: JSON.parse(row.values_json || '{}') });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/clients/:id/measurements — replace client-level measurement values
+router.put('/clients/:id/measurements', async (req, res) => {
+  try {
+    const db = getDb();
+    const ts = now();
+    const values = req.body.values && typeof req.body.values === 'object' ? req.body.values : {};
+    const unit = safe(req.body.unit) || 'in';
+    const existing = await db.execute({ sql: 'SELECT id FROM client_measurements WHERE client_id=?', args: [req.params.id] });
+    if (existing.rows.length === 0) {
+      await db.execute({ sql: `INSERT INTO client_measurements (id, client_id, unit, values_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`, args: [uuidv4(), req.params.id, unit, JSON.stringify(values), ts, ts] });
+    } else {
+      await db.execute({ sql: 'UPDATE client_measurements SET unit=?, values_json=?, updated_at=? WHERE client_id=?', args: [unit, JSON.stringify(values), ts, req.params.id] });
+    }
+    res.json({ client_id: req.params.id, unit, values, updated_at: ts });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/clients/:id/visits — add a dated client visit
+router.post('/clients/:id/visits', async (req, res) => {
+  const visitDate = safe(req.body.visit_date);
+  if (!visitDate) return res.status(400).json({ error: 'visit_date is required.' });
+  try {
+    const db = getDb();
+    const clientCheck = await db.execute({ sql: 'SELECT id FROM clients WHERE id=?', args: [req.params.id] });
+    if (clientCheck.rows.length === 0) return res.status(404).json({ error: 'Client not found.' });
+    const row = { id: uuidv4(), client_id: req.params.id, visit_date: visitDate, purpose: safe(req.body.purpose), created_at: now() };
+    await db.execute({ sql: 'INSERT INTO client_visits (id, client_id, visit_date, purpose, created_at) VALUES (?, ?, ?, ?, ?)', args: [row.id, row.client_id, row.visit_date, row.purpose, row.created_at] });
+    res.status(201).json(row);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // PUT /api/clients/:id — update client fields
@@ -192,11 +263,14 @@ router.put('/clients/:id', async (req, res) => {
       }
     }
 
+    const storedPhone = phone !== undefined
+      ? (safe(phone) || (await supportsNullPhone(db) ? null : `__NO_PHONE__${req.params.id}`))
+      : row.phone;
     await db.execute({
       sql:  `UPDATE clients SET name=?, phone=?, email=?, address=?, city=?, notes=?, updated_at=? WHERE id=?`,
       args: [
         name    !== undefined ? safe(name)    : row.name,
-        phone   !== undefined ? safe(phone)   : row.phone,
+        storedPhone,
         email   !== undefined ? safe(email)   : row.email,
         address !== undefined ? safe(address) : row.address,
         city    !== undefined ? safe(city)    : row.city,
@@ -206,7 +280,9 @@ router.put('/clients/:id', async (req, res) => {
     });
 
     const updated = await db.execute({ sql: 'SELECT * FROM clients WHERE id = ?', args: [req.params.id] });
-    res.json(updated.rows[0]);
+    const updatedClient = updated.rows[0];
+    updatedClient.phone = displayPhone(updatedClient.phone);
+    res.json(updatedClient);
   } catch (err) {
     console.error('[clients] PUT /:id error:', err);
     res.status(500).json({ error: err.message });

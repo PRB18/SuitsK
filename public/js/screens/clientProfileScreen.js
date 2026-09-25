@@ -142,6 +142,20 @@ export async function renderClientProfileScreen(container) {
         </div>
       </div>
     </div>
+    <!-- Add Visit Modal -->
+    <div class="modal-overlay" id="visit-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="visit-modal-title">
+      <div class="modal-panel modal-panel--sm">
+        <div class="modal-header">
+          <h2 class="modal-title" id="visit-modal-title">Add Client Visit</h2>
+          <button class="btn-icon modal-close" id="visit-modal-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-field"><label for="visit-date">Visit Date <span class="required">*</span></label><input type="date" id="visit-date" class="input"></div>
+          <div class="form-field"><label for="visit-purpose">Purpose</label><input type="text" id="visit-purpose" class="input" placeholder="Fitting, consultation, collection…"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-ghost" id="visit-cancel">Cancel</button><button class="btn btn-primary" id="visit-save">Add Visit</button></div>
+      </div>
+    </div>
     <!-- New Order Modal -->
     <div class="modal-overlay" id="order-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
       <div class="modal-panel">
@@ -237,14 +251,22 @@ export async function renderClientProfileScreen(container) {
     document.getElementById('cpr-body').innerHTML = `
       <!-- Contact Card -->
       <div class="cpr-contact-card">
-        <div class="cpr-contact-row">
-          <span class="cpr-contact-icon">📞</span>
-          <a href="tel:${escHtml(clientData.phone)}">${escHtml(clientData.phone)}</a>
-        </div>
+        ${clientData.phone ? `<div class="cpr-contact-row"><span class="cpr-contact-icon">📞</span><a href="tel:${escHtml(clientData.phone)}">${escHtml(clientData.phone)}</a></div>` : ''}
         ${clientData.email ? `<div class="cpr-contact-row"><span class="cpr-contact-icon">✉️</span><a href="mailto:${escHtml(clientData.email)}">${escHtml(clientData.email)}</a></div>` : ''}
         ${clientData.address || clientData.city ? `<div class="cpr-contact-row"><span class="cpr-contact-icon">📍</span>${escHtml([clientData.address, clientData.city].filter(Boolean).join(', '))}</div>` : ''}
+        ${clientData.phone ? `<div class="cpr-contact-row"><span class="cpr-contact-icon">📞</span><a href="tel:${escHtml(clientData.phone)}">${escHtml(clientData.phone)}</a></div>` : ''}
         ${clientData.notes ? `<div class="cpr-contact-row cpr-notes"><span class="cpr-contact-icon">📝</span>${escHtml(clientData.notes)}</div>` : ''}
       </div>
+
+      <section class="cpr-section cpr-profile-tools">
+        <div class="cpr-section-header"><h2>Measurements</h2><button class="btn btn-ghost btn-sm" id="cpr-open-measurements">Open in Configurator</button></div>
+        <p class="text-muted">${clientData.measurement ? `Linked profile · ${escHtml(clientData.measurement.unit || 'in')} · last updated ${fmtDate(clientData.measurement.updated_at)}` : 'Measurement profile will be created automatically.'}</p>
+      </section>
+
+      <section class="cpr-section">
+        <div class="cpr-section-header"><h2>Client Visits</h2><button class="btn btn-primary btn-sm" id="cpr-add-visit">+ Add Visit</button></div>
+        ${(clientData.visits || []).length ? `<div class="cpr-visits">${clientData.visits.map(v => `<div class="cpr-visit-row"><strong>${fmtDate(v.visit_date)}</strong><span>${escHtml(v.purpose || 'General visit')}</span></div>`).join('')}</div>` : '<p class="text-muted">No visits recorded yet.</p>'}
+      </section>
 
       <!-- Active Orders -->
       <section class="cpr-section">
@@ -271,6 +293,11 @@ export async function renderClientProfileScreen(container) {
 
     // Bind new order button
     document.getElementById('cpr-new-order').addEventListener('click', openOrderModal);
+    document.getElementById('cpr-add-visit').addEventListener('click', openVisitModal);
+    document.getElementById('cpr-open-measurements').addEventListener('click', () => {
+      state.startNewSuit();
+      router.navigateTo('#configurator', { client_id: clientId });
+    });
 
     // Bind all garment action buttons
     document.querySelectorAll('[data-garment-action]').forEach(btn => {
@@ -470,7 +497,7 @@ export async function renderClientProfileScreen(container) {
           <input type="text" id="ec-name" class="input" value="${escHtml(clientData.name)}">
         </div>
         <div class="form-field">
-          <label for="ec-phone">Phone <span class="required">*</span></label>
+          <label for="ec-phone">Phone <span class="optional">(optional)</span></label>
           <input type="tel" id="ec-phone" class="input" value="${escHtml(clientData.phone)}">
         </div>
         <div class="form-field">
@@ -505,7 +532,6 @@ export async function renderClientProfileScreen(container) {
     const address = document.getElementById('ec-address').value.trim();
     const notes   = document.getElementById('ec-notes').value.trim();
     if (!name) { showToast('Name is required.','error'); return; }
-    if (!phone){ showToast('Phone is required.','error'); return; }
     try {
       clientData = await api.updateClient(clientId, { name, phone, email, city, address, notes });
       document.getElementById('edit-modal').style.display = 'none';
@@ -540,6 +566,25 @@ export async function renderClientProfileScreen(container) {
       await api.createOrder(clientId, { order_date, trial_date, delivery_date, total_amount, advance_paid, notes });
       document.getElementById('order-modal').style.display = 'none';
       showToast('Order created!', 'success');
+      await load();
+    } catch (err) { showToast('Failed: ' + err.message, 'error'); }
+  });
+
+  function openVisitModal() {
+    document.getElementById('visit-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('visit-purpose').value = '';
+    document.getElementById('visit-modal').style.display = 'flex';
+  }
+  document.getElementById('visit-modal-close').addEventListener('click', () => { document.getElementById('visit-modal').style.display = 'none'; });
+  document.getElementById('visit-cancel').addEventListener('click', () => { document.getElementById('visit-modal').style.display = 'none'; });
+  document.getElementById('visit-save').addEventListener('click', async () => {
+    const visit_date = document.getElementById('visit-date').value;
+    const purpose = document.getElementById('visit-purpose').value.trim();
+    if (!visit_date) { showToast('Visit date is required.', 'error'); return; }
+    try {
+      await api.addClientVisit(clientId, { visit_date, purpose });
+      document.getElementById('visit-modal').style.display = 'none';
+      showToast('Visit added.', 'success');
       await load();
     } catch (err) { showToast('Failed: ' + err.message, 'error'); }
   });

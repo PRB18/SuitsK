@@ -15,8 +15,8 @@ export function renderLockScreen(container) {
     <div class="lock-card">
       <div class="lock-header">
         <div class="brand-monogram">KS</div>
-        <h1 class="brand-title">Krishna Suits</h1>
-        <p class="brand-subtitle">Bespoke Tailoring Configurator</p>
+        <h1 class="brand-title">Congressional The Bespoke</h1>
+        <p class="brand-subtitle">Krishna Suits Atelier</p>
       </div>
 
       <div class="lock-body">

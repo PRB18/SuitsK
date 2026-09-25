@@ -1,3 +1,10 @@
+## 2026-09-25: Client records own measurement profiles and visits
+
+- **Decision:** Create an additive `client_measurements` row when a client is created and store dated client visits in `client_visits`.
+- **Why:** Client identity, measurement history, and visit history need explicit relationships instead of relying on a garment project existing first.
+- **Alternatives considered:** Keep measurements only on projects; rejected because a new client can exist before an order or garment is created.
+- **Status:** Implemented in the client API and profile UI; configurator data migration and full browser verification remain follow-up work.
+
 ## Decision
 Run independent database schema creation statements concurrently during startup.
 

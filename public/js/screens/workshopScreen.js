@@ -76,8 +76,14 @@ export async function renderWorkshopScreen(container) {
           <button class="btn-icon modal-close" id="ws-edit-close" aria-label="Close">✕</button>
         </div>
         <div class="modal-body">
-          <p class="text-muted" id="ws-edit-project-label"></p>
-          <div class="form-field"><label for="ws-edit-status">Stage</label><select id="ws-edit-status" class="input">${STAGES.map(stage => `<option value="${stage}">${STAGE_LABELS[stage]}</option>`).join('')}</select></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+            <p class="text-muted" id="ws-edit-project-label" style="margin:0;"></p>
+            <button class="btn btn-ghost btn-sm" id="ws-edit-view-client">Client Profile →</button>
+          </div>
+          <div class="form-field">
+            <label for="ws-edit-status">Move to Stage</label>
+            <select id="ws-edit-status" class="input">${STAGES.map(stage => `<option value="${stage}">${STAGE_LABELS[stage]}</option>`).join('')}</select>
+          </div>
           <div class="form-grid form-grid-2">
             <div class="form-field"><label for="ws-edit-trial">Trial Date</label><input type="date" id="ws-edit-trial" class="input"></div>
             <div class="form-field"><label for="ws-edit-delivery">Delivery Date</label><input type="date" id="ws-edit-delivery" class="input"></div>
@@ -95,7 +101,12 @@ export async function renderWorkshopScreen(container) {
           <button class="btn-icon modal-close" id="ws-sections-close" aria-label="Close">✕</button>
         </div>
         <div class="modal-body" id="ws-sections-body"><div class="table-loading">Loading sections…</div></div>
-        <div class="modal-footer"><button class="btn btn-ghost" id="ws-sections-cancel">Cancel</button><button class="btn btn-primary" id="ws-sections-save">Save Sections</button></div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" id="ws-sections-add">+ Add Section</button>
+          <div style="flex:1"></div>
+          <button class="btn btn-ghost" id="ws-sections-cancel">Cancel</button>
+          <button class="btn btn-primary" id="ws-sections-save">Save Changes</button>
+        </div>
       </div>
     </div>
   `;
@@ -187,6 +198,24 @@ export async function renderWorkshopScreen(container) {
     board.querySelectorAll('[data-action="edit-project"]').forEach(btn => {
       btn.addEventListener('click', () => openEditModal(btn.dataset.id));
     });
+    // Quick-move: instant stage change from dropdown — no confirmation needed
+    board.querySelectorAll('[data-action="quick-move"]').forEach(sel => {
+      sel.addEventListener('change', async () => {
+        const projectId = sel.dataset.id;
+        const newStage  = sel.value;
+        const project   = allProjects.find(p => p.id === projectId);
+        if (!project || newStage === project.status) return;
+        const origVal = project.status;
+        try {
+          await api.updateProjectStatus(projectId, newStage);
+          showToast(`Moved to ${STAGE_LABELS[newStage]}.`, 'success');
+          await load();
+        } catch (err) {
+          showToast('Move failed: ' + err.message, 'error');
+          sel.value = origVal;
+        }
+      });
+    });
   }
 
   function renderCard(p) {
@@ -195,9 +224,12 @@ export async function renderWorkshopScreen(container) {
     const urgencyClass = urgency === 'overdue' ? 'card-urgent' : urgency === 'soon' ? 'card-warn' : '';
     const dueBadge = p.delivery_date
       ? `<span class="due-badge ${urgency === 'overdue' ? 'badge--danger' : urgency === 'soon' ? 'badge--warning' : 'badge--success'}">
-           ${urgency === 'overdue' ? '🔴 Overdue' : urgency === 'soon' ? '🟡 Due soon' : '🟢 On track'}
+           ${urgency === 'overdue' ? 'Overdue' : urgency === 'soon' ? 'Due soon' : 'On track'}
          </span>`
       : '';
+    const stageOptions = STAGES.map(s =>
+      `<option value="${s}"${s === p.status ? ' selected' : ''}>${STAGE_LABELS[s]}</option>`
+    ).join('');
     return `
       <div class="kanban-card ${urgencyClass}">
         <div class="kanban-card-header">
@@ -209,11 +241,17 @@ export async function renderWorkshopScreen(container) {
           <span class="kanban-card-ref">${escHtml(p.client_ref)} · ${escHtml(p.order_ref)}</span>
         </div>
         ${p.delivery_date ? `<div class="kanban-card-date">Delivery: ${fmtDate(p.delivery_date)}</div>` : ''}
-        <button class="btn btn-ghost btn-sm kanban-edit-btn" data-action="edit-project" data-id="${p.id}">✎ Edit</button>
-        ${nextStage ? `
-          <button class="btn btn-primary btn-sm kanban-move-btn" data-action="move-stage" data-id="${p.id}" data-current="${p.status}">
+        <div style="display:flex; gap:0.4rem; margin-top:0.5rem; flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm kanban-edit-btn" data-action="edit-project" data-id="${p.id}" style="flex:0 0 auto;">Edit</button>
+          ${nextStage ? `
+          <button class="btn btn-primary btn-sm kanban-move-btn" data-action="move-stage" data-id="${p.id}" data-current="${p.status}" style="flex:1;">
             → ${STAGE_LABELS[nextStage]}
-          </button>` : '<div class="kanban-card-done">✓ Complete</div>'}
+          </button>` : '<div class="kanban-card-done" style="flex:1;text-align:center;">✓ Complete</div>'}
+        </div>
+        <div style="display:flex; gap:0.3rem; margin-top:0.35rem; align-items:center;">
+          <label style="font-size:0.7rem; color:var(--color-text-secondary); white-space:nowrap;">Jump to:</label>
+          <select class="input" style="font-size:0.75rem; padding:2px 6px; height:28px; flex:1;" data-action="quick-move" data-id="${p.id}">${stageOptions}</select>
+        </div>
       </div>
     `;
   }
@@ -223,10 +261,16 @@ export async function renderWorkshopScreen(container) {
   function openEditModal(projectId) {
     editingProject = allProjects.find(project => project.id === projectId);
     if (!editingProject) return;
-    document.getElementById('ws-edit-project-label').textContent = `${editingProject.garment_type} · ${editingProject.client_name} · ${editingProject.order_ref}`;
-    document.getElementById('ws-edit-status').value = editingProject.status;
-    document.getElementById('ws-edit-trial').value = editingProject.trial_date || '';
+    document.getElementById('ws-edit-project-label').textContent =
+      `${editingProject.garment_type} · ${editingProject.client_name} · ${editingProject.order_ref}`;
+    document.getElementById('ws-edit-status').value   = editingProject.status;
+    document.getElementById('ws-edit-trial').value    = editingProject.trial_date || '';
     document.getElementById('ws-edit-delivery').value = editingProject.delivery_date || '';
+    // Wire the "Client Profile" button to navigate to this client
+    document.getElementById('ws-edit-view-client').onclick = () => {
+      closeEditModal();
+      router.navigateTo('#client-profile', { id: editingProject.client_id });
+    };
     document.getElementById('ws-edit-modal').style.display = 'flex';
   }
 
@@ -239,61 +283,145 @@ export async function renderWorkshopScreen(container) {
   document.getElementById('ws-edit-cancel').addEventListener('click', closeEditModal);
   document.getElementById('ws-edit-save').addEventListener('click', async () => {
     if (!editingProject) return;
-    const button = document.getElementById('ws-edit-save');
-    const status = document.getElementById('ws-edit-status').value;
-    const trial_date = document.getElementById('ws-edit-trial').value;
+    const button        = document.getElementById('ws-edit-save');
+    const status        = document.getElementById('ws-edit-status').value;
+    const trial_date    = document.getElementById('ws-edit-trial').value;
     const delivery_date = document.getElementById('ws-edit-delivery').value;
     button.disabled = true;
+    button.textContent = 'Saving...';
     try {
-      await api.updateProject(editingProject.id, { status });
-      await api.updateOrder(editingProject.client_id, editingProject.order_id, { trial_date, delivery_date });
+      await Promise.all([
+        api.updateProjectStatus(editingProject.id, status),
+        api.updateOrder(editingProject.client_id, editingProject.order_id, { trial_date, delivery_date }),
+      ]);
       closeEditModal();
-      showToast('Workshop project updated.', 'success');
+      showToast(`Stage updated to "${STAGE_LABELS[status]}".`, 'success');
       await load();
     } catch (err) { showToast('Update failed: ' + err.message, 'error'); }
-    finally { button.disabled = false; }
+    finally { button.disabled = false; button.textContent = 'Save Changes'; }
   });
+
+  // Track pending deletions inside the sections editor
+  const pendingDeletes = new Set();
+
+  function renderSectionsEditorRow(section) {
+    const row = document.createElement('div');
+    row.className = 'ws-section-edit-row';
+    row.style.cssText = 'display:grid; grid-template-columns:1fr 1fr auto; gap:0.75rem; align-items:end; padding:0.5rem 0; border-bottom:1px solid var(--color-border);';
+    if (section.id) row.dataset.sectionId = section.id;
+    row.innerHTML = `
+      <div class="form-field" style="margin:0">
+        <label style="font-size:0.75rem;">Section Name</label>
+        <input class="input ws-section-name" value="${escHtml(section.section_name || '')}" placeholder="e.g. Cutting" required>
+      </div>
+      <div class="form-field" style="margin:0">
+        <label style="font-size:0.75rem;">Personnel <span class="optional">(comma separated)</span></label>
+        <input class="input ws-section-personnel" value="${escHtml((section.personnel || []).join(', '))}" placeholder="Ali, Raza, Hassan">
+      </div>
+      <button class="btn-icon btn-icon--danger ws-section-delete-btn" title="Delete section" style="margin-bottom:2px;" aria-label="Delete section">🗑</button>
+    `;
+    row.querySelector('.ws-section-delete-btn').addEventListener('click', () => {
+      if (section.id) {
+        // Existing section — mark for deletion and fade the row
+        pendingDeletes.add(section.id);
+        row.style.opacity = '0.35';
+        row.querySelectorAll('input').forEach(i => i.disabled = true);
+        row.querySelector('.ws-section-delete-btn').textContent = '↩';
+        row.querySelector('.ws-section-delete-btn').title = 'Undo';
+        row.querySelector('.ws-section-delete-btn').onclick = () => {
+          pendingDeletes.delete(section.id);
+          row.style.opacity = '1';
+          row.querySelectorAll('input').forEach(i => i.disabled = false);
+          renderSectionsEditorRow._restore(row, section);
+        };
+      } else {
+        // New (unsaved) row — just remove it
+        row.remove();
+      }
+    });
+    return row;
+  }
+  renderSectionsEditorRow._restore = (row, section) => {
+    const btn = row.querySelector('.ws-section-delete-btn');
+    btn.textContent = '🗑';
+    btn.title = 'Delete section';
+    btn.onclick = null;
+    btn.addEventListener('click', () => {
+      pendingDeletes.add(section.id);
+      row.style.opacity = '0.35';
+      row.querySelectorAll('input').forEach(i => i.disabled = true);
+    });
+  };
 
   async function openSectionsEditor() {
     const modal = document.getElementById('ws-sections-modal');
     const body = document.getElementById('ws-sections-body');
+    pendingDeletes.clear();
     modal.style.display = 'flex';
     body.innerHTML = '<div class="table-loading">Loading sections…</div>';
     try {
       const sections = await api.getHierarchy();
-      body.innerHTML = sections.length
-        ? sections.map(section => `
-            <div class="ws-section-edit-row" data-section-id="${section.id}">
-              <div class="form-field"><label>Section name</label><input class="input ws-section-name" value="${escHtml(section.section_name)}"></div>
-              <div class="form-field"><label>Personnel <span class="optional">(comma separated)</span></label><input class="input ws-section-personnel" value="${escHtml((section.personnel || []).join(', '))}"></div>
-            </div>`).join('')
-        : '<p class="text-muted">No workshop sections found.</p>';
+      body.innerHTML = '';
+      if (sections.length === 0) {
+        body.innerHTML = '<p class="text-muted" style="padding:0.5rem 0;">No sections yet. Click "+ Add Section" to create one.</p>';
+      } else {
+        sections.forEach(s => body.appendChild(renderSectionsEditorRow(s)));
+      }
     } catch (err) {
       body.innerHTML = `<p class="form-error" style="display:block;">Failed to load sections: ${escHtml(err.message)}</p>`;
     }
   }
 
   function closeSectionsEditor() {
+    pendingDeletes.clear();
     document.getElementById('ws-sections-modal').style.display = 'none';
   }
 
   document.getElementById('ws-sections-close').addEventListener('click', closeSectionsEditor);
   document.getElementById('ws-sections-cancel').addEventListener('click', closeSectionsEditor);
+
+  document.getElementById('ws-sections-add').addEventListener('click', () => {
+    const body = document.getElementById('ws-sections-body');
+    // Remove empty-state message if present
+    const emptyMsg = body.querySelector('p.text-muted');
+    if (emptyMsg) emptyMsg.remove();
+    body.appendChild(renderSectionsEditorRow({ section_name: '', personnel: [] }));
+  });
+
   document.getElementById('ws-sections-save').addEventListener('click', async () => {
     const button = document.getElementById('ws-sections-save');
     const rows = [...document.querySelectorAll('#ws-sections-body .ws-section-edit-row')];
     button.disabled = true;
+    button.textContent = 'Saving…';
     try {
-      await Promise.all(rows.flatMap(row => {
-        const sectionId = row.dataset.sectionId;
-        const name = row.querySelector('.ws-section-name').value.trim();
-        const personnel = row.querySelector('.ws-section-personnel').value.split(',').map(value => value.trim()).filter(Boolean);
-        return [api.updateSection(sectionId, { section_name: name }), api.updatePersonnel(sectionId, personnel)];
-      }));
+      // 1. Delete marked sections
+      if (pendingDeletes.size > 0) {
+        await Promise.all([...pendingDeletes].map(id => api.deleteSection(id)));
+      }
+
+      // 2. Update or create remaining rows
+      const ops = rows
+        .filter(row => !pendingDeletes.has(row.dataset.sectionId))
+        .flatMap(row => {
+          const sectionId = row.dataset.sectionId;  // undefined for new rows
+          const name = row.querySelector('.ws-section-name').value.trim();
+          const personnel = row.querySelector('.ws-section-personnel').value
+            .split(',').map(v => v.trim()).filter(Boolean);
+          if (!name) return [];
+          if (sectionId) {
+            // Existing section — update
+            return [api.updateSection(sectionId, { section_name: name }), api.updatePersonnel(sectionId, personnel)];
+          } else {
+            // New section — create then set personnel
+            return [api.createSection({ section_name: name }).then(created => api.updatePersonnel(created.id, personnel))];
+          }
+        });
+      await Promise.all(ops);
       closeSectionsEditor();
-      showToast('Workshop sections updated.', 'success');
-    } catch (err) { showToast('Section update failed: ' + err.message, 'error'); }
-    finally { button.disabled = false; }
+      showToast('Workshop sections saved.', 'success');
+      await load();
+    } catch (err) { showToast('Save failed: ' + err.message, 'error'); }
+    finally { button.disabled = false; button.textContent = 'Save Changes'; }
   });
 
   // ── Move Stage Modal ───────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * clientProfileScreen.js — Full Client Profile screen
  *
  * Shows:
@@ -259,8 +259,36 @@ export async function renderClientProfileScreen(container) {
       </div>
 
       <section class="cpr-section cpr-profile-tools">
-        <div class="cpr-section-header"><h2>Measurements</h2><button class="btn btn-ghost btn-sm" id="cpr-open-measurements">Open in Configurator</button></div>
-        <p class="text-muted">${clientData.measurement ? `Linked profile · ${escHtml(clientData.measurement.unit || 'in')} · last updated ${fmtDate(clientData.measurement.updated_at)}` : 'Measurement profile will be created automatically.'}</p>
+        <div class="cpr-section-header">
+          <h2>Body Measurements</h2>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="btn btn-primary btn-sm" id="cpr-edit-measurements">Edit Measurements</button>
+            <button class="btn btn-ghost btn-sm" id="cpr-open-measurements">Open in Configurator</button>
+          </div>
+        </div>
+        ${clientData.measurement && clientData.measurement.values_json ? (() => {
+          const vals = typeof clientData.measurement.values_json === 'string'
+            ? JSON.parse(clientData.measurement.values_json || '{}')
+            : (clientData.measurement.values_json || {});
+          const unit = clientData.measurement.unit || 'in';
+          const CORE = [
+            ['Chest','chest'], ['Waist','waist'], ['Hip','hip'], ['Shoulder','shoulder'],
+            ['Neck','neck'], ['Sleeve Length','sleeve_length'], ['Inseam','inseam'], ['Height','height'],
+          ];
+          const filled = CORE.filter(([,k]) => vals[k]);
+          return filled.length > 0
+            ? '<div class="cpr-meas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.5rem;margin-top:0.5rem;">' +
+              filled.map(([label, key]) =>
+                '<div class="cpr-meas-cell" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:6px;padding:0.5rem;text-align:center;">' +
+                '<div style="font-size:0.7rem;color:var(--color-text-secondary);text-transform:uppercase;">' + label + '</div>' +
+                '<div style="font-weight:600;font-size:1rem;">' + vals[key] + '</div>' +
+                '<div style="font-size:0.65rem;color:var(--color-text-secondary);">' + unit + '</div>' +
+                '</div>'
+              ).join('') + '</div>' +
+              '<p class="text-muted" style="margin-top:0.35rem;font-size:0.75rem;">Last updated ' + fmtDate(clientData.measurement.updated_at) + '</p>'
+            : '<p class="text-muted">Measurement profile exists but no values entered yet. Click Edit Measurements to add them.</p>';
+        })() : '<p class="text-muted">No measurement profile yet. Click Edit Measurements to add them.</p>'}
+        <div id="cpr-meas-editor" style="display:none; margin-top:1rem; background:var(--color-surface); border:1px solid var(--color-border); border-radius:8px; padding:1rem;"></div>
       </section>
 
       <section class="cpr-section">
@@ -297,6 +325,84 @@ export async function renderClientProfileScreen(container) {
     document.getElementById('cpr-open-measurements').addEventListener('click', () => {
       state.startNewSuit();
       router.navigateTo('#configurator', { client_id: clientId });
+    });
+
+    // ── Inline Measurement Editor ────────────────────────────────────────────
+    const measEditorEl = document.getElementById('cpr-meas-editor');
+    let measEditorOpen = false;
+    const MEAS_BASE_FIELDS = [
+      ['Chest',        'chest'],        ['Waist',        'waist'],
+      ['Hip',          'hip'],          ['Shoulder',     'shoulder'],
+      ['Neck',         'neck'],         ['Sleeve Length','sleeve_length'],
+      ['Shirt Length', 'shirt_length'], ['Inseam',       'inseam'],
+      ['Outseam',      'outseam'],      ['Thigh',        'thigh'],
+      ['Knee',         'knee'],         ['Bottom',       'bottom'],
+      ['Height',       'height'],       ['Weight',       'weight'],
+    ];
+    document.getElementById('cpr-edit-measurements').addEventListener('click', async () => {
+      if (measEditorOpen) {
+        measEditorEl.style.display = 'none';
+        measEditorOpen = false;
+        document.getElementById('cpr-edit-measurements').textContent = 'Edit Measurements';
+        return;
+      }
+      measEditorOpen = true;
+      document.getElementById('cpr-edit-measurements').textContent = 'Close Editor';
+      let existingVals = {};
+      let existingUnit = 'in';
+      try {
+        const m = await api.getClientMeasurements(clientId);
+        existingVals = m.values || {};
+        existingUnit = m.unit || 'in';
+      } catch (_) { /* No measurements yet — use empty */ }
+      measEditorEl.innerHTML =
+        '<h4 style="margin:0 0 0.75rem;">Base Measurements</h4>' +
+        '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem;">' +
+        '<label style="font-size:0.8rem;">Unit:</label>' +
+        '<select id="cpr-meas-unit" class="input" style="width:80px;">' +
+        '<option value="in"' + (existingUnit === 'in' ? ' selected' : '') + '>in</option>' +
+        '<option value="cm"' + (existingUnit === 'cm' ? ' selected' : '') + '>cm</option>' +
+        '</select></div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.5rem;">' +
+        MEAS_BASE_FIELDS.map(([label, key]) =>
+          '<div><label style="font-size:0.75rem;color:var(--color-text-secondary);">' + label + '</label>' +
+          '<input type="number" class="input" id="cpr-mf-' + key + '" placeholder="0" step="0.1" min="0" value="' + (existingVals[key] || '') + '" style="width:100%;margin-top:2px;"></div>'
+        ).join('') +
+        '</div>' +
+        '<div style="display:flex;gap:0.5rem;margin-top:1rem;justify-content:flex-end;">' +
+        '<button class="btn btn-ghost btn-sm" id="cpr-meas-cancel">Cancel</button>' +
+        '<button class="btn btn-primary btn-sm" id="cpr-meas-save">Save Measurements</button>' +
+        '</div>';
+      measEditorEl.style.display = 'block';
+      document.getElementById('cpr-meas-cancel').addEventListener('click', () => {
+        measEditorEl.style.display = 'none';
+        measEditorOpen = false;
+        document.getElementById('cpr-edit-measurements').textContent = 'Edit Measurements';
+      });
+      document.getElementById('cpr-meas-save').addEventListener('click', async () => {
+        const saveBtn = document.getElementById('cpr-meas-save');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+        const unit = document.getElementById('cpr-meas-unit').value;
+        const values = {};
+        MEAS_BASE_FIELDS.forEach(([, key]) => {
+          const v = document.getElementById('cpr-mf-' + key)?.value;
+          if (v) values[key] = parseFloat(v);
+        });
+        try {
+          await api.updateClientMeasurements(clientId, { unit, values });
+          showToast('Measurements saved.', 'success');
+          measEditorEl.style.display = 'none';
+          measEditorOpen = false;
+          document.getElementById('cpr-edit-measurements').textContent = 'Edit Measurements';
+          // Reload the screen to reflect updated values
+          await renderClientProfileScreen(container);
+        } catch (err) {
+          showToast('Save failed: ' + err.message, 'error');
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Measurements';
+        }
+      });
     });
 
     // Bind all garment action buttons

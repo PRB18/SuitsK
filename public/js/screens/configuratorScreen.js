@@ -1,4 +1,4 @@
-/**
+﻿/**
  * configuratorScreen.js — Bespoke suit configurator wizard (Stage 4)
  * 
  * Fully wired to canonical TAILORING_SCHEMA across all 7 steps:
@@ -1247,19 +1247,82 @@ function getPlaceholderIcon(category, field, value) {
         `;
       }
       if (field === 'shoulderShape') {
+        // Square: flat horizontal shoulder line; Regular: slight natural drop; Sloping: pronounced drop
+        if (value === 'Square') return `
+          <svg width="40" height="36" viewBox="0 0 40 36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="20" cy="7" r="4"/>
+            <line x1="4" y1="14" x2="36" y2="14"/>
+            <path d="M4 14 Q4 28 8 35"/>
+            <path d="M36 14 Q36 28 32 35"/>
+            <line x1="8" y1="35" x2="32" y2="35"/>
+          </svg>`;
+        if (value === 'Regular') return `
+          <svg width="40" height="36" viewBox="0 0 40 36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="20" cy="7" r="4"/>
+            <path d="M4 18 Q12 14 20 14 Q28 14 36 18"/>
+            <path d="M4 18 Q4 28 8 35"/>
+            <path d="M36 18 Q36 28 32 35"/>
+            <line x1="8" y1="35" x2="32" y2="35"/>
+          </svg>`;
         return `
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-            <path d="M3 16c2-6 6-9 9-9s7 3 9 9"></path>
-            <circle cx="12" cy="5" r="2.5"></circle>
-          </svg>
-        `;
+          <svg width="40" height="36" viewBox="0 0 40 36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="20" cy="7" r="4"/>
+            <path d="M4 22 Q12 14 20 14 Q28 14 36 22"/>
+            <path d="M4 22 Q4 28 8 35"/>
+            <path d="M36 22 Q36 28 32 35"/>
+            <line x1="8" y1="35" x2="32" y2="35"/>
+          </svg>`;
       }
-      if (field === 'backShape' || field === 'stomachShape') {
+      if (field === 'backShape') {
+        // Side-profile silhouettes: Normal (upright), Erect (leaning back / chest forward), Hunched (bent forward)
+        if (value === 'Normal') return `
+          <svg width="36" height="44" viewBox="0 0 36 44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="4"/>
+            <path d="M18 9 L18 28"/>
+            <path d="M18 13 L10 22 L12 30"/>
+            <path d="M18 13 L26 22 L24 30"/>
+            <path d="M18 28 L14 44"/>
+            <path d="M18 28 L22 44"/>
+          </svg>`;
+        if (value === 'Erect') return `
+          <svg width="36" height="44" viewBox="0 0 36 44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="20" cy="5" r="4"/>
+            <path d="M22 9 Q24 18 22 28"/>
+            <path d="M22 13 L14 22 L16 30"/>
+            <path d="M22 13 L28 22 L26 30"/>
+            <path d="M22 28 L18 44"/>
+            <path d="M22 28 L26 44"/>
+          </svg>`;
         return `
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-            <path d="M10 3c2 2 3 5 2 9s-3 6-1 9"></path>
-          </svg>
-        `;
+          <svg width="36" height="44" viewBox="0 0 36 44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="16" cy="5" r="4"/>
+            <path d="M16 9 Q10 18 14 28"/>
+            <path d="M14 14 L8 22 L10 30"/>
+            <path d="M14 14 L22 21 L20 30"/>
+            <path d="M14 28 L10 44"/>
+            <path d="M14 28 L18 44"/>
+          </svg>`;
+      }
+      if (field === 'stomachShape') {
+        // Front-profile silhouettes showing stomach prominence: Flat, Slight, Large
+        if (value === 'Flat') return `
+          <svg width="36" height="44" viewBox="0 0 36 44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="4"/>
+            <path d="M12 9 Q8 12 8 18 Q8 26 12 30 Q16 34 18 44"/>
+            <path d="M24 9 Q28 12 28 18 Q28 26 24 30 Q20 34 18 44"/>
+          </svg>`;
+        if (value === 'Slight') return `
+          <svg width="36" height="44" viewBox="0 0 36 44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="4"/>
+            <path d="M12 9 Q8 12 8 18 Q8 26 12 30 Q16 34 18 44"/>
+            <path d="M24 9 Q30 12 30 18 Q32 24 28 30 Q22 34 18 44"/>
+          </svg>`;
+        return `
+          <svg width="36" height="44" viewBox="0 0 36 44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="4"/>
+            <path d="M12 9 Q8 12 8 18 Q8 26 12 30 Q16 34 18 44"/>
+            <path d="M24 9 Q34 12 34 20 Q36 28 28 32 Q22 36 18 44"/>
+          </svg>`;
       }
       return `
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * clientProfileScreen.js — Full Client Profile screen
  *
  * Shows:
@@ -36,15 +36,65 @@ const STAGE_BADGE_CLS = {
 export async function renderClientProfileScreen(container) {
   const clientId = state.currentClientId;
   if (!clientId) {
+    // No client in state — fetch all clients and show a picker so the user
+    // doesn't have to leave the screen and navigate to client-db manually.
     container.innerHTML = `
-      <div class="screen-wrapper" style="display:flex; align-items:center; justify-content:center; min-height:60vh;">
-        <div class="empty-state" style="border:none; background:transparent;">
-          <div class="empty-icon">👤</div>
-          <h3>No Client Selected</h3>
-          <p>Please select a client from the Client Database to view their profile.</p>
-          <a class="btn btn-primary" href="#client-db">Go to Client Database</a>
+      <div class="screen-wrapper cpr-screen">
+        <header class="screen-header">
+          <button class="btn-icon back-btn" id="cpr-pick-back" aria-label="Back">← Back</button>
+          <div class="screen-header-title">
+            <h1 class="screen-title">Client Profiles</h1>
+          </div>
+          <div class="screen-header-actions">
+            <button class="btn btn-primary" id="cpr-new-btn">+ New Client</button>
+          </div>
+        </header>
+        <div class="cpr-body" id="cpr-pick-body">
+          <div class="table-loading">Loading clients…</div>
         </div>
       </div>`;
+
+    document.getElementById('cpr-pick-back').addEventListener('click', () => router.navigate('#congressional'));
+    document.getElementById('cpr-new-btn').addEventListener('click', () => router.navigate('#client-db'));
+
+    try {
+      const clients = await api.getClients();
+      const body = document.getElementById('cpr-pick-body');
+      if (!body) return;
+      if (!clients || clients.length === 0) {
+        body.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">👤</div>
+            <h3>No Clients Yet</h3>
+            <p>Create your first client in the Client Database.</p>
+            <button class="btn btn-primary" id="cpr-go-db">Open Client Database</button>
+          </div>`;
+        document.getElementById('cpr-go-db').addEventListener('click', () => router.navigate('#client-db'));
+        return;
+      }
+      body.innerHTML = `
+        <div style="padding: 0 0 24px 0;">
+          <p class="text-sm text-muted" style="margin-bottom: 16px;">Select a client to view their profile</p>
+          <div style="display:flex; flex-direction:column; gap: 8px;" id="cpr-pick-list"></div>
+        </div>`;
+      const list = document.getElementById('cpr-pick-list');
+      clients.forEach(c => {
+        const card = document.createElement('button');
+        card.className = 'cdb-row';
+        card.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border:1px solid var(--color-border); border-radius:8px; background:var(--color-surface); cursor:pointer; text-align:left; width:100%;';
+        card.innerHTML = `
+          <div>
+            <div style="font-weight:600; color:var(--color-text);">${escHtml(c.name)}</div>
+            <div style="font-size:0.8rem; color:var(--color-text-secondary); margin-top:2px;">${escHtml(c.client_ref || '')}${c.city ? ' · ' + escHtml(c.city) : ''}</div>
+          </div>
+          <span class="badge badge--neutral">${escHtml(c.phone || '')}</span>`;
+        card.addEventListener('click', () => router.navigateTo('#client-profile', { id: c.id }));
+        list.appendChild(card);
+      });
+    } catch (err) {
+      const body = document.getElementById('cpr-pick-body');
+      if (body) body.innerHTML = `<div class="empty-state"><p style="color:var(--color-danger)">Failed to load clients: ${escHtml(err.message)}</p></div>`;
+    }
     return;
   }
 

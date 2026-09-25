@@ -1,4 +1,4 @@
-/**
+﻿/**
  * router.js — Hash-based client screen router
  *
  * Supports query parameters in hash: #client-profile?id=UUID
@@ -76,7 +76,7 @@ class Router {
     // Parse query params and inject client/order context into state
     const params = this.getParams();
     if (params.client_id) state.setCurrentClientId(params.client_id);
-    if (params.id && cleanHash === '#client-profile') state.setCurrentClientId(params.id);
+    if (cleanHash === '#client-profile') { state.setCurrentClientId(params.id || null); }
     if (params.order_id)  state.setCurrentOrderId(params.order_id);
     if (params.project_id) state.setCurrentProjectId(params.project_id);
 

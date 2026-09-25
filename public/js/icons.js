@@ -246,7 +246,7 @@ export const ICONS = {
       <text x="35" y="70" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">SLOPING</text>
     </svg>
   `
-const JACKET_ICON_LABELS = [
+,`n};`n`nconst JACKET_ICON_LABELS = [
   '1 Button Suit', '2 Button Suit', '3 Button Suit', '4 Button', '6 Button',
   'Single Breasted', 'Double Breasted', 'HS3', 'H4', 'HS5', 'HS4',
   'Single Vent', 'Double Vent', 'Straight Bone', 'Slanted Bone',

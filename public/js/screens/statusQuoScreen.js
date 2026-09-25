@@ -61,7 +61,7 @@ export async function renderStatusQuoScreen(container) {
   document.getElementById('sq-back').addEventListener('click', () => router.navigate('#congressional'));
   document.getElementById('sq-goto-inv').addEventListener('click', () => router.navigate('#inventory'));
   document.getElementById('sq-goto-ws').addEventListener('click',  () => router.navigate('#workshop'));
-  document.getElementById('sq-goto-dash').addEventListener('click',() => router.navigate('#dashboard?section=b2b'));
+  document.getElementById('sq-goto-dash').addEventListener('click',() => router.navigate('#b2b'));
   document.getElementById('sq-refresh').addEventListener('click',  load);
 
   let b2bData   = [];

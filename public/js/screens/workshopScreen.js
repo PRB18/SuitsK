@@ -31,6 +31,7 @@ export async function renderWorkshopScreen(container) {
       <header class="screen-header">
         <button class="btn-icon back-btn" id="ws-back">← Back</button>
         <div class="screen-header-title"><h1 class="screen-title">Workshop</h1></div>
+        <div class="screen-header-actions"><button class="btn btn-ghost" id="ws-edit-sections">✎ Edit Sections</button></div>
       </header>
 
       <!-- Summary strip -->
@@ -88,6 +89,7 @@ export async function renderWorkshopScreen(container) {
   `;
 
   document.getElementById('ws-back').addEventListener('click', () => router.navigate('#congressional'));
+  document.getElementById('ws-edit-sections').addEventListener('click', () => router.navigate('#work-hierarchy'));
 
   async function load() {
     try {

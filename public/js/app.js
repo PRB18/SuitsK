@@ -33,6 +33,7 @@ async function bootstrap() {
       '#lock':           renderLockScreen,
       '#congressional':  renderCongressionalScreen,
       '#dashboard':      renderDashboardScreen,
+      '#b2b':            renderDashboardScreen,
       '#configurator':   renderConfiguratorScreen,
       '#client-db':      renderClientDbScreen,
       '#client-profile': renderClientProfileScreen,

@@ -105,7 +105,7 @@ const MODULES = [
     roman: 'IX',
     title: 'B2B Logistics',
     subtitle: 'Vendor & Corporate',
-    route: '#dashboard?section=b2b',
+    route: '#b2b',
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
       <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
@@ -125,7 +125,7 @@ const MODULES = [
 ];
 
 const IMPLEMENTED = [
-  '#dashboard', '#configurator', '#client-profile', '#client-db',
+  '#dashboard', '#b2b', '#configurator', '#client-profile', '#client-db',
   '#inventory', '#schedule', '#work-hierarchy', '#workshop',
   '#shortcomings', '#status-quo'
 ];

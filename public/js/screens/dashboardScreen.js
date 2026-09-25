@@ -208,7 +208,7 @@ export function renderDashboardScreen(container) {
   
   loadSuits(gridContainer, analyticsContainer, wrapper);
   renderB2bPanel(b2bContainer);
-  if (window.location.hash.includes('section=b2b')) {
+  if (window.location.hash === '#b2b' || window.location.hash.includes('section=b2b')) {
     setTimeout(() => b2bContainer.scrollIntoView({ behavior: 'auto', block: 'start' }), 0);
   }
 

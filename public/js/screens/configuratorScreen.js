@@ -17,7 +17,7 @@ import { state } from '../state.js';
 import { router } from '../router.js';
 import { TAILORING_SCHEMA, TOOLTIP_DESCRIPTIONS } from '../schema.js';
 import { showToast } from '../toast.js';
-import { getIcon } from '../icons.js';
+import { getIconForOption } from '../icons.js';
 
 // ── Styled Tooltip DOM ────────────────────────────────────────────────────────
 // Single floating tooltip element reused across all option cards.
@@ -935,7 +935,7 @@ function renderOptionSection(title, category, field, options, currentValue) {
 
 function renderOptionCard(category, field, value, isSelected) {
   const tip = TOOLTIP_DESCRIPTIONS[value] || '';
-  const customIcon = getIcon(value);
+  const customIcon = getIconForOption(category, field, value);
   const iconContent = customIcon || getPlaceholderIcon(category, field, value);
 
   return `

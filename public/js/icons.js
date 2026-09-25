@@ -217,65 +217,35 @@ export const ICONS = {
 
   // 1. Square: Roped, padded Pagoda / British structured horizontal shoulder pitch
   'Square': `
-    <svg width="40" height="40" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Neck base & collar -->
-      <path d="M28 16 C32 14 38 14 42 16" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.5"/>
-      <path d="M28 16 L31 28 M42 16 L39 28" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.4"/>
-
-      <!-- Square / Roped Shoulder Line: Firm, horizontal shoulder pitch with sharp 90° roped sleevehead -->
-      <path d="M28 16 L10 18 L8 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"/>
-      <path d="M42 16 L60 18 L62 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"/>
-
-      <!-- Roped head ridge marker -->
-      <path d="M10 16 L12 24 M60 16 L58 24" stroke="#C9A87A" stroke-width="1.5"/>
-
-      <!-- Center seam guide -->
-      <line x1="35" y1="28" x2="35" y2="56" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
-
-      <!-- Label subtitle -->
-      <text x="35" y="62" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">STRUCTURED</text>
+    <svg width="44" height="50" viewBox="0 0 70 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="68" height="60" rx="2" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35"/>
+      <path d="M28 15 V10 H42 V15" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M28 15 H15 V50 M42 15 H55 V50" stroke="currentColor" stroke-width="2.2" fill="none"/>
+      <path d="M20 50 V25 M50 50 V25" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.6"/>
+      <path d="M20 25 Q35 28 50 25" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.5"/>
+      <text x="35" y="70" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">SQUARE</text>
     </svg>
   `,
-
-  // 2. Regular: Natural soft Neapolitan shoulder line (Spalla Camicia)
   'Regular': `
-    <svg width="40" height="40" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Neck base -->
-      <path d="M28 16 C32 14 38 14 42 16" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.5"/>
-      <path d="M28 16 L31 28 M42 16 L39 28" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.4"/>
-
-      <!-- Regular / Natural Shoulder Line: Gentle natural anatomy drape with softly rounded sleevehead -->
-      <path d="M28 16 Q16 19 12 23 L10 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M42 16 Q54 19 58 23 L60 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-
-      <!-- Center seam guide -->
-      <line x1="35" y1="28" x2="35" y2="56" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
-
-      <!-- Label subtitle -->
-      <text x="35" y="62" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">NATURAL</text>
+    <svg width="44" height="50" viewBox="0 0 70 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="68" height="60" rx="2" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35"/>
+      <path d="M28 15 V10 H42 V15" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M28 15 L15 22 V50 M42 15 L55 22 V50" stroke="currentColor" stroke-width="2.2" fill="none"/>
+      <path d="M20 50 V28 M50 50 V28" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.6"/>
+      <path d="M20 28 Q35 31 50 28" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.5"/>
+      <text x="35" y="70" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">REGULAR</text>
     </svg>
   `,
-
-  // 3. Sloping: Pronounced downward athletic drop from neck point to armhole
   'Sloping': `
-    <svg width="40" height="40" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Neck base -->
-      <path d="M28 16 C32 14 38 14 42 16" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.5"/>
-      <path d="M28 16 L31 28 M42 16 L39 28" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.4"/>
-
-      <!-- Sloping Shoulder Line: Steep downward gradient angle from collar to armhole -->
-      <path d="M28 16 L12 29 L11 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M42 16 L58 29 L59 52" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-
-      <!-- Center seam guide -->
-      <line x1="35" y1="28" x2="35" y2="56" stroke="currentColor" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="2 2"/>
-
-      <!-- Label subtitle -->
-      <text x="35" y="62" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">SLOPING</text>
+    <svg width="44" height="50" viewBox="0 0 70 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="68" height="60" rx="2" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35"/>
+      <path d="M28 15 V10 H42 V15" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M28 15 L15 28 V50 M42 15 L55 28 V50" stroke="currentColor" stroke-width="2.2" fill="none"/>
+      <path d="M22 50 V32 M48 50 V32" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.6"/>
+      <path d="M22 32 Q35 35 48 32" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.5"/>
+      <text x="35" y="70" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">SLOPING</text>
     </svg>
-  `,
-};
-
+  `
 const JACKET_ICON_LABELS = [
   '1 Button Suit', '2 Button Suit', '3 Button Suit', '4 Button', '6 Button',
   'Single Breasted', 'Double Breasted', 'HS3', 'H4', 'HS5', 'HS4',
@@ -334,24 +304,17 @@ function pocketIcon(label, rounded = false, slanted = false, flap = false) {
 }
 
 function shapeIcon(label, shape) {
-  // Side-profile body posture silhouette matching tailor reference chart
-  // Each shows: head circle, spine curve, body outline from side view
   const bodyPath = shape === 'Erect'
-    // Erect: chest puffed forward, head slightly back (military posture)
-    ? `<circle cx="35" cy="13" r="5" stroke-width="1.8"/>
-       <path d="M35 18 Q38 28 38 38 Q37 46 35 52" stroke-width="2" stroke-linecap="round"/>
-       <path d="M25 22 Q18 30 18 40 Q19 48 24 52 L46 52 Q51 48 52 40 Q52 30 45 22 Q42 20 38 18" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-       <path d="M38 18 Q44 25 44 35" stroke-width="2.2" stroke-linecap="round"/>`
+    ? `<line x1="45" y1="10" x2="45" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
+       <path d="M28 15 Q25 20 28 30 Q33 40 25 50" stroke-width="1.5" fill="none"/>
+       <path d="M38 15 Q40 20 35 30 Q28 40 38 50" stroke-width="2.2" fill="none"/>`
     : shape === 'Hunched'
-    // Hunched: forward lean, curved spine, head drooped
-    ? `<circle cx="30" cy="13" r="5" stroke-width="1.8"/>
-       <path d="M31 18 Q28 28 30 38 Q32 46 35 52" stroke-width="2" stroke-linecap="round"/>
-       <path d="M21 24 Q15 32 17 42 Q19 50 25 52 L47 52 Q50 48 49 40 Q47 31 42 24 Q38 20 33 18" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-       <path d="M31 18 Q26 26 27 36" stroke-width="2.2" stroke-linecap="round"/>`
-    // Normal: upright natural posture
-    : `<circle cx="35" cy="13" r="5" stroke-width="1.8"/>
-       <path d="M35 18 Q35 28 35 38 Q35 46 35 52" stroke-width="2" stroke-linecap="round"/>
-       <path d="M24 22 Q18 30 18 40 Q19 48 24 52 L46 52 Q51 48 52 40 Q52 30 46 22 Q42 20 40 18" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`;
+    ? `<line x1="45" y1="10" x2="45" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
+       <path d="M20 15 Q15 20 20 30 Q25 40 25 50" stroke-width="1.5" fill="none"/>
+       <path d="M30 15 Q45 20 40 30 Q35 40 42 50" stroke-width="2.2" fill="none"/>`
+    : `<line x1="45" y1="10" x2="45" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
+       <path d="M25 15 Q20 20 23 30 Q28 40 25 50" stroke-width="1.5" fill="none"/>
+       <path d="M35 15 Q42 20 38 30 Q33 40 40 50" stroke-width="2.2" fill="none"/>`;
   return `
     <svg width="44" height="50" viewBox="0 0 70 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <rect x="1" y="1" width="68" height="60" rx="2" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35"/>
@@ -362,22 +325,17 @@ function shapeIcon(label, shape) {
 }
 
 function stomachIcon(label, amount) {
-  // Front-facing body silhouette with varying stomach protrusion
   const bodyPath = amount === 'Large'
-    ? `<circle cx="35" cy="13" r="5" stroke-width="1.8"/>
-       <path d="M26 20 Q16 24 14 36 Q12 46 18 52 L52 52 Q58 46 56 36 Q54 24 44 20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-       <path d="M22 35 Q18 41 20 50 L50 50 Q52 41 48 35 Q44 27 35 26 Q26 27 22 35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-       <line x1="35" y1="20" x2="35" y2="52" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="2 2"/>`
+    ? `<line x1="20" y1="10" x2="20" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
+       <path d="M40 15 Q35 25 40 35 V50" stroke-width="1.5" fill="none"/>
+       <path d="M25 15 Q10 25 20 38 L25 50" stroke-width="2.2" fill="none"/>`
     : amount === 'Slight'
-    ? `<circle cx="35" cy="13" r="5" stroke-width="1.8"/>
-       <path d="M27 20 Q18 24 17 36 Q16 46 21 52 L49 52 Q54 46 53 36 Q52 24 43 20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-       <path d="M25 35 Q22 41 23 50 L47 50 Q48 41 45 35 Q42 28 35 27 Q28 28 25 35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-       <line x1="35" y1="20" x2="35" y2="52" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="2 2"/>`
-    // Flat
-    : `<circle cx="35" cy="13" r="5" stroke-width="1.8"/>
-       <path d="M28 20 Q20 24 19 36 Q19 46 23 52 L47 52 Q51 46 51 36 Q50 24 42 20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-       <path d="M27 34 Q27 42 28 50 L42 50 Q43 42 43 34 Q43 28 35 27 Q27 28 27 34" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-       <line x1="35" y1="20" x2="35" y2="52" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="2 2"/>`;
+    ? `<line x1="20" y1="10" x2="20" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
+       <path d="M40 15 Q35 25 40 35 V50" stroke-width="1.5" fill="none"/>
+       <path d="M25 15 Q18 25 22 35 L28 50" stroke-width="2.2" fill="none"/>`
+    : `<line x1="20" y1="10" x2="20" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
+       <path d="M40 15 Q35 25 40 35 V50" stroke-width="1.5" fill="none"/>
+       <path d="M25 15 Q25 25 25 35 L30 50" stroke-width="2.2" fill="none"/>`;
   return `
     <svg width="44" height="50" viewBox="0 0 70 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <rect x="1" y="1" width="68" height="60" rx="2" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35"/>

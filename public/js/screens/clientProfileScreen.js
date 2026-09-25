@@ -213,7 +213,7 @@ export async function renderClientProfileScreen(container) {
   let activeMeasProject = null;
 
   document.getElementById('cpr-back').addEventListener('click', () => {
-    router.navigate('#client-db');
+    window.history.back();
   });
 
   // ── Load client ────────────────────────────────────────────────────────────

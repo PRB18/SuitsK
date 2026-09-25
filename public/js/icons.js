@@ -307,23 +307,32 @@ function pocketIcon(label, rounded = false, slanted = false, flap = false) {
 }
 
 function shapeIcon(label, shape) {
-  const url = '/images/shapes/' + shape.toLowerCase() + '.jpg';
-  return '<div style="width: 44px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">' +
-           '<div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--color-border); border-radius: 2px; background: #fff; width: 100%;">' +
-             '<img src="' + url + '" style="width: 140%; height: 140%; object-fit: cover; object-position: center; mix-blend-mode: multiply; filter: contrast(1.2);" alt="' + label + '" />' +
-           '</div>' +
-           '<div style="font-family: var(--font-ui, sans-serif); font-size: 7px; font-weight: 700; color: #C9A87A; text-align: center; letter-spacing: 0.08em; margin-top: 4px;">' + label.toUpperCase() + '</div>' +
-         '</div>';
+  const contour = shape === 'Erect'
+    ? 'M23 10 C21 17 22 28 24 41 M25 10 C27 18 26 29 25 41'
+    : shape === 'Hunched'
+      ? 'M22 10 C28 16 30 26 27 41 M24 10 C30 17 32 27 29 41'
+      : 'M23 10 C24 19 24 30 24 41 M26 10 C26 20 26 30 25 41';
+  return `<svg class="option-shape-icon" width="58" height="64" viewBox="0 0 58 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label}">
+    <rect x="1" y="1" width="56" height="48" rx="2" stroke="currentColor" stroke-opacity="0.22"/>
+    <path d="M20 10 C17 13 16 19 17 24 L19 41 H35 L37 24 C38 19 37 13 34 10" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>
+    <path d="${contour}" stroke="#C9A87A" stroke-width="1.8" stroke-linecap="round"/>
+    <text x="29" y="59" fill="#C9A87A" font-family="sans-serif" font-size="6" font-weight="700" text-anchor="middle" letter-spacing="0.05em">${label.toUpperCase()}</text>
+  </svg>`;
 }
 
 function stomachIcon(label, amount) {
-  const url = '/images/shapes/' + amount.toLowerCase() + '.jpg';
-  return '<div style="width: 44px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">' +
-           '<div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--color-border); border-radius: 2px; background: #fff; width: 100%;">' +
-             '<img src="' + url + '" style="width: 140%; height: 140%; object-fit: cover; object-position: center; mix-blend-mode: multiply; filter: contrast(1.2);" alt="' + label + '" />' +
-           '</div>' +
-           '<div style="font-family: var(--font-ui, sans-serif); font-size: 7px; font-weight: 700; color: #C9A87A; text-align: center; letter-spacing: 0.08em; margin-top: 4px;">' + label.toUpperCase() + '</div>' +
-         '</div>';
+  const belly = amount === 'Large'
+    ? 'M27 18 C39 20 42 29 38 39'
+    : amount === 'Slight'
+      ? 'M27 18 C34 21 36 29 34 39'
+      : 'M27 18 C30 22 30 30 30 39';
+  return `<svg class="option-shape-icon" width="58" height="64" viewBox="0 0 58 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label}">
+    <rect x="1" y="1" width="56" height="48" rx="2" stroke="currentColor" stroke-opacity="0.22"/>
+    <path d="M22 10 C20 15 21 22 23 27 L24 40 H38" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+    <path d="${belly}" stroke="#C9A87A" stroke-width="2" stroke-linecap="round"/>
+    <path d="M22 10 L28 15 M22 10 L24 18" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+    <text x="29" y="59" fill="#C9A87A" font-family="sans-serif" font-size="6" font-weight="700" text-anchor="middle" letter-spacing="0.05em">${label.toUpperCase()}</text>
+  </svg>`;
 }
 Object.assign(ICONS, {
   '1 Button Suit': buttonIcon('1 Button Suit', 1),

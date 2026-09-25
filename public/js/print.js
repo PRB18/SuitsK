@@ -236,12 +236,13 @@ function buildPage2(config, project) {
         ${j.lapelSize ? `<div class="style-note">Lapel Size: <strong>${j.lapelSize}</strong></div>` : ''}
       </div>
 
-            <!-- SHOULDER -->
+                  <!-- SHOULDER -->
       <div class="style-section">
         <div class="style-section-title">SHOULDER SHAPE</div>
         <div class="style-options-row">
           ${['Square','Regular','Sloping'].map(opt =>
-            <div class="style-opt"><div class="style-opt-svg">${getIcon(opt) || ''}</div><div class="style-opt-label">${checked(j.shoulder,opt)} ${opt}</div></div>
+            `<div class="style-opt"><div class="style-opt-svg">${getIcon(opt) || ''}</div><div class="style-opt-label">${checked(j.shoulder,opt)} ${opt}</div></div>
+          `
           ).join('')}
         </div>
       </div>
@@ -251,7 +252,8 @@ function buildPage2(config, project) {
         <div class="style-section-title">BACK SHAPE</div>
         <div class="style-options-row">
           ${['Normal','Erect','Hunched'].map(opt =>
-            <div class="style-opt"><div class="style-opt-svg">${getIcon(opt) || ''}</div><div class="style-opt-label">${checked(j.backShape,opt)} ${opt}</div></div>
+            `<div class="style-opt"><div class="style-opt-svg">${getIcon(opt) || ''}</div><div class="style-opt-label">${checked(j.backShape,opt)} ${opt}</div></div>
+          `
           ).join('')}
         </div>
       </div>
@@ -261,15 +263,11 @@ function buildPage2(config, project) {
         <div class="style-section-title">STOMACH SHAPE</div>
         <div class="style-options-row">
           ${['Flat','Slight','Large'].map(opt =>
-            <div class="style-opt"><div class="style-opt-svg">${getIcon(opt) || ''}</div><div class="style-opt-label">${checked(j.stomachShape,opt)} ${opt}</div></div>
+            `<div class="style-opt"><div class="style-opt-svg">${getIcon(opt) || ''}</div><div class="style-opt-label">${checked(j.stomachShape,opt)} ${opt}</div></div>
+          `
           ).join('')}
         </div>
-      </div>`
-          ).join('')}
-        </div>
-      </div>
-
-      <!-- JACKET POCKETS -->
+      </div><!-- JACKET POCKETS -->
       <div class="style-section">
         <div class="style-section-title">JACKET POCKET STYLE</div>
         <div class="style-options-row">

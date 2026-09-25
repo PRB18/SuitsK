@@ -307,7 +307,7 @@ function pocketIcon(label, rounded = false, slanted = false, flap = false) {
 }
 
 function shapeIcon(label, shape) {
-  const url = '/images/shapes/' + shape.lower() + '.jpg';
+  const url = '/images/shapes/' + shape.toLowerCase() + '.jpg';
   return '<div style="width: 44px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">' +
            '<div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--color-border); border-radius: 2px; background: #fff; width: 100%;">' +
              '<img src="' + url + '" style="width: 140%; height: 140%; object-fit: cover; object-position: center; mix-blend-mode: multiply; filter: contrast(1.2);" alt="' + label + '" />' +
@@ -317,7 +317,7 @@ function shapeIcon(label, shape) {
 }
 
 function stomachIcon(label, amount) {
-  const url = '/images/shapes/' + amount.lower() + '.jpg';
+  const url = '/images/shapes/' + amount.toLowerCase() + '.jpg';
   return '<div style="width: 44px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">' +
            '<div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--color-border); border-radius: 2px; background: #fff; width: 100%;">' +
              '<img src="' + url + '" style="width: 140%; height: 140%; object-fit: cover; object-position: center; mix-blend-mode: multiply; filter: contrast(1.2);" alt="' + label + '" />' +

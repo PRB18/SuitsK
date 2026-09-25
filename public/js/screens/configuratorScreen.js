@@ -18,6 +18,7 @@ import { TAILORING_SCHEMA, TOOLTIP_DESCRIPTIONS } from '../schema.js';
 import { showToast } from '../toast.js';
 import { getIconForOption } from '../icons.js';
 import { printMeasurementCard } from '../print.js';
+import { ensureActiveWorkshopProject } from '../workshopLink.js';
 
 // ── Styled Tooltip DOM ────────────────────────────────────────────────────────
 // Single floating tooltip element reused across all option cards.
@@ -963,14 +964,36 @@ async function handleFinalSave() {
     }
 
     // Keep active garment project connected to this style sheet + measurements.
-    if (state.currentProjectId && saved?.id) {
+    // If measurements are for a client but no workshop project exists yet, create one
+    // so the work appears on the Kanban board automatically.
+    let projectId = state.currentProjectId;
+    if (clientId && !projectId) {
       try {
-        await api.updateProject(state.currentProjectId, {
+        const { order, project } = await ensureActiveWorkshopProject(clientId, 'Jacket');
+        projectId = project.id;
+        state.setCurrentOrderId(order.id);
+        state.setCurrentProjectId(project.id);
+      } catch (ensureErr) {
+        console.warn('[configurator] workshop ensure failed:', ensureErr);
+      }
+    }
+
+    if (projectId && saved?.id) {
+      try {
+        await api.updateProject(projectId, {
           suit_config_id: saved.id,
           measurements: suit.data?.measurements?.values || {},
         });
       } catch (linkErr) {
         console.warn('[configurator] project link failed:', linkErr);
+      }
+    } else if (projectId && suit.data?.measurements?.values) {
+      try {
+        await api.updateProject(projectId, {
+          measurements: suit.data.measurements.values,
+        });
+      } catch (linkErr) {
+        console.warn('[configurator] project measurement sync failed:', linkErr);
       }
     }
 

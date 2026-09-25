@@ -1,3 +1,10 @@
+## 2026-09-25: Add Order continues into measurements and Workshop
+
+- **Decision:** New Order creates the first garment project immediately, then opens the configurator on the Measurements step. Saving a style sheet linked to a client without a project auto-ensures an active Workshop project. Extra garments use the same continue-to-measurements path.
+- **Why:** Workshop Kanban lists projects, not empty orders. Users expected “Add Order” + measurements to show up on the board without a separate Add Garment step.
+- **Alternatives considered:** Keep empty orders until Add Garment (rejected: invisible on Workshop); auto-create a default Jacket with no garment picker (rejected: wrong garment type too often).
+- **Status:** Implemented in `workshopLink.js`, client profile order/garment flows, and configurator save.
+
 ## 2026-09-25: Persistent sidebar shell + history-safe back navigation
 
 - **Decision:** Mount a persistent atelier shell (`shell.js` + shared `navConfig.js`) for all unlocked routes so the sidebar survives hash changes. Auth redirects and “Back to Hub” use `history.replaceState` / `router.backToHub()` instead of pushing another `#congressional` entry.

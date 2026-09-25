@@ -17,6 +17,11 @@ import { router } from '../router.js';
 import { showToast } from '../toast.js';
 import { getIcon }   from '../icons.js';
 import { printMeasurementCard } from '../print.js';
+import {
+  createOrderWithProject,
+  ensureActiveWorkshopProject,
+  openMeasurementsForProject,
+} from '../workshopLink.js';
 
 const GARMENT_TYPES = ['Jacket','Sherwani','Sadri','Waistcoat','Jodhpuri','Shirts/Kurta','Pant','Safari jkt','Denim'];
 const PROJECT_STAGES = ['pending','cutting','canvas','stitching','buttonholes','pressing','trial','ready','delivered'];
@@ -156,7 +161,7 @@ export async function renderClientProfileScreen(container) {
         <div class="modal-footer"><button class="btn btn-ghost" id="visit-cancel">Cancel</button><button class="btn btn-primary" id="visit-save">Add Visit</button></div>
       </div>
     </div>
-    <!-- New Order Modal -->
+    <!-- New Order Modal — dates then continue into measurements / workshop -->
     <div class="modal-overlay" id="order-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
       <div class="modal-panel">
         <div class="modal-header">
@@ -164,10 +169,18 @@ export async function renderClientProfileScreen(container) {
           <button class="btn-icon modal-close" id="order-modal-close" aria-label="Close">✕</button>
         </div>
         <div class="modal-body">
+          <p class="text-muted" style="margin:0 0 1rem;">Set the order dates, pick the garment, then continue straight into measurements. The garment appears on the Workshop board immediately.</p>
           <div class="form-grid form-grid-2">
             <div class="form-field">
               <label for="ord-date">Order Date <span class="required">*</span></label>
               <input type="date" id="ord-date" class="input">
+            </div>
+            <div class="form-field">
+              <label for="ord-garment">Garment <span class="required">*</span></label>
+              <select id="ord-garment" class="input">
+                <option value="">— Select garment —</option>
+                ${GARMENT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
+              </select>
             </div>
             <div class="form-field">
               <label for="ord-trial">Trial Date</label>
@@ -193,7 +206,7 @@ export async function renderClientProfileScreen(container) {
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" id="ord-cancel">Cancel</button>
-          <button class="btn btn-primary" id="ord-save">Create Order</button>
+          <button class="btn btn-primary" id="ord-save">Continue to Measurements</button>
         </div>
       </div>
     </div>
@@ -320,7 +333,7 @@ export async function renderClientProfileScreen(container) {
           <button class="btn btn-primary btn-sm" id="cpr-new-order">+ New Order</button>
         </div>
         ${activeOrders.length === 0
-          ? '<p class="text-muted cpr-no-orders">No active orders. Create one to start tracking garments.</p>'
+          ? '<p class="text-muted cpr-no-orders">No active orders yet. Use <strong>+ New Order</strong> to set dates and continue into measurements — the garment appears on the Workshop board automatically.</p>'
           : activeOrders.map(o => renderOrderCard(o, true)).join('')
         }
       </section>
@@ -340,23 +353,25 @@ export async function renderClientProfileScreen(container) {
     document.getElementById('cpr-new-order').addEventListener('click', openOrderModal);
     document.getElementById('cpr-add-visit').addEventListener('click', openVisitModal);
 
-    const openLinkedConfigurator = (step = 0) => {
-      state.setCurrentClientId(clientId);
-      state.startNewSuit();
-      // Prefer editing an existing linked style sheet when available
-      const linkedSuit = (clientData.suits || [])[0];
-      const go = () => {
-        state.setStep(step);
-        router.navigateTo('#configurator', { client_id: clientId });
-      };
-      if (linkedSuit) {
-        api.getSuit(linkedSuit.id).then(suit => {
-          state.editSuit(suit);
-          state.setCurrentClientId(clientId);
-          go();
-        }).catch(() => go());
-      } else {
-        go();
+    const openLinkedConfigurator = async (step = 0) => {
+      try {
+        const { order, project } = await ensureActiveWorkshopProject(clientId, 'Jacket');
+        const linkedSuit = (clientData.suits || [])[0];
+        let suit = null;
+        if (linkedSuit) {
+          try { suit = await api.getSuit(linkedSuit.id); } catch { /* start fresh */ }
+        } else if (project.suit_config_id) {
+          try { suit = await api.getSuit(project.suit_config_id); } catch { /* start fresh */ }
+        }
+        openMeasurementsForProject({
+          clientId,
+          orderId: order.id,
+          projectId: project.id,
+          suit,
+          step,
+        });
+      } catch (err) {
+        showToast('Could not open measurements: ' + err.message, 'error');
       }
     };
 
@@ -651,6 +666,7 @@ export async function renderClientProfileScreen(container) {
   // ── New Order Modal ────────────────────────────────────────────────────────
   function openOrderModal() {
     document.getElementById('ord-date').value     = new Date().toISOString().split('T')[0];
+    document.getElementById('ord-garment').value  = 'Jacket';
     document.getElementById('ord-trial').value    = '';
     document.getElementById('ord-delivery').value = '';
     document.getElementById('ord-total').value    = '';
@@ -662,18 +678,37 @@ export async function renderClientProfileScreen(container) {
   document.getElementById('ord-cancel').addEventListener('click',         () => { document.getElementById('order-modal').style.display = 'none'; });
   document.getElementById('ord-save').addEventListener('click', async () => {
     const order_date    = document.getElementById('ord-date').value;
+    const garment_type  = document.getElementById('ord-garment').value;
     const trial_date    = document.getElementById('ord-trial').value;
     const delivery_date = document.getElementById('ord-delivery').value;
     const total_amount  = parseFloat(document.getElementById('ord-total').value)   || 0;
     const advance_paid  = parseFloat(document.getElementById('ord-advance').value) || 0;
     const notes         = document.getElementById('ord-notes').value.trim();
     if (!order_date) { showToast('Order date is required.','error'); return; }
+    if (!garment_type) { showToast('Please select a garment type.','error'); return; }
+
+    const btn = document.getElementById('ord-save');
+    btn.disabled = true;
+    btn.textContent = 'Opening measurements…';
     try {
-      await api.createOrder(clientId, { order_date, trial_date, delivery_date, total_amount, advance_paid, notes });
+      const { order, project } = await createOrderWithProject(
+        clientId,
+        { order_date, trial_date, delivery_date, total_amount, advance_paid, notes },
+        garment_type,
+      );
       document.getElementById('order-modal').style.display = 'none';
-      showToast('Order created!', 'success');
-      await load();
-    } catch (err) { showToast('Failed: ' + err.message, 'error'); }
+      showToast(`${garment_type} added to Workshop — enter measurements.`, 'success');
+      openMeasurementsForProject({
+        clientId,
+        orderId: order.id,
+        projectId: project.id,
+        step: 5,
+      });
+    } catch (err) {
+      showToast('Failed: ' + err.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Continue to Measurements';
+    }
   });
 
   function openVisitModal() {
@@ -705,12 +740,24 @@ export async function renderClientProfileScreen(container) {
   document.getElementById('garment-save').addEventListener('click', async () => {
     const garment_type = document.getElementById('garment-type').value;
     if (!garment_type) { showToast('Please select a garment type.','error'); return; }
+    const btn = document.getElementById('garment-save');
+    btn.disabled = true;
+    btn.textContent = 'Opening…';
     try {
-      await api.addProject(clientId, activeGarmentAddOrderId, { garment_type });
+      const project = await api.addProject(clientId, activeGarmentAddOrderId, { garment_type });
       document.getElementById('garment-modal').style.display = 'none';
-      showToast(`${garment_type} added to order!`, 'success');
-      await load();
-    } catch (err) { showToast('Failed: ' + err.message, 'error'); }
+      showToast(`${garment_type} added — continue with measurements.`, 'success');
+      openMeasurementsForProject({
+        clientId,
+        orderId: activeGarmentAddOrderId,
+        projectId: project.id,
+        step: 5,
+      });
+    } catch (err) {
+      showToast('Failed: ' + err.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Add Garment';
+    }
   });
 
   // ── Complete Order ─────────────────────────────────────────────────────────

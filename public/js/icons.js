@@ -307,45 +307,23 @@ function pocketIcon(label, rounded = false, slanted = false, flap = false) {
 }
 
 function shapeIcon(label, shape) {
-  const bodyPath = shape === 'Erect'
-    ? `<line x1="45" y1="10" x2="45" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
-       <path d="M28 15 Q25 20 28 30 Q33 40 25 50" stroke-width="1.5" fill="none"/>
-       <path d="M38 15 Q40 20 35 30 Q28 40 38 50" stroke-width="2.2" fill="none"/>`
-    : shape === 'Hunched'
-    ? `<line x1="45" y1="10" x2="45" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
-       <path d="M20 15 Q15 20 20 30 Q25 40 25 50" stroke-width="1.5" fill="none"/>
-       <path d="M30 15 Q45 20 40 30 Q35 40 42 50" stroke-width="2.2" fill="none"/>`
-    : `<line x1="45" y1="10" x2="45" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
-       <path d="M25 15 Q20 20 23 30 Q28 40 25 50" stroke-width="1.5" fill="none"/>
-       <path d="M35 15 Q42 20 38 30 Q33 40 40 50" stroke-width="2.2" fill="none"/>`;
-  return `
-    <svg width="44" height="50" viewBox="0 0 70 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect x="1" y="1" width="68" height="60" rx="2" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35"/>
-      <g stroke="currentColor" fill="none">${bodyPath}</g>
-      <text x="35" y="70" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">${label.toUpperCase()}</text>
-    </svg>
-  `;
+  const url = '/images/shapes/' + shape.lower() + '.jpg';
+  return '<div style="width: 44px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">' +
+           '<div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--color-border); border-radius: 2px; background: #fff; width: 100%;">' +
+             '<img src="' + url + '" style="width: 140%; height: 140%; object-fit: cover; object-position: center; mix-blend-mode: multiply; filter: contrast(1.2);" alt="' + label + '" />' +
+           '</div>' +
+           '<div style="font-family: var(--font-ui, sans-serif); font-size: 7px; font-weight: 700; color: #C9A87A; text-align: center; letter-spacing: 0.08em; margin-top: 4px;">' + label.toUpperCase() + '</div>' +
+         '</div>';
 }
 
 function stomachIcon(label, amount) {
-  const bodyPath = amount === 'Large'
-    ? `<line x1="20" y1="10" x2="20" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
-       <path d="M40 15 Q35 25 40 35 V50" stroke-width="1.5" fill="none"/>
-       <path d="M25 15 Q10 25 20 38 L25 50" stroke-width="2.2" fill="none"/>`
-    : amount === 'Slight'
-    ? `<line x1="20" y1="10" x2="20" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
-       <path d="M40 15 Q35 25 40 35 V50" stroke-width="1.5" fill="none"/>
-       <path d="M25 15 Q18 25 22 35 L28 50" stroke-width="2.2" fill="none"/>`
-    : `<line x1="20" y1="10" x2="20" y2="50" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
-       <path d="M40 15 Q35 25 40 35 V50" stroke-width="1.5" fill="none"/>
-       <path d="M25 15 Q25 25 25 35 L30 50" stroke-width="2.2" fill="none"/>`;
-  return `
-    <svg width="44" height="50" viewBox="0 0 70 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect x="1" y="1" width="68" height="60" rx="2" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35"/>
-      <g stroke="currentColor" fill="none">${bodyPath}</g>
-      <text x="35" y="70" font-family="var(--font-ui, sans-serif)" font-size="7" font-weight="700" fill="#C9A87A" text-anchor="middle" letter-spacing="0.08em">${label.toUpperCase()}</text>
-    </svg>
-  `;
+  const url = '/images/shapes/' + amount.lower() + '.jpg';
+  return '<div style="width: 44px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">' +
+           '<div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--color-border); border-radius: 2px; background: #fff; width: 100%;">' +
+             '<img src="' + url + '" style="width: 140%; height: 140%; object-fit: cover; object-position: center; mix-blend-mode: multiply; filter: contrast(1.2);" alt="' + label + '" />' +
+           '</div>' +
+           '<div style="font-family: var(--font-ui, sans-serif); font-size: 7px; font-weight: 700; color: #C9A87A; text-align: center; letter-spacing: 0.08em; margin-top: 4px;">' + label.toUpperCase() + '</div>' +
+         '</div>';
 }
 Object.assign(ICONS, {
   '1 Button Suit': buttonIcon('1 Button Suit', 1),

@@ -1,3 +1,10 @@
+## 2026-09-26: Inventory edit + history-safe measurement back navigation
+
+- **Decision:** Inventory rows expose Edit (reuse `inv-modal`, PUT `/api/inventory/:id`). Configurator leave/save/Open-Profile navigations to the linked client profile use `replace: true`. Client name + ref appear under the measurements grid, on the Save summary measurements block, and inside `#meas-panel-body`.
+- **Why:** Missing Edit blocked typo/supplier fixes. Wizard Back *pushed* `#client-profile`, so browser Back returned to `#configurator` and recreated a profile ↔ measurements ping-pong while `currentClientId` stayed correctly set.
+- **Alternatives considered:** `history.back()` from the wizard (rejected: mixes with auth hash guards); clearing `currentClientId` on leave (rejected: breaks client↔measurement interconnection).
+- **Status:** Implemented in `inventoryScreen.js`, `configuratorScreen.js`, `clientProfileScreen.js`.
+
 ## 2026-09-25: Add Order continues into measurements and Workshop
 
 - **Decision:** New Order creates the first garment project immediately, then opens the configurator on the Measurements step. Saving a style sheet linked to a client without a project auto-ensures an active Workshop project. Extra garments use the same continue-to-measurements path.

@@ -6,6 +6,7 @@
 import { router } from '../router.js';
 import { api } from '../api.js';
 import { HUB_MODULES, IMPLEMENTED_ROUTES } from '../navConfig.js';
+import { openHubMeasurements } from '../configuratorEntry.js';
 
 export function renderCongressionalScreen(container) {
   const wrapper = document.createElement('div');
@@ -58,11 +59,15 @@ export function renderCongressionalScreen(container) {
     el.addEventListener('click', () => {
       const route = el.dataset.route;
       const cleanRoute = route.split('?')[0];
-      if (IMPLEMENTED_ROUTES.includes(cleanRoute)) {
-        router.navigate(route);
-      } else {
+      if (!IMPLEMENTED_ROUTES.includes(cleanRoute)) {
         _pulse(el);
+        return;
       }
+      if (cleanRoute === '#configurator') {
+        openHubMeasurements({ step: 5 });
+        return;
+      }
+      router.navigate(route);
     });
   });
 

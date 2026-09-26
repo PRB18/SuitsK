@@ -386,6 +386,7 @@ export async function renderClientProfileScreen(container) {
           const suit = await api.getSuit(row.dataset.suitId);
           state.setCurrentClientId(clientId);
           state.editSuit(suit);
+          state.setConfiguratorReturn(`#client-profile?id=${encodeURIComponent(clientId)}`);
           router.navigateTo('#configurator', { client_id: clientId });
         } catch (err) {
           showToast('Could not open style sheet: ' + err.message, 'error');
@@ -407,6 +408,7 @@ export async function renderClientProfileScreen(container) {
       } else if (action === 'open-configurator') {
         const project = findProject(projectId);
         btn.addEventListener('click', () => {
+          state.setConfiguratorReturn(`#client-profile?id=${encodeURIComponent(clientId)}`);
           state.setCurrentClientId(clientId);
           state.setCurrentProjectId(projectId);
           state.setCurrentOrderId(project.order_id);

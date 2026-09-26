@@ -6,8 +6,7 @@
  * always has a Kanban card.
  */
 import { api } from './api.js';
-import { state } from './state.js';
-import { router } from './router.js';
+import { openClientMeasurements } from './configuratorEntry.js';
 
 /**
  * Create a brand-new order with its first garment project (Add Order flow).
@@ -56,18 +55,5 @@ export function openMeasurementsForProject({
   suit = null,
   step = 5,
 }) {
-  state.setCurrentClientId(clientId);
-  state.setCurrentOrderId(orderId);
-  state.setCurrentProjectId(projectId);
-  if (suit) {
-    state.editSuit(suit);
-  } else {
-    state.startNewSuit();
-  }
-  state.setStep(step);
-  router.navigateTo('#configurator', {
-    client_id: clientId,
-    order_id: orderId,
-    project_id: projectId,
-  });
+  openClientMeasurements({ clientId, orderId, projectId, suit, step });
 }

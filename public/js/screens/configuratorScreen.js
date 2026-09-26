@@ -132,12 +132,12 @@ export async function renderConfiguratorScreen(container) {
     <header class="wizard-header">
       <div class="wizard-header-container">
         <div class="wizard-left">
-          <button type="button" id="wizard-back-vault-btn" class="btn btn-ghost btn-sm" aria-label="Back to dashboard">
+          <button type="button" id="wizard-back-vault-btn" class="btn btn-ghost btn-sm" aria-label="Back">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
-            Dashboard
+            <span id="wizard-back-label">Back</span>
           </button>
           <div class="wizard-title-block">
             <h1 class="wizard-suit-title" id="wizard-suit-title-display">
@@ -265,16 +265,28 @@ export async function renderConfiguratorScreen(container) {
   const quickSaveBtn = wrapper.querySelector('#wizard-quick-save-btn');
   const backVaultBtn = wrapper.querySelector('#wizard-back-vault-btn');
 
-  /** Leave wizard without stacking duplicate history (prevents profile ↔ measurements loop). */
+  /** Leave wizard without stacking history. Prefer explicit return path over sticky client. */
   function leaveConfigurator() {
     hideTooltip();
-    // Keep state.currentClientId — linkage must survive navigation.
-    if (state.currentClientId) {
-      router.navigateTo('#client-profile', { id: state.currentClientId }, { replace: true });
-    } else {
-      router.navigate('#dashboard', { replace: true });
+    const dest = state.configuratorReturnHash || '#congressional';
+    // Returning to hub/dashboard: drop session client so the next Measurements
+    // visit is not locked. Profile return keeps currentClientId for the screen.
+    if (!dest.startsWith('#client-profile')) {
+      state.clearClientContext();
     }
+    state.clearConfiguratorReturn();
+    router.navigate(dest, { replace: true });
   }
+
+  const backDest = state.configuratorReturnHash || '#congressional';
+  const backLabel = backDest.startsWith('#client-profile')
+    ? 'Client Profile'
+    : (backDest.startsWith('#dashboard') || backDest.startsWith('#b2b'))
+      ? 'Dashboard'
+      : 'Atelier Hub';
+  const backLabelEl = wrapper.querySelector('#wizard-back-label');
+  if (backLabelEl) backLabelEl.textContent = backLabel;
+  backVaultBtn.setAttribute('aria-label', `Back to ${backLabel}`);
 
   backVaultBtn.addEventListener('click', leaveConfigurator);
 
@@ -1034,10 +1046,12 @@ async function handleFinalSave() {
     showToast(clientId ? 'Saved — linked to client profile.' : 'Suit saved to encrypted vault.', 'success');
     state.currentSuit = null;
     if (clientId) {
-      // replace avoids stacking profile after wizard (browser Back ping-pong)
+      state.clearConfiguratorReturn();
       router.navigateTo('#client-profile', { id: clientId }, { replace: true });
     } else {
-      router.navigate('#dashboard', { replace: true });
+      const dest = state.configuratorReturnHash || '#congressional';
+      state.clearConfiguratorReturn();
+      router.navigate(dest, { replace: true });
     }
   } catch (err) {
     const msg = 'Failed to save suit to encrypted vault: ' + err.message;

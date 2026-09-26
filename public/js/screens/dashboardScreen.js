@@ -95,6 +95,7 @@ export function renderDashboardScreen(container) {
   // ── Bind header actions ──────────────────────────────────────────────────
   const openNewSuit = () => {
     state.startNewSuit();
+    state.setConfiguratorReturn('#b2b');
     router.navigate('#configurator');
   };
 
@@ -213,6 +214,7 @@ async function loadSuits(gridContainer, analyticsContainer, wrapper) {
       `;
       gridContainer.querySelector('#empty-create-btn')?.addEventListener('click', () => {
         state.startNewSuit();
+        state.setConfiguratorReturn('#b2b');
         router.navigate('#configurator');
       });
       return;
@@ -313,6 +315,7 @@ function createSuitCard(suit, gridContainer, analyticsContainer, wrapper) {
     try {
       const fullSuit = await api.getSuit(suit.id);
       state.editSuit(fullSuit);
+      state.setConfiguratorReturn('#b2b');
       router.navigate('#configurator');
     } catch (err) {
       showToast('Error opening suit: ' + err.message, 'error');

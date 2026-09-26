@@ -1,3 +1,10 @@
+## 2026-09-26: Hub Measurements entry clears sticky client context
+
+- **Decision:** Sidebar/hub Measurements uses `openHubMeasurements()` — clears `currentClientId`, starts a fresh sheet, and sets `configuratorReturnHash` to `#congressional`. Profile/workshop entry uses `openClientMeasurements()` with Back → that profile. Configurator Back follows `configuratorReturnHash`, not “if clientId then profile”.
+- **Why:** After visiting a client, Measurements stayed locked to that person; Back walked Measurements → Profile → Client DB → Dashboard and repeated on every Measurements click.
+- **Alternatives considered:** Always Back to profile when `currentClientId` is set (rejected: causes the loop); clearing client on every bare `#configurator` without an explicit return path (rejected: breaks dashboard edit return).
+- **Status:** Implemented in `configuratorEntry.js`, `shell.js`, `router.js`, `configuratorScreen.js`, profile/dashboard entry points.
+
 ## 2026-09-26: Inventory edit + history-safe measurement back navigation
 
 - **Decision:** Inventory rows expose Edit (reuse `inv-modal`, PUT `/api/inventory/:id`). Configurator leave/save/Open-Profile navigations to the linked client profile use `replace: true`. Client name + ref appear under the measurements grid, on the Save summary measurements block, and inside `#meas-panel-body`.

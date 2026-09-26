@@ -113,10 +113,39 @@ class Router {
 
       // Parse query params and inject client/order context into state
       const params = this.getParams();
-      if (params.client_id) state.setCurrentClientId(params.client_id);
-      if (cleanHash === '#client-profile') { state.setCurrentClientId(params.id || null); }
       if (params.order_id)  state.setCurrentOrderId(params.order_id);
       if (params.project_id) state.setCurrentProjectId(params.project_id);
+
+      if (cleanHash === '#client-profile') {
+        state.setCurrentClientId(params.id || null);
+      }
+
+      if (cleanHash === '#configurator') {
+        if (params.client_id) {
+          state.setCurrentClientId(params.client_id);
+          // Deep link from profile/workshop — Back returns to that client, not hub.
+          if (!state.configuratorReturnHash) {
+            state.setConfiguratorReturn(`#client-profile?id=${encodeURIComponent(params.client_id)}`);
+          }
+        } else if (!params.project_id && !params.order_id) {
+          // Bare #configurator (hub Measurements / dashboard). Drop sticky client
+          // from a prior profile visit so the sheet is not locked to one person.
+          const editingVaultSuit = Boolean(state.currentSuit?.id);
+          state.clearClientContext();
+          if (!editingVaultSuit) {
+            // Leftover draft from a previous client session — start clean.
+            // Dashboard already called startNewSuit/editSuit; startNewSuit again is harmless.
+            if (!state.currentSuit || state.currentSuit.clientId) {
+              state.startNewSuit();
+            }
+          }
+          if (!state.configuratorReturnHash) {
+            state.setConfiguratorReturn('#congressional');
+          }
+        }
+      } else if (params.client_id) {
+        state.setCurrentClientId(params.client_id);
+      }
 
       const handler = this.routes[cleanHash] || this.routes['#congressional'];
       if (!handler || !this.rootElement) return;

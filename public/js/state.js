@@ -16,6 +16,9 @@ class AppState {
     this.currentOrderId  = null;  // set when navigating with a specific order context
     this.currentProjectId= null;  // set when opening a project in the configurator
     this.linkedClientInfo = null; // { id, name, client_ref } for banner UI
+    // Where configurator Back/Escape should go (hub vs client profile vs dashboard).
+    // Prevents sticky currentClientId from forcing Measurements → Profile → Client DB loops.
+    this.configuratorReturnHash = null;
     this.listeners      = new Set();
   }
 
@@ -67,6 +70,19 @@ class AppState {
     this.currentOrderId   = null;
     this.currentProjectId = null;
     this.linkedClientInfo = null;
+  }
+
+  /** Remember where Back should leave the configurator (e.g. #congressional, #client-profile?id=…). */
+  setConfiguratorReturn(hash) {
+    if (!hash) {
+      this.configuratorReturnHash = null;
+      return;
+    }
+    this.configuratorReturnHash = hash.startsWith('#') ? hash : `#${hash}`;
+  }
+
+  clearConfiguratorReturn() {
+    this.configuratorReturnHash = null;
   }
 
   // ── Configurator suit wizard ───────────────────────────────────────────────

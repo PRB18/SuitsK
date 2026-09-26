@@ -1,4 +1,4 @@
-﻿/**
+/**
  * router.js — Hash-based client screen router
  *
  * Supports query parameters in hash: #client-profile?id=UUID
@@ -12,10 +12,11 @@ import { ensureShell, teardownShell, setActiveNav } from './shell.js';
 
 class Router {
   constructor() {
-    this.routes       = {};
-    this.currentRoute = null;
-    this.rootElement  = null;
-    this._rendering   = false;
+    this.routes        = {};
+    this.currentRoute  = null;
+    this.previousRoute = null;  // track where we came FROM for smart Back
+    this.rootElement   = null;
+    this._rendering    = false;
 
     window.addEventListener('hashchange', () => this.handleRoute());
   }
@@ -71,12 +72,30 @@ class Router {
   }
 
   /**
-   * Leave nested screens without stacking history.
-   * Always replace — pairing history.back() with navigate() was the ping-pong loop.
+   * Smart back navigation.
+   * If the immediately-previous route matches the intended fallback, use the
+   * native history.back() so we don't duplicate the entry in history.
+   * Otherwise replace the current entry (prevents ping-pong loops).
    */
   back(fallback = '#congressional') {
     const fb = fallback.startsWith('#') ? fallback : `#${fallback}`;
-    this.navigate(fb, { replace: true });
+    // Extract the base route from previousRoute (strip query string)
+    const prevBase = this.previousRoute
+      ? this.previousRoute.split('?')[0]
+      : null;
+    const fbBase = fb.split('?')[0];
+    if (prevBase && prevBase === fbBase) {
+      // Previous history entry IS the fallback — use native back so we don't
+      // add a second copy of that route to history.
+      history.back();
+    } else {
+      this.navigate(fb, { replace: true });
+    }
+  }
+
+  /** Returns the previous clean route (base hash without query params). */
+  getPreviousRoute() {
+    return this.previousRoute ? this.previousRoute.split('?')[0] : null;
   }
 
   /** Parse query params from the hash portion, e.g. #route?id=abc → { id: 'abc' } */
@@ -150,6 +169,10 @@ class Router {
       const handler = this.routes[cleanHash] || this.routes['#congressional'];
       if (!handler || !this.rootElement) return;
 
+      // Track previous route for smart Back navigation (before updating currentRoute)
+      if (this.currentRoute && this.currentRoute !== cleanHash) {
+        this.previousRoute = this.currentRoute;
+      }
       this.currentRoute = cleanHash;
 
       // Lock: full-bleed, no sidebar. Unlocked: persistent shell, swap main only.

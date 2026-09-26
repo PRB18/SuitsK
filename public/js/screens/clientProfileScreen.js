@@ -40,13 +40,19 @@ const STAGE_BADGE_CLS = {
 
 export async function renderClientProfileScreen(container) {
   const clientId = state.currentClientId;
+
+  // Determine where "Back" should go based on where we came from
+  const prevRoute = router.getPreviousRoute();
+  const backTarget = '#client-db';
+  const backLabel  = prevRoute === '#client-db' ? '← Client Database' : '← Back';
+
   if (!clientId) {
     // No client in state — fetch all clients and show a picker so the user
     // doesn't have to leave the screen and navigate to client-db manually.
     container.innerHTML = `
       <div class="screen-wrapper cpr-screen">
         <header class="screen-header">
-          <button class="btn-icon back-btn" id="cpr-pick-back" aria-label="Back">← Back</button>
+          <button class="btn-icon back-btn" id="cpr-pick-back" aria-label="Back">${backLabel}</button>
           <div class="screen-header-title">
             <h1 class="screen-title">Client Profiles</h1>
           </div>
@@ -107,7 +113,7 @@ export async function renderClientProfileScreen(container) {
   container.innerHTML = `
     <div class="screen-wrapper cpr-screen">
       <header class="screen-header">
-        <button class="btn-icon back-btn" id="cpr-back" aria-label="Back to Client Database">← Back</button>
+        <button class="btn-icon back-btn" id="cpr-back" aria-label="Back to Client Database">${backLabel}</button>
         <div class="screen-header-title">
           <h1 class="screen-title" id="cpr-title">Loading…</h1>
           <span class="badge badge--neutral" id="cpr-ref"></span>
@@ -272,17 +278,29 @@ export async function renderClientProfileScreen(container) {
         ${clientData.notes ? `<div class="cpr-contact-row cpr-notes"><span class="cpr-contact-icon">📝</span>${escHtml(clientData.notes)}</div>` : ''}
       </div>
 
+      <!-- Active Orders — shown first for quick access -->
+      <section class="cpr-section">
+        <div class="cpr-section-header">
+          <h2>Active Orders</h2>
+          <button class="btn btn-primary btn-sm" id="cpr-new-order">+ New Order</button>
+        </div>
+        ${activeOrders.length === 0
+          ? '<p class="text-muted cpr-no-orders">No active orders yet. Use <strong>+ New Order</strong> to create an order and jump straight into measurements — the garment appears on the Workshop board automatically.</p>'
+          : activeOrders.map(o => renderOrderCard(o, true)).join('')
+        }
+      </section>
+
       <section class="cpr-section cpr-profile-tools">
         <div class="cpr-section-header">
           <h2>Body Measurements</h2>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-            <button class="btn btn-primary btn-sm" id="cpr-edit-measurements">Edit on Style Sheet</button>
-            <button class="btn btn-ghost btn-sm" id="cpr-open-measurements">Full Configurator</button>
+            <button class="btn btn-primary btn-sm" id="cpr-edit-measurements">✏️ Update Measurements</button>
+            <button class="btn btn-ghost btn-sm" id="cpr-open-measurements">Open Style Sheet</button>
           </div>
         </div>
         ${(() => {
           const meas = clientData.measurement;
-          if (!meas) return '<p class="text-muted">No measurement profile yet — created automatically with this client. Click Edit to fill the paper-form sheet.</p>';
+          if (!meas) return '<p class="text-muted">No measurement profile yet — created automatically with this client. Click <strong>Update Measurements</strong> to fill the paper-form sheet.</p>';
           const vals = meas.values
             || (typeof meas.values_json === 'string' ? (() => { try { return JSON.parse(meas.values_json || '{}'); } catch { return {}; } })() : (meas.values_json || {}));
           const unit = meas.unit || 'in';
@@ -294,7 +312,7 @@ export async function renderClientProfileScreen(container) {
           const filled = HIGHLIGHT.filter(([, k]) => vals[k]);
           const anyFilled = Object.keys(vals).some(k => vals[k] !== '' && vals[k] != null);
           if (!anyFilled) {
-            return '<p class="text-muted">Measurement profile linked — no values entered yet. Use <strong>Edit on Style Sheet</strong> to fill the same grid as the paper order form.</p>';
+            return '<p class="text-muted">Measurement profile linked — no values entered yet. Use <strong>Update Measurements</strong> to fill the same grid as the paper order form.</p>';
           }
           return (filled.length
             ? '<div class="cpr-meas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.5rem;margin-top:0.5rem;">' +
@@ -326,18 +344,6 @@ export async function renderClientProfileScreen(container) {
       <section class="cpr-section">
         <div class="cpr-section-header"><h2>Client Visits</h2><button class="btn btn-primary btn-sm" id="cpr-add-visit">+ Add Visit</button></div>
         ${(clientData.visits || []).length ? `<div class="cpr-visits">${clientData.visits.map(v => `<div class="cpr-visit-row"><strong>${fmtDate(v.visit_date)}</strong><span>${escHtml(v.purpose || 'General visit')}</span></div>`).join('')}</div>` : '<p class="text-muted">No visits recorded yet.</p>'}
-      </section>
-
-      <!-- Active Orders -->
-      <section class="cpr-section">
-        <div class="cpr-section-header">
-          <h2>Active Orders</h2>
-          <button class="btn btn-primary btn-sm" id="cpr-new-order">+ New Order</button>
-        </div>
-        ${activeOrders.length === 0
-          ? '<p class="text-muted cpr-no-orders">No active orders yet. Use <strong>+ New Order</strong> to set dates and continue into measurements — the garment appears on the Workshop board automatically.</p>'
-          : activeOrders.map(o => renderOrderCard(o, true)).join('')
-        }
       </section>
 
       <!-- Order History -->
@@ -490,12 +496,14 @@ export async function renderClientProfileScreen(container) {
     return `
       <div class="project-chip-wrap">
         <div class="project-chip" data-project-id="${project.id}">
-          <span class="project-chip-type">${escHtml(project.garment_type)}</span>
-          <span class="badge ${stageCls} badge--sm">${STAGE_LABELS[project.status] || project.status}</span>
+          <div class="project-chip-header">
+            <span class="project-chip-type">${escHtml(project.garment_type)}</span>
+            <span class="badge ${stageCls} badge--sm">${STAGE_LABELS[project.status] || project.status}</span>
+          </div>
           <div class="project-chip-actions">
-            <button class="btn-link btn-xs" data-garment-action="view-meas" data-project-id="${project.id}" data-order-id="${orderId}" title="View measurements">📐</button>
-            <button class="btn-link btn-xs" data-garment-action="open-configurator" data-project-id="${project.id}" data-order-id="${orderId}" title="Open in configurator">⚙️</button>
-            <button class="btn-link btn-xs" data-garment-action="print-meas" data-project-id="${project.id}" data-order-id="${orderId}" title="Print measurement card">🖨</button>
+            <button class="btn btn-ghost btn-xs" data-garment-action="view-meas" data-project-id="${project.id}" data-order-id="${orderId}" title="View measurements">📐 Measurements</button>
+            <button class="btn btn-ghost btn-xs" data-garment-action="open-configurator" data-project-id="${project.id}" data-order-id="${orderId}" title="Open in configurator">⚙️ Style Sheet</button>
+            <button class="btn btn-ghost btn-xs" data-garment-action="print-meas" data-project-id="${project.id}" data-order-id="${orderId}" title="Print measurement card">🖨 Print</button>
           </div>
           <label class="text-muted" style="font-size:0.65rem;display:block;margin-top:0.35rem;">Move phase</label>
           <select class="input" style="font-size:0.75rem;padding:2px 6px;height:28px;width:100%;" data-garment-action="move-phase" data-project-id="${project.id}" data-order-id="${orderId}" aria-label="Move ${escHtml(project.garment_type)} to another workshop phase">${stageOptions}</select>

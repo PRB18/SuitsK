@@ -21,7 +21,7 @@ export async function renderClientDbScreen(container) {
       <!-- Header -->
       <header class="screen-header">
         <button class="btn-icon back-btn" id="cdb-back" title="Back to Hub" aria-label="Back to Hub">
-          ${getIcon('arrow-left') || '←'}
+          ${getIcon('arrow-left') || '←'} Atelier Hub
         </button>
         <div class="screen-header-title">
           <h1 class="screen-title">Client Database</h1>
@@ -184,7 +184,7 @@ export async function renderClientDbScreen(container) {
           <td>${statusBadge}</td>
           <td class="text-muted">${updatedAgo}</td>
           <td>
-            <button class="btn-link cdb-view-btn" data-id="${c.id}">View Profile →</button>
+            <span class="text-muted" style="font-size:0.8rem;">Click row to open →</span>
           </td>
         </tr>
       `;
@@ -193,15 +193,11 @@ export async function renderClientDbScreen(container) {
     // Row click events
     tbody.querySelectorAll('.cdb-row').forEach(row => {
       row.addEventListener('click', (e) => {
-        if (e.target.classList.contains('cdb-view-btn')) return;
         router.navigateTo('#client-profile', { id: row.dataset.id });
       });
       row.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') router.navigateTo('#client-profile', { id: row.dataset.id });
       });
-    });
-    tbody.querySelectorAll('.cdb-view-btn').forEach(btn => {
-      btn.addEventListener('click', () => router.navigateTo('#client-profile', { id: btn.dataset.id }));
     });
   }
 

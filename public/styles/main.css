@@ -2339,7 +2339,7 @@ textarea:focus-visible, summary:focus-visible {
 
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
 .ctb-hero {
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .ctb-hero-eyebrow {
@@ -2347,17 +2347,17 @@ textarea:focus-visible, summary:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.32em;
   color: #C9A84C;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .ctb-hero-title {
   font-family: 'Cormorant Garamond', Garamond, 'Didot', Georgia, serif;
-  font-size: clamp(2.35rem, 4vw, 3.75rem);
+  font-size: clamp(1.85rem, 2.8vw, 2.6rem);
   font-weight: 600;
   line-height: 0.95;
   color: #2C1810;
   letter-spacing: -0.01em;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .ctb-hero-title em {
@@ -2581,7 +2581,7 @@ textarea:focus-visible, summary:focus-visible {
 
 @media (max-width: 480px) {
   .ctb-module-grid { grid-template-columns: 1fr; }
-  .ctb-hero-title  { font-size: 2.5rem; }
+  .ctb-hero-title  { font-size: 2rem; }
 }
 
 /* ==========================================================================

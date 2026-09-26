@@ -12,7 +12,6 @@ import {
   IMPLEMENTED_ROUTES,
   routeToNavId,
 } from './navConfig.js';
-import { state } from './state.js';
 
 let shellEl = null;
 let mainEl  = null;
@@ -105,17 +104,9 @@ function bindShellOnce(shell) {
     btn.addEventListener('click', () => {
       const route = btn.dataset.route;
       const clean = route.split('?')[0];
-      if (!IMPLEMENTED_ROUTES.includes(clean)) return;
-      // Measurements module: always a fresh sheet, never the last client visited.
-      if (btn.dataset.id === 'measurements' || clean === '#configurator') {
-        state.clearClientContext();
-        state.startNewSuit();
-        state.setStep(5);
-        state.setConfiguratorReturn('#congressional');
-        navigate('#configurator', { replace: true });
-        return;
+      if (IMPLEMENTED_ROUTES.includes(clean)) {
+        navigate(route);
       }
-      navigate(route);
     });
   });
 

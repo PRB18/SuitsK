@@ -1,3 +1,16 @@
+## 2026-09-26: Measurements nav opens B2B vault
+
+- **Decision:** Sidebar/hub **Measurements** (III) routes to `#b2b` (same vault screen as B2B Logistics), not the bare configurator wizard.
+- **Why:** Users expect Measurements to open the style-sheet vault (B2B section), then edit individual sheets from there — not land in an empty wizard locked to a prior client.
+- **Alternatives considered:** Keep Measurements → `#configurator` with a fresh sheet (rejected: wrong destination for this nav item).
+- **Status:** Implemented in `navConfig.js`, `shell.js`, `congressionalScreen.js`.
+
+## 2026-09-26: Measurements nav opens B2B vault section
+
+- **Decision:** Sidebar/hub **Measurements** (III) routes to `#b2b`, which renders the suit vault and scrolls to the B2B Logistics panel. **B2B Logistics** (IX) routes to `#dashboard` (same screen, top). Configurator remains reachable via New Suit / Edit / client profile.
+- **Why:** Users expected Measurements to open the B2B section, not a fresh locked configurator sheet.
+- **Status:** Implemented in `navConfig.js` (shell/hub use shared routes).
+
 ## 2026-09-26: Hub Measurements entry clears sticky client context
 
 - **Decision:** Sidebar/hub Measurements uses `openHubMeasurements()` — clears `currentClientId`, starts a fresh sheet, and sets `configuratorReturnHash` to `#congressional`. Profile/workshop entry uses `openClientMeasurements()` with Back → that profile. Configurator Back follows `configuratorReturnHash`, not “if clientId then profile”.

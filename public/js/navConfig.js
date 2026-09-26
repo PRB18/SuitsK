@@ -39,13 +39,13 @@ export const NAV_MODULES = [
     roman: 'III',
     title: 'Measurements',
     subtitle: 'Style & body data',
-    route: '#configurator',
+    route: '#b2b',
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
       <path d="M3 7h18M3 12h18M3 17h18"/>
       <rect x="2" y="4" width="20" height="16" rx="2"/>
     </svg>`,
     chips: ['Style', 'Measurements'],
-    hint: 'Pick a client first — measurements live on their profile',
+    hint: 'Opens the B2B vault — style sheets and measurements live here',
   },
   {
     id: 'inventory',
@@ -111,7 +111,7 @@ export const NAV_MODULES = [
     roman: 'IX',
     title: 'B2B Logistics',
     subtitle: 'Vendor & Corporate',
-    route: '#b2b',
+    route: '#dashboard',
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
       <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
@@ -142,7 +142,10 @@ export const IMPLEMENTED_ROUTES = [
 /** Map hash → nav item id for active highlighting. */
 export function routeToNavId(cleanHash) {
   if (cleanHash === '#congressional') return 'hub';
-  if (cleanHash === '#dashboard' || cleanHash === '#b2b') return 'dashboard';
+  // Measurements (III) and B2B Logistics (IX) share the vault screen at #b2b.
+  // Prefer highlighting Measurements when on that screen; #dashboard keeps IX.
+  if (cleanHash === '#b2b') return 'measurements';
+  if (cleanHash === '#dashboard') return 'dashboard';
   if (cleanHash === '#configurator') return 'measurements';
   const match = NAV_MODULES.find((m) => m.route.split('?')[0] === cleanHash);
   return match?.id || null;

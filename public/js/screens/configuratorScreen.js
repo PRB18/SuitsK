@@ -239,9 +239,11 @@ export async function renderConfiguratorScreen(container) {
 
   container.appendChild(wrapper);
 
-  // Client link controls
+  // Client link controls — replace so Back cannot ping-pong wizard ↔ profile
   wrapper.querySelector('#wizard-open-client')?.addEventListener('click', () => {
-    if (state.currentClientId) router.navigateTo('#client-profile', { id: state.currentClientId });
+    if (state.currentClientId) {
+      router.navigateTo('#client-profile', { id: state.currentClientId }, { replace: true });
+    }
   });
   const pickClient = () => openClientPickerModal(async (client) => {
     state.setCurrentClientId(client.id);
@@ -263,15 +265,18 @@ export async function renderConfiguratorScreen(container) {
   const quickSaveBtn = wrapper.querySelector('#wizard-quick-save-btn');
   const backVaultBtn = wrapper.querySelector('#wizard-back-vault-btn');
 
-  backVaultBtn.addEventListener('click', () => {
+  /** Leave wizard without stacking duplicate history (prevents profile ↔ measurements loop). */
+  function leaveConfigurator() {
     hideTooltip();
-    // Prefer returning to the linked client profile when one is in context.
+    // Keep state.currentClientId — linkage must survive navigation.
     if (state.currentClientId) {
-      router.navigateTo('#client-profile', { id: state.currentClientId });
+      router.navigateTo('#client-profile', { id: state.currentClientId }, { replace: true });
     } else {
-      router.navigate('#dashboard');
+      router.navigate('#dashboard', { replace: true });
     }
-  });
+  }
+
+  backVaultBtn.addEventListener('click', leaveConfigurator);
 
   // Keyboard shortcuts — Rule 2: efficient shortcuts for power users
   const onWizardKeydown = (e) => {
@@ -283,12 +288,7 @@ export async function renderConfiguratorScreen(container) {
 
     if (e.key === 'Escape') {
       if (inInput) { e.target.blur(); return; }
-      hideTooltip();
-      if (state.currentClientId) {
-        router.navigateTo('#client-profile', { id: state.currentClientId });
-      } else {
-        router.navigate('#dashboard');
-      }
+      leaveConfigurator();
       return;
     }
 
@@ -654,6 +654,17 @@ function renderMeasurementsPanel(container) {
           </tbody>
         </table>
       </div>
+
+      <div class="meas-client-attribution" style="margin-top:1.25rem;padding:0.85rem 1rem;background:var(--color-surface);border:1px solid var(--color-border);border-radius:6px;">
+        ${state.linkedClientInfo
+          ? `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--color-text-secondary);margin-bottom:0.25rem;">Client</div>
+             <div style="display:flex;align-items:baseline;gap:0.75rem;flex-wrap:wrap;">
+               <strong style="font-size:1.05rem;">${escapeHtml(state.linkedClientInfo.name)}</strong>
+               <span class="badge badge--neutral">${escapeHtml(state.linkedClientInfo.client_ref || 'No ref')}</span>
+             </div>`
+          : `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--color-text-secondary);margin-bottom:0.25rem;">Client</div>
+             <p class="text-muted" style="margin:0;">No client linked — pick one from the banner above so these measurements belong to a profile.</p>`}
+      </div>
       
     </div>
   `;
@@ -868,9 +879,18 @@ function renderSavePanel(container) {
         <div class="breakdown-section">
           <div class="breakdown-group-title">6. Measurements (${s.data.measurements.unit.toUpperCase()})</div>
           <div class="breakdown-chips-grid">
-            ${Object.entries(s.data.measurements.values || {}).filter(([_, v]) => v != null).map(([k, v]) => `
+            ${Object.entries(s.data.measurements.values || {}).filter(([_, v]) => v != null && v !== '').map(([k, v]) => `
               <div class="breakdown-item"><span>${escapeHtml(k)}:</span> <strong>${v} ${s.data.measurements.unit}</strong></div>
             `).join('') || '<div class="text-secondary">No dimensions entered yet.</div>'}
+          </div>
+          <div class="meas-client-attribution" style="margin-top:0.85rem;padding:0.75rem 0.9rem;background:var(--color-surface);border:1px solid var(--color-border);border-radius:6px;">
+            ${state.linkedClientInfo
+              ? `<span class="text-muted" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;">Client</span>
+                 <div style="display:flex;align-items:baseline;gap:0.65rem;flex-wrap:wrap;margin-top:0.2rem;">
+                   <strong>${escapeHtml(state.linkedClientInfo.name)}</strong>
+                   <span class="badge badge--neutral">${escapeHtml(state.linkedClientInfo.client_ref || 'No ref')}</span>
+                 </div>`
+              : `<span class="text-muted">No client linked to these measurements.</span>`}
           </div>
         </div>
       </div>
@@ -1014,9 +1034,10 @@ async function handleFinalSave() {
     showToast(clientId ? 'Saved — linked to client profile.' : 'Suit saved to encrypted vault.', 'success');
     state.currentSuit = null;
     if (clientId) {
-      router.navigateTo('#client-profile', { id: clientId });
+      // replace avoids stacking profile after wizard (browser Back ping-pong)
+      router.navigateTo('#client-profile', { id: clientId }, { replace: true });
     } else {
-      router.navigate('#dashboard');
+      router.navigate('#dashboard', { replace: true });
     }
   } catch (err) {
     const msg = 'Failed to save suit to encrypted vault: ' + err.message;

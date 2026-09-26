@@ -154,6 +154,7 @@ export async function renderInventoryScreen(container) {
   let activeFilter = 'all';
   let activeItemId = null;
   let itemType   = 'fabric';
+  let editingItemId = null; // null = add mode; set = edit mode
 
   document.getElementById('inv-back').addEventListener('click', () => router.backToHub());
 
@@ -193,6 +194,7 @@ export async function renderInventoryScreen(container) {
         <td class="inv-actions">
           <button class="btn-link btn-xs" data-action="deduct" data-id="${item.id}">Use</button>
           <button class="btn-link btn-xs" data-action="history" data-id="${item.id}">History</button>
+          <button class="btn-link btn-xs" data-action="edit" data-id="${item.id}">Edit</button>
           <button class="btn-link btn-xs btn-link-danger" data-action="delete" data-id="${item.id}">Delete</button>
         </td>
       </tr>
@@ -203,6 +205,7 @@ export async function renderInventoryScreen(container) {
       const item = allItems.find(i => i.id === id);
       if (btn.dataset.action === 'deduct') btn.addEventListener('click', () => openDeductModal(item, 'deduct'));
       if (btn.dataset.action === 'history') btn.addEventListener('click', () => openTxModal(item));
+      if (btn.dataset.action === 'edit') btn.addEventListener('click', () => openEditModal(item));
       if (btn.dataset.action === 'delete') btn.addEventListener('click', () => deleteItem(item));
     });
   }
@@ -217,13 +220,24 @@ export async function renderInventoryScreen(container) {
     });
   });
 
-  // ── Add Item Modal ──────────────────────────────────────────────────────────
+  // ── Add / Edit Item Modal ───────────────────────────────────────────────────
   document.getElementById('inv-new-btn').addEventListener('click', openAddModal);
-  document.getElementById('inv-modal-close').addEventListener('click',  closeAddModal);
-  document.getElementById('inv-modal-cancel').addEventListener('click', closeAddModal);
+  document.getElementById('inv-modal-close').addEventListener('click',  closeItemModal);
+  document.getElementById('inv-modal-cancel').addEventListener('click', closeItemModal);
+
+  const qtyFieldWrap = document.getElementById('inv-f-qty').closest('.form-field');
+
+  function setModalMode(mode) {
+    const isEdit = mode === 'edit';
+    document.getElementById('inv-modal-title').textContent = isEdit ? 'Edit Inventory Item' : 'Add Inventory Item';
+    document.getElementById('inv-modal-save').textContent = isEdit ? 'Save Changes' : 'Add Item';
+    // Quantity is set on create; use Use/transact to change stock later.
+    if (qtyFieldWrap) qtyFieldWrap.style.display = isEdit ? 'none' : '';
+  }
 
   function openAddModal() {
-    document.getElementById('inv-modal-title').textContent = 'Add Inventory Item';
+    editingItemId = null;
+    setModalMode('add');
     ['inv-f-name','inv-f-article','inv-f-color','inv-f-supplier','inv-f-notes'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
@@ -234,45 +248,88 @@ export async function renderInventoryScreen(container) {
     document.getElementById('inv-f-received-date').value = '';
     setItemType('fabric');
     document.getElementById('inv-modal').style.display = 'flex';
+    document.getElementById('inv-f-name').focus();
   }
-  function closeAddModal() { document.getElementById('inv-modal').style.display = 'none'; }
+
+  function openEditModal(item) {
+    if (!item) return;
+    editingItemId = item.id;
+    setModalMode('edit');
+    setItemType(item.item_type === 'accessory' ? 'accessory' : 'fabric');
+    document.getElementById('inv-f-name').value          = item.name || '';
+    document.getElementById('inv-f-article').value       = item.article_number || '';
+    document.getElementById('inv-f-color').value         = item.color || '';
+    document.getElementById('inv-f-supplier').value      = item.supplier || '';
+    document.getElementById('inv-f-order-date').value    = item.order_date || '';
+    document.getElementById('inv-f-received-date').value = item.received_date || '';
+    document.getElementById('inv-f-unit').value          = item.unit || (itemType === 'fabric' ? 'm' : 'pcs');
+    document.getElementById('inv-f-alert').value         = item.low_stock_alert ?? '';
+    document.getElementById('inv-f-notes').value         = item.notes || '';
+    document.getElementById('inv-modal').style.display = 'flex';
+    document.getElementById('inv-f-name').focus();
+  }
+
+  function closeItemModal() {
+    editingItemId = null;
+    document.getElementById('inv-modal').style.display = 'none';
+  }
 
   function setItemType(type) {
     itemType = type;
     document.getElementById('inv-type-fabric').classList.toggle('toggle-btn--active', type === 'fabric');
     document.getElementById('inv-type-accessory').classList.toggle('toggle-btn--active', type === 'accessory');
-    document.getElementById('inv-f-unit').value = type === 'fabric' ? 'm' : 'pcs';
+    // Only auto-fill unit when adding; preserve stored unit while editing.
+    if (!editingItemId) {
+      document.getElementById('inv-f-unit').value = type === 'fabric' ? 'm' : 'pcs';
+    }
   }
   document.getElementById('inv-type-fabric').addEventListener('click',    () => setItemType('fabric'));
   document.getElementById('inv-type-accessory').addEventListener('click', () => setItemType('accessory'));
 
   document.getElementById('inv-modal-save').addEventListener('click', async () => {
-    const name     = document.getElementById('inv-f-name').value.trim();
-    const quantity = parseFloat(document.getElementById('inv-f-qty').value);
+    const name = document.getElementById('inv-f-name').value.trim();
     if (!name) { showToast('Item name is required.','error'); return; }
-    if (isNaN(quantity) || quantity < 0) { showToast('Quantity must be ≥ 0.','error'); return; }
+
+    const payload = {
+      item_type:       itemType,
+      name,
+      article_number:  document.getElementById('inv-f-article').value.trim(),
+      color:           document.getElementById('inv-f-color').value.trim(),
+      supplier:        document.getElementById('inv-f-supplier').value.trim(),
+      order_date:      document.getElementById('inv-f-order-date').value,
+      received_date:   document.getElementById('inv-f-received-date').value,
+      unit:            document.getElementById('inv-f-unit').value.trim() || (itemType === 'fabric' ? 'm' : 'pcs'),
+      low_stock_alert: parseFloat(document.getElementById('inv-f-alert').value) || 0,
+      notes:           document.getElementById('inv-f-notes').value.trim(),
+    };
+
     const btn = document.getElementById('inv-modal-save');
-    btn.disabled = true; btn.textContent = 'Adding…';
+    const isEdit = Boolean(editingItemId);
+    btn.disabled = true;
+    btn.textContent = isEdit ? 'Saving…' : 'Adding…';
+
     try {
-      const newItem = await api.createInventoryItem({
-        item_type:       itemType,
-        name,
-        article_number:  document.getElementById('inv-f-article').value.trim(),
-        color:           document.getElementById('inv-f-color').value.trim(),
-        supplier:        document.getElementById('inv-f-supplier').value.trim(),
-        order_date:      document.getElementById('inv-f-order-date').value,
-        received_date:   document.getElementById('inv-f-received-date').value,
-        quantity,
-        unit:            document.getElementById('inv-f-unit').value.trim() || (itemType === 'fabric' ? 'm' : 'pcs'),
-        low_stock_alert: parseFloat(document.getElementById('inv-f-alert').value) || 0,
-        notes:           document.getElementById('inv-f-notes').value.trim(),
-      });
-      allItems.unshift(newItem);
-      renderTable();
-      closeAddModal();
-      showToast('Item added!', 'success');
+      if (isEdit) {
+        const updated = await api.updateInventoryItem(editingItemId, payload);
+        const idx = allItems.findIndex(i => i.id === editingItemId);
+        if (idx !== -1) allItems[idx] = { ...allItems[idx], ...updated };
+        renderTable();
+        closeItemModal();
+        showToast('Item updated.', 'success');
+      } else {
+        const quantity = parseFloat(document.getElementById('inv-f-qty').value);
+        if (isNaN(quantity) || quantity < 0) { showToast('Quantity must be ≥ 0.','error'); return; }
+        const newItem = await api.createInventoryItem({ ...payload, quantity });
+        allItems.unshift(newItem);
+        renderTable();
+        closeItemModal();
+        showToast('Item added!', 'success');
+      }
     } catch (err) { showToast('Error: ' + err.message, 'error'); }
-    finally { btn.disabled = false; btn.textContent = 'Add Item'; }
+    finally {
+      btn.disabled = false;
+      btn.textContent = isEdit ? 'Save Changes' : 'Add Item';
+    }
   });
 
   // ── Deduct Modal ───────────────────────────────────────────────────────────

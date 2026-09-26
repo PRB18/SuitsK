@@ -240,6 +240,8 @@ export async function renderClientProfileScreen(container) {
   let activeMeasProject = null;
 
   document.getElementById('cpr-back').addEventListener('click', () => {
+    // Always replace — never history.back() — so profile ↔ measurements cannot ping-pong.
+    // currentClientId stays set so the client↔measurement link remains intact.
     router.back('#client-db');
   });
 
@@ -533,8 +535,18 @@ export async function renderClientProfileScreen(container) {
 
   function renderMeasPanelBody(meas, isEdit) {
     const MEAS_FIELDS = getMeasurementFields(activeMeasProject?.garment_type);
+    const clientAttribution = `
+      <div class="meas-client-attribution" style="padding:16px 20px;border-bottom:1px solid var(--color-border);background:var(--color-surface-muted, var(--color-surface));">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--color-text-secondary);margin-bottom:0.2rem;">Client</div>
+        <div style="display:flex;align-items:baseline;gap:0.65rem;flex-wrap:wrap;">
+          <strong style="font-size:1.05rem;">${escHtml(clientData?.name || 'Unknown')}</strong>
+          <span class="badge badge--neutral">${escHtml(clientData?.client_ref || 'No ref')}</span>
+        </div>
+      </div>`;
+
     if (isEdit) {
       measPanelBody.innerHTML = `
+        ${clientAttribution}
         <div class="meas-edit-grid">
           ${MEAS_FIELDS.map(f => `
             <div class="meas-field">
@@ -570,13 +582,15 @@ export async function renderClientProfileScreen(container) {
     } else {
       const filled = MEAS_FIELDS.filter(f => meas[f.key+'_l'] || meas[f.key+'_r'] || meas[f.key]);
       if (filled.length === 0) {
-        measPanelBody.innerHTML = `<p class="text-muted" style="padding:16px;">No measurements recorded yet.</p>
-          <button class="btn btn-primary btn-sm" id="meas-edit-btn-inner">📝 Enter Measurements</button>`;
+        measPanelBody.innerHTML = `${clientAttribution}
+          <p class="text-muted" style="padding:16px;">No measurements recorded yet.</p>
+          <button class="btn btn-primary btn-sm" id="meas-edit-btn-inner" style="margin:0 16px 16px;">📝 Enter Measurements</button>`;
         document.getElementById('meas-edit-btn-inner').addEventListener('click', () =>
           renderMeasPanelBody(meas, true));
         return;
       }
       measPanelBody.innerHTML = `
+        ${clientAttribution}
         <table class="meas-view-table">
           <thead><tr><th>Measurement</th><th>L</th><th>R</th></tr></thead>
           <tbody>

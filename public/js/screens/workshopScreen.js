@@ -1,12 +1,12 @@
-/**
- * workshopScreen.js — Workshop Kanban board
+﻿/**
+ * workshopScreen.js --- Workshop Kanban board
  *
  * Features:
  *   - Horizontal Kanban: one column per stage
  *   - Project cards with urgency colouring (overdue/due soon/on track)
  *   - "Move to Next Stage" with smart prompts:
- *     → Trial stage: offer to create a Schedule event
- *     → Delivered (all garments): offer to mark order complete
+ *     --- Trial stage: offer to create a Schedule event
+ *     --- Delivered (all garments): offer to mark order complete
  *   - Summary strip (Total / Overdue / Due This Week / Ready)
  *   - Filter by garment type + search by client name
  */
@@ -29,9 +29,9 @@ export async function renderWorkshopScreen(container) {
   container.innerHTML = `
     <div class="screen-wrapper kanban-screen">
       <header class="screen-header">
-        <button class="btn-icon back-btn" id="ws-back">← Back</button>
+        <button class="btn-icon back-btn" id="ws-back">--- Back</button>
         <div class="screen-header-title"><h1 class="screen-title">Workshop</h1></div>
-        <div class="screen-header-actions"><button class="btn btn-ghost" id="ws-edit-sections">✎ Edit Sections</button></div>
+        <div class="screen-header-actions"><button class="btn btn-ghost" id="ws-edit-sections">--- Edit Sections</button></div>
       </header>
 
       <!-- Summary strip -->
@@ -39,11 +39,11 @@ export async function renderWorkshopScreen(container) {
 
       <!-- Controls -->
       <div class="cdb-controls">
-        <input type="search" id="ws-search" class="search-input" placeholder="Search by client name…">
+        <input type="search" id="ws-search" class="search-input" placeholder="Search by client name---">
         <div class="filter-chips">
           <button class="chip chip--active" data-filter="all">All Garments</button>
-          <button class="chip" data-filter="overdue">Overdue 🔴</button>
-          <button class="chip" data-filter="due-soon">Due Soon 🟡</button>
+          <button class="chip" data-filter="overdue">Overdue ----</button>
+          <button class="chip" data-filter="due-soon">Due Soon ----</button>
           ${['Jacket','Sherwani','Sadri','Waistcoat','Jodhpuri','Shirts/Kurta','Pant','Safari jkt','Denim'].map(t =>
             `<button class="chip" data-filter="${t}">${t}</button>`).join('')}
         </div>
@@ -58,7 +58,7 @@ export async function renderWorkshopScreen(container) {
       <div class="modal-panel modal-panel--sm">
         <div class="modal-header">
           <h2 class="modal-title" id="ws-move-title">Move to Next Stage?</h2>
-          <button class="btn-icon modal-close" id="ws-move-close">✕</button>
+          <button class="btn-icon modal-close" id="ws-move-close">---</button>
         </div>
         <div class="modal-body" id="ws-move-body"></div>
         <div class="modal-footer">
@@ -73,12 +73,12 @@ export async function renderWorkshopScreen(container) {
       <div class="modal-panel modal-panel--sm">
         <div class="modal-header">
           <h2 class="modal-title" id="ws-edit-title">Edit Workshop Project</h2>
-          <button class="btn-icon modal-close" id="ws-edit-close" aria-label="Close">✕</button>
+          <button class="btn-icon modal-close" id="ws-edit-close" aria-label="Close">---</button>
         </div>
         <div class="modal-body">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
             <p class="text-muted" id="ws-edit-project-label" style="margin:0;"></p>
-            <button class="btn btn-ghost btn-sm" id="ws-edit-view-client">Client Profile →</button>
+            <button class="btn btn-ghost btn-sm" id="ws-edit-view-client">Client Profile ---</button>
           </div>
           <div class="form-field">
             <label for="ws-edit-status">Move to Stage</label>
@@ -98,9 +98,9 @@ export async function renderWorkshopScreen(container) {
       <div class="modal-panel" id="ws-sections-panel">
         <div class="modal-header">
           <h2 class="modal-title" id="ws-sections-title">Edit Workshop Sections</h2>
-          <button class="btn-icon modal-close" id="ws-sections-close" aria-label="Close">✕</button>
+          <button class="btn-icon modal-close" id="ws-sections-close" aria-label="Close">---</button>
         </div>
-        <div class="modal-body" id="ws-sections-body"><div class="table-loading">Loading sections…</div></div>
+        <div class="modal-body" id="ws-sections-body"><div class="table-loading">Loading sections---</div></div>
         <div class="modal-footer">
           <button class="btn btn-ghost" id="ws-sections-add">+ Add Section</button>
           <div style="flex:1"></div>
@@ -183,7 +183,7 @@ export async function renderWorkshopScreen(container) {
             <span class="badge badge--neutral">${cards.length}</span>
           </div>
           <div class="kanban-cards">
-            ${cards.map(p => renderCard(p)).join('') || '<div class="kanban-empty">—</div>'}
+            ${cards.map(p => renderCard(p)).join('') || '<div class="kanban-empty">---</div>'}
           </div>
         </div>
       `;
@@ -198,7 +198,7 @@ export async function renderWorkshopScreen(container) {
     board.querySelectorAll('[data-action="edit-project"]').forEach(btn => {
       btn.addEventListener('click', () => openEditModal(btn.dataset.id));
     });
-    // Quick-move: instant stage change from dropdown — no confirmation needed
+    // Quick-move: instant stage change from dropdown --- no confirmation needed
     board.querySelectorAll('[data-action="quick-move"]').forEach(sel => {
       sel.addEventListener('change', async () => {
         const projectId = sel.dataset.id;
@@ -238,15 +238,15 @@ export async function renderWorkshopScreen(container) {
         </div>
         <div class="kanban-card-client" data-action="view-client" data-client-id="${p.client_id}">
           <strong>${escHtml(p.client_name)}</strong>
-          <span class="kanban-card-ref">${escHtml(p.client_ref)} · ${escHtml(p.order_ref)}</span>
+          <span class="kanban-card-ref">${escHtml(p.client_ref)} -- ${escHtml(p.order_ref)}</span>
         </div>
         ${p.delivery_date ? `<div class="kanban-card-date">Delivery: ${fmtDate(p.delivery_date)}</div>` : ''}
         <div style="display:flex; gap:0.4rem; margin-top:0.5rem; flex-wrap:wrap;">
           <button class="btn btn-ghost btn-sm kanban-edit-btn" data-action="edit-project" data-id="${p.id}" style="flex:0 0 auto;">Edit</button>
           ${nextStage ? `
           <button class="btn btn-primary btn-sm kanban-move-btn" data-action="move-stage" data-id="${p.id}" data-current="${p.status}" style="flex:1;">
-            → ${STAGE_LABELS[nextStage]}
-          </button>` : '<div class="kanban-card-done" style="flex:1;text-align:center;">✓ Complete</div>'}
+            --- ${STAGE_LABELS[nextStage]}
+          </button>` : '<div class="kanban-card-done" style="flex:1;text-align:center;">--- Complete</div>'}
         </div>
         <div style="display:flex; gap:0.3rem; margin-top:0.35rem; align-items:center;">
           <label style="font-size:0.7rem; color:var(--color-text-secondary); white-space:nowrap;" for="ws-jump-${p.id}">Move phase:</label>
@@ -262,7 +262,7 @@ export async function renderWorkshopScreen(container) {
     editingProject = allProjects.find(project => project.id === projectId);
     if (!editingProject) return;
     document.getElementById('ws-edit-project-label').textContent =
-      `${editingProject.garment_type} · ${editingProject.client_name} · ${editingProject.order_ref}`;
+      `${editingProject.garment_type} -- ${editingProject.client_name} -- ${editingProject.order_ref}`;
     document.getElementById('ws-edit-status').value   = editingProject.status;
     document.getElementById('ws-edit-trial').value    = editingProject.trial_date || '';
     document.getElementById('ws-edit-delivery').value = editingProject.delivery_date || '';
@@ -318,15 +318,15 @@ export async function renderWorkshopScreen(container) {
         <label style="font-size:0.75rem;">Personnel <span class="optional">(comma separated)</span></label>
         <input class="input ws-section-personnel" value="${escHtml((section.personnel || []).join(', '))}" placeholder="Ali, Raza, Hassan">
       </div>
-      <button class="btn-icon btn-icon--danger ws-section-delete-btn" title="Delete section" style="margin-bottom:2px;" aria-label="Delete section">🗑</button>
+      <button class="btn-icon btn-icon--danger ws-section-delete-btn" title="Delete section" style="margin-bottom:2px;" aria-label="Delete section">----</button>
     `;
     row.querySelector('.ws-section-delete-btn').addEventListener('click', () => {
       if (section.id) {
-        // Existing section — mark for deletion and fade the row
+        // Existing section --- mark for deletion and fade the row
         pendingDeletes.add(section.id);
         row.style.opacity = '0.35';
         row.querySelectorAll('input').forEach(i => i.disabled = true);
-        row.querySelector('.ws-section-delete-btn').textContent = '↩';
+        row.querySelector('.ws-section-delete-btn').textContent = '---';
         row.querySelector('.ws-section-delete-btn').title = 'Undo';
         row.querySelector('.ws-section-delete-btn').onclick = () => {
           pendingDeletes.delete(section.id);
@@ -335,7 +335,7 @@ export async function renderWorkshopScreen(container) {
           renderSectionsEditorRow._restore(row, section);
         };
       } else {
-        // New (unsaved) row — just remove it
+        // New (unsaved) row --- just remove it
         row.remove();
       }
     });
@@ -343,7 +343,7 @@ export async function renderWorkshopScreen(container) {
   }
   renderSectionsEditorRow._restore = (row, section) => {
     const btn = row.querySelector('.ws-section-delete-btn');
-    btn.textContent = '🗑';
+    btn.textContent = '----';
     btn.title = 'Delete section';
     btn.onclick = null;
     btn.addEventListener('click', () => {
@@ -358,7 +358,7 @@ export async function renderWorkshopScreen(container) {
     const body = document.getElementById('ws-sections-body');
     pendingDeletes.clear();
     modal.style.display = 'flex';
-    body.innerHTML = '<div class="table-loading">Loading sections…</div>';
+    body.innerHTML = '<div class="table-loading">Loading sections---</div>';
     try {
       const sections = await api.getHierarchy();
       body.innerHTML = '';
@@ -392,7 +392,7 @@ export async function renderWorkshopScreen(container) {
     const button = document.getElementById('ws-sections-save');
     const rows = [...document.querySelectorAll('#ws-sections-body .ws-section-edit-row')];
     button.disabled = true;
-    button.textContent = 'Saving…';
+    button.textContent = 'Saving---';
     try {
       // 1. Delete marked sections
       if (pendingDeletes.size > 0) {
@@ -409,10 +409,10 @@ export async function renderWorkshopScreen(container) {
             .split(',').map(v => v.trim()).filter(Boolean);
           if (!name) return [];
           if (sectionId) {
-            // Existing section — update
+            // Existing section --- update
             return [api.updateSection(sectionId, { section_name: name }), api.updatePersonnel(sectionId, personnel)];
           } else {
-            // New section — create then set personnel
+            // New section --- create then set personnel
             return [api.createSection({ section_name: name }).then(created => api.updatePersonnel(created.id, personnel))];
           }
         });
@@ -424,7 +424,7 @@ export async function renderWorkshopScreen(container) {
     finally { button.disabled = false; button.textContent = 'Save Changes'; }
   });
 
-  // ── Move Stage Modal ───────────────────────────────────────────────────────
+  // ------ Move Stage Modal ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
   let pendingMoveId = null;
   let pendingNextStage = null;
 
@@ -438,7 +438,7 @@ export async function renderWorkshopScreen(container) {
 
     let extraMsg = '';
     if (nextStage === 'trial') {
-      extraMsg = `<div class="modal-tip">💡 This garment is moving to Trial. You can create a trial appointment in the Schedule after confirming.</div>`;
+      extraMsg = `<div class="modal-tip">---- This garment is moving to Trial. You can create a trial appointment in the Schedule after confirming.</div>`;
     }
 
     document.getElementById('ws-move-body').innerHTML = `
@@ -453,7 +453,7 @@ export async function renderWorkshopScreen(container) {
 
   document.getElementById('ws-move-confirm').addEventListener('click', async () => {
     const btn = document.getElementById('ws-move-confirm');
-    btn.disabled = true; btn.textContent = 'Moving…';
+    btn.disabled = true; btn.textContent = 'Moving---';
     try {
       const result = await api.updateProjectStatus(pendingMoveId, pendingNextStage);
       document.getElementById('ws-move-modal').style.display = 'none';
@@ -483,7 +483,7 @@ export async function renderWorkshopScreen(container) {
     finally { btn.disabled = false; btn.textContent = 'Move Stage'; }
   });
 
-  // ── Filter chips + Search ──────────────────────────────────────────────────
+  // ------ Filter chips + Search ------------------------------------------------------------------------------------------------------------------------------------------------------
   container.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
       container.querySelectorAll('.chip').forEach(c => c.classList.remove('chip--active'));

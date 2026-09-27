@@ -81,11 +81,12 @@ router.get('/active-orders', async (req, res) => {
     const result = await db.execute(`
       SELECT o.id, o.order_ref, o.status, o.order_date as date, 
              c.name as customer, o.total_amount as amount,
-             (SELECT COUNT(*) FROM projects WHERE order_id = o.id) as qty,
+             (SELECT COUNT(*) FROM projects WHERE order_id = o.id AND status != 'delivered') as qty,
              o.client_id
       FROM orders o
       JOIN clients c ON o.client_id = c.id
       WHERE o.status NOT IN ('completed', 'cancelled', 'delivered')
+        AND (SELECT COUNT(*) FROM projects WHERE order_id = o.id AND status != 'delivered') > 0
       ORDER BY o.order_date DESC
     `);
     res.json(result.rows);

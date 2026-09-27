@@ -1,4 +1,4 @@
-﻿/**
+/**
  * workshopScreen.js --- Workshop Kanban board
  *
  * Features:
@@ -21,10 +21,11 @@ const STAGE_LABELS = {
 };
 
 export async function renderWorkshopScreen(container) {
+  const params      = router.getParams();
   let allProjects   = [];
   let summary       = {};
   let activeFilter  = 'all';
-  let searchQuery   = '';
+  let searchQuery   = params.search || '';
 
   container.innerHTML = `
     <div class="screen-wrapper kanban-screen">
@@ -39,7 +40,7 @@ export async function renderWorkshopScreen(container) {
 
       <!-- Controls -->
       <div class="cdb-controls">
-        <input type="search" id="ws-search" class="search-input" placeholder="Search by client name---">
+        <input type="search" id="ws-search" class="search-input" placeholder="Search by client name..." value="${searchQuery ? searchQuery.replace(/"/g, '&quot;') : ''}">
         <div class="filter-chips">
           <button class="chip chip--active" data-filter="all">All Garments</button>
           <button class="chip" data-filter="overdue">Overdue ----</button>

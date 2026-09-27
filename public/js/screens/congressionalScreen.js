@@ -208,7 +208,7 @@ async function renderActiveOrders(container) {
 
     orders.forEach((order, index) => {
       const row = document.createElement('a');
-      row.href = '#workshop';
+      row.href = '#workshop?search=' + encodeURIComponent(order.customer);
       row.className = 'ctb-order-row ctb-order-grid';
       row.style.textDecoration = 'none';
       row.style.color = 'inherit';

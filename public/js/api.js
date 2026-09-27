@@ -79,6 +79,7 @@ export const api = {
   },
 
   // ── Orders ────────────────────────────────────────────────────────────────
+  async getActiveOrders()   { return request('/api/active-orders'); },
   async getOrders(clientId) {
     return request(`/api/clients/${encodeURIComponent(clientId)}/orders`);
   },

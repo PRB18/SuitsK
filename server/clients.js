@@ -71,6 +71,31 @@ async function supportsNullPhone(db) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// ACTIVE ORDERS ROUTE
+// ────────────────────────────────────────────────────────────────────────────
+
+// GET /api/active-orders — fetch all non-completed orders with details
+router.get('/active-orders', async (req, res) => {
+  try {
+    const db = getDb();
+    const result = await db.execute(`
+      SELECT o.id, o.order_ref, o.status, o.order_date as date, 
+             c.name as customer, o.total_amount as amount,
+             (SELECT COUNT(*) FROM projects WHERE order_id = o.id) as qty,
+             o.client_id
+      FROM orders o
+      JOIN clients c ON o.client_id = c.id
+      WHERE o.status NOT IN ('completed', 'cancelled', 'delivered')
+      ORDER BY o.order_date DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('[clients] GET /active-orders error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ────────────────────────────────────────────────────────────────────────────
 // CLIENT ROUTES
 // ────────────────────────────────────────────────────────────────────────────
 

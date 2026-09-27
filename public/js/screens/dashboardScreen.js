@@ -49,6 +49,16 @@ export function renderDashboardScreen(container) {
           </span>
         </div>
       </div>
+      <!-- Active Orders Section -->
+      <div id="active-orders-section" class="active-orders-section" style="margin-bottom: 2rem;">
+        <div class="ds-section-label" style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span>Active Orders</span>
+          <a href="#workshop" class="btn btn-ghost btn-sm" style="font-size: 0.75rem;">View Workshop Kanban</a>
+        </div>
+        <div id="active-orders-container" class="suits-grid-container">
+          <div class="loading-state">Loading active orders…</div>
+        </div>
+      </div>
 
       <!-- Stats strip -->
       <div class="ds-stats-strip" id="ds-stats-strip">
@@ -150,6 +160,7 @@ export function renderDashboardScreen(container) {
   const analyticsContainer = wrapper.querySelector('#analytics-panel-container');
   const b2bContainer = wrapper.querySelector('#b2b-panel-container');
   
+  renderActiveOrders(wrapper.querySelector('#active-orders-container'));
   loadSuits(gridContainer, analyticsContainer, wrapper);
   renderB2bPanel(b2bContainer);
   if (window.location.hash === '#b2b' || window.location.hash.includes('section=b2b')) {
@@ -164,6 +175,93 @@ export function renderDashboardScreen(container) {
     }
   });
   obs.observe(container, { childList: true });
+}
+
+// ---------------------------------------------------------------------------
+// Render Active Orders
+// ---------------------------------------------------------------------------
+async function renderActiveOrders(container) {
+  try {
+    const orders = await api.getActiveOrders();
+    if (!orders || orders.length === 0) {
+      container.innerHTML = `
+        <div class="empty-vault-card" style="padding: 1.5rem; text-align: center;">
+          <div class="empty-icon-wrap" style="width: 40px; height: 40px; margin-bottom: 0.5rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(0,0,0,0.05);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h3 class="empty-title" style="font-size: 1rem; margin-top: 0.5rem;">All caught up! No active orders right now.</h3>
+          <p class="empty-text" style="font-size: 0.85rem; margin-bottom: 0;">Start a new order in the B2B section or client profile.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'suits-grid';
+    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+    
+    const getBadgeClass = (status) => {
+      if (status === 'pending') return 'badge--neutral';
+      if (status === 'in_progress') return 'badge--info';
+      if (status === 'ready') return 'badge--success';
+      return 'badge--neutral';
+    };
+
+    const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, 
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+    );
+
+    orders.forEach(order => {
+      const card = document.createElement('a');
+      card.href = '#workshop';
+      card.className = 'suit-card';
+      card.style.textDecoration = 'none';
+      card.style.color = 'inherit';
+      
+      const dateStr = new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      
+      card.innerHTML = `
+        <div class="suit-card-inner">
+          <div class="suit-card-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="suit-card-title">${escapeHTML(order.customer)}</h3>
+            <span class="vault-status-badge ${getBadgeClass(order.status)}" style="font-size: 0.7rem;">${escapeHTML(order.status.replace('_', ' '))}</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+            <strong>Ref:</strong> ${escapeHTML(order.order_ref)} &nbsp;|&nbsp; <strong>Date:</strong> ${dateStr}
+          </div>
+          <div class="suit-card-summary" style="gap: 0.5rem; margin-bottom: 0; display: flex;">
+            <div class="summary-badge" style="flex: 1; text-align: center;">
+              <span class="badge-label">Garments</span>
+              <span class="badge-value">${order.qty}</span>
+            </div>
+            <div class="summary-badge" style="flex: 1; text-align: center;">
+              <span class="badge-label">Amount</span>
+              <span class="badge-value">₹${Number(order.amount).toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    container.appendChild(grid);
+  } catch (err) {
+    container.innerHTML = `
+      <div class="form-error" style="display:block;">
+        Failed to load active orders: ${String(err.message)}
+      </div>
+    `;
+  }
 }
 
 // ---------------------------------------------------------------------------

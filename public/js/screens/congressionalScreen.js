@@ -32,7 +32,13 @@ export function renderCongressionalScreen(container) {
       <div class="ctb-hero-sub" style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 1rem;">
         <span style="font-size: 1.1rem; color: var(--text-primary); font-family: var(--font-serif); font-style: italic; white-space: nowrap;">Active Orders</span>
         <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 1rem; min-width: 250px;">
-          <input type="search" id="active-orders-search" placeholder="Search orders..." style="background: transparent; border: none; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; padding: 0.2rem 0.5rem; color: var(--text-primary); width: 100%; max-width: 200px; outline: none; transition: border-color 0.2s; font-family: inherit;">
+          <div style="position: relative; width: 100%; max-width: 220px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: rgba(201,168,76,0.6); pointer-events: none;">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="search" id="active-orders-search" placeholder="Search orders..." style="background: rgba(255,255,255,0.4); border: 1px solid rgba(201,168,76,0.3); border-radius: 4px; font-size: 0.85rem; padding: 0.4rem 0.5rem 0.4rem 2rem; color: var(--text-primary); width: 100%; outline: none; transition: all 0.2s; font-family: inherit;">
+          </div>
           <a href="#workshop" class="btn btn-ghost btn-sm" style="font-size: 0.75rem; white-space: nowrap;">View Workshop Kanban</a>
         </div>
       </div>
@@ -209,7 +215,7 @@ async function renderActiveOrders(container) {
       .ctb-order-panel-scroll::-webkit-scrollbar-track { background: transparent; }
       .ctb-order-panel-scroll::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.25); border-radius: 4px; }
       .ctb-order-panel-scroll::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,0.5); }
-      #active-orders-search:focus { border-bottom-color: var(--accent-color) !important; }
+      #active-orders-search:focus { border-color: var(--accent-color) !important; background: rgba(255,255,255,0.8) !important; box-shadow: 0 0 0 2px rgba(201,168,76,0.1); }
       @media (max-width: 900px) {
          .ctb-order-grid { grid-template-columns: 1fr auto; gap: 0.75rem; }
          .ctb-hide-mobile { display: none !important; }

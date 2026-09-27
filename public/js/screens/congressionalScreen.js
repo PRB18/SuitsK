@@ -29,9 +29,12 @@ export function renderCongressionalScreen(container) {
 
     <!-- Active Orders Section -->
     <div id="active-orders-section" class="active-orders-section" style="margin: 2rem 0; width: 100%;">
-      <div class="ctb-hero-sub" style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-        <span style="font-size: 1.1rem; color: var(--text-primary); font-family: var(--font-serif); font-style: italic;">Active Orders</span>
-        <a href="#workshop" class="btn btn-ghost btn-sm" style="font-size: 0.75rem;">View Workshop Kanban</a>
+      <div class="ctb-hero-sub" style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 1rem;">
+        <span style="font-size: 1.1rem; color: var(--text-primary); font-family: var(--font-serif); font-style: italic; white-space: nowrap;">Active Orders</span>
+        <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 1rem; min-width: 250px;">
+          <input type="search" id="active-orders-search" placeholder="Search orders..." style="background: transparent; border: none; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; padding: 0.2rem 0.5rem; color: var(--text-primary); width: 100%; max-width: 200px; outline: none; transition: border-color 0.2s; font-family: inherit;">
+          <a href="#workshop" class="btn btn-ghost btn-sm" style="font-size: 0.75rem; white-space: nowrap;">View Workshop Kanban</a>
+        </div>
       </div>
       <div id="active-orders-container" style="margin-top: 1rem;">
         <div class="loading-state">Loading active orders…</div>
@@ -190,50 +193,80 @@ async function renderActiveOrders(container) {
     panel.style.background = 'var(--bg-card, #FFFDF7)';
     panel.style.border = '1px solid var(--border-color, rgba(201,168,76,0.25))';
     panel.style.borderRadius = '6px';
-    panel.style.overflow = 'hidden';
+    panel.style.overflowX = 'hidden';
+    panel.style.overflowY = 'auto';
+    panel.style.maxHeight = '210px'; // Approx 3 rows max
     panel.style.boxShadow = '0 2px 8px rgba(44,24,16,0.04)';
+    panel.className = 'ctb-order-panel-scroll';
     
-    // Add custom style for hover effect and responsive grid
+    // Add custom style for hover effect, responsive grid, and custom scrollbar
     const styleEl = document.createElement('style');
     styleEl.textContent = `
       .ctb-order-row { transition: background-color 0.2s ease; }
       .ctb-order-row:hover { background-color: rgba(201,168,76,0.06); }
       .ctb-order-grid { display: grid; grid-template-columns: 2fr 1.5fr 1fr 110px 80px 100px; align-items: center; gap: 1rem; }
+      .ctb-order-panel-scroll::-webkit-scrollbar { width: 6px; }
+      .ctb-order-panel-scroll::-webkit-scrollbar-track { background: transparent; }
+      .ctb-order-panel-scroll::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.25); border-radius: 4px; }
+      .ctb-order-panel-scroll::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,0.5); }
+      #active-orders-search:focus { border-bottom-color: var(--accent-color) !important; }
       @media (max-width: 900px) {
          .ctb-order-grid { grid-template-columns: 1fr auto; gap: 0.75rem; }
          .ctb-hide-mobile { display: none !important; }
       }
     `;
-    panel.appendChild(styleEl);
-
-    orders.forEach((order, index) => {
-      const row = document.createElement('a');
-      row.href = '#workshop?search=' + encodeURIComponent(order.customer);
-      row.className = 'ctb-order-row ctb-order-grid';
-      row.style.textDecoration = 'none';
-      row.style.color = 'inherit';
-      row.style.padding = '14px 24px';
-      
-      if (index < orders.length - 1) {
-        row.style.borderBottom = '1px solid var(--border-color, rgba(201,168,76,0.15))';
+    
+    const renderRows = (list) => {
+      panel.innerHTML = '';
+      panel.appendChild(styleEl);
+      if (list.length === 0) {
+        panel.innerHTML += `<div style="padding: 2rem; text-align: center; font-size: 0.85rem; color: var(--text-secondary);">No orders match your search.</div>`;
+        return;
       }
       
-      const dateStr = new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-      
-      row.innerHTML = `
-        <div style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.customer)}</div>
-        <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary); font-variant-numeric: tabular-nums;">${escapeHTML(order.order_ref)}</div>
-        <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary);">${dateStr}</div>
-        <div>
-          <span class="vault-status-badge ${getBadgeClass(order.status)}" style="font-size: 0.6rem; text-transform: uppercase; padding: 0.2rem 0.5rem; line-height: 1;">${escapeHTML(order.status.replace('_', ' '))}</span>
-        </div>
-        <div class="ctb-hide-mobile" style="font-size: 0.85rem; text-align: right; color: var(--text-secondary);"><strong style="color: var(--text-primary);">${order.qty}</strong> items</div>
-        <div style="font-size: 0.95rem; font-weight: 600; text-align: right; color: var(--text-primary);">₹${Number(order.amount).toLocaleString()}</div>
-      `;
-      panel.appendChild(row);
-    });
+      list.forEach((order, index) => {
+        const row = document.createElement('a');
+        row.href = '#workshop?search=' + encodeURIComponent(order.customer);
+        row.className = 'ctb-order-row ctb-order-grid';
+        row.style.textDecoration = 'none';
+        row.style.color = 'inherit';
+        row.style.padding = '14px 24px';
+        
+        if (index < list.length - 1) {
+          row.style.borderBottom = '1px solid var(--border-color, rgba(201,168,76,0.15))';
+        }
+        
+        const dateStr = new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        
+        row.innerHTML = `
+          <div style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.customer)}</div>
+          <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary); font-variant-numeric: tabular-nums;">${escapeHTML(order.order_ref)}</div>
+          <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary);">${dateStr}</div>
+          <div>
+            <span class="vault-status-badge ${getBadgeClass(order.status)}" style="font-size: 0.6rem; text-transform: uppercase; padding: 0.2rem 0.5rem; line-height: 1;">${escapeHTML(order.status.replace('_', ' '))}</span>
+          </div>
+          <div class="ctb-hide-mobile" style="font-size: 0.85rem; text-align: right; color: var(--text-secondary);"><strong style="color: var(--text-primary);">${order.qty}</strong> items</div>
+          <div style="font-size: 0.95rem; font-weight: 600; text-align: right; color: var(--text-primary);">₹${Number(order.amount).toLocaleString()}</div>
+        `;
+        panel.appendChild(row);
+      });
+    };
 
+    renderRows(orders);
+    container.innerHTML = '';
     container.appendChild(panel);
+
+    const searchInput = document.getElementById('active-orders-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        const filtered = orders.filter(o => 
+          (o.customer||'').toLowerCase().includes(q) || 
+          (o.order_ref||'').toLowerCase().includes(q)
+        );
+        renderRows(filtered);
+      });
+    }
   } catch (err) {
     container.innerHTML = `
       <div class="form-error" style="display:block;">

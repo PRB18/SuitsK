@@ -33,7 +33,7 @@ export function renderCongressionalScreen(container) {
         <span style="font-size: 1.1rem; color: var(--text-primary); font-family: var(--font-serif); font-style: italic;">Active Orders</span>
         <a href="#workshop" class="btn btn-ghost btn-sm" style="font-size: 0.75rem;">View Workshop Kanban</a>
       </div>
-      <div id="active-orders-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
+      <div id="active-orders-container" style="margin-top: 1rem;">
         <div class="loading-state">Loading active orders…</div>
       </div>
     </div>
@@ -185,39 +185,55 @@ async function renderActiveOrders(container) {
         }[tag] || tag)
     );
 
-    orders.forEach(order => {
-      const card = document.createElement('a');
-      card.href = '#workshop';
-      card.className = 'suit-card';
-      card.style.textDecoration = 'none';
-      card.style.color = 'inherit';
-      card.style.padding = '0.75rem 1.25rem';
-      card.style.display = 'flex';
-      card.style.alignItems = 'center';
-      card.style.justifyContent = 'space-between';
-      card.style.flexWrap = 'wrap';
-      card.style.gap = '1rem';
+    // Create the outer panel
+    const panel = document.createElement('div');
+    panel.style.background = 'var(--bg-card, #FFFDF7)';
+    panel.style.border = '1px solid var(--border-color, rgba(201,168,76,0.25))';
+    panel.style.borderRadius = '6px';
+    panel.style.overflow = 'hidden';
+    panel.style.boxShadow = '0 2px 8px rgba(44,24,16,0.04)';
+    
+    // Add custom style for hover effect and responsive grid
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+      .ctb-order-row { transition: background-color 0.2s ease; }
+      .ctb-order-row:hover { background-color: rgba(201,168,76,0.06); }
+      .ctb-order-grid { display: grid; grid-template-columns: 2fr 1.5fr 1fr 110px 80px 100px; align-items: center; gap: 1rem; }
+      @media (max-width: 900px) {
+         .ctb-order-grid { grid-template-columns: 1fr auto; gap: 0.75rem; }
+         .ctb-hide-mobile { display: none !important; }
+      }
+    `;
+    panel.appendChild(styleEl);
+
+    orders.forEach((order, index) => {
+      const row = document.createElement('a');
+      row.href = '#workshop';
+      row.className = 'ctb-order-row ctb-order-grid';
+      row.style.textDecoration = 'none';
+      row.style.color = 'inherit';
+      row.style.padding = '14px 24px';
+      
+      if (index < orders.length - 1) {
+        row.style.borderBottom = '1px solid var(--border-color, rgba(201,168,76,0.15))';
+      }
       
       const dateStr = new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
       
-      card.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 1rem; min-width: 200px;">
-          <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary); font-family: var(--font-serif);">${escapeHTML(order.customer)}</h3>
-          <span class="vault-status-badge ${getBadgeClass(order.status)}" style="font-size: 0.6rem; text-transform: uppercase; padding: 0.15rem 0.4rem; height: fit-content; line-height: 1.2;">${escapeHTML(order.status.replace('_', ' '))}</span>
+      row.innerHTML = `
+        <div style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.customer)}</div>
+        <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary); font-variant-numeric: tabular-nums;">${escapeHTML(order.order_ref)}</div>
+        <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary);">${dateStr}</div>
+        <div>
+          <span class="vault-status-badge ${getBadgeClass(order.status)}" style="font-size: 0.6rem; text-transform: uppercase; padding: 0.2rem 0.5rem; line-height: 1;">${escapeHTML(order.status.replace('_', ' '))}</span>
         </div>
-        
-        <div style="display: flex; align-items: center; gap: 1.5rem; font-size: 0.8rem; color: var(--text-secondary);">
-          <span style="font-variant-numeric: tabular-nums;">${escapeHTML(order.order_ref)}</span>
-          <span>${dateStr}</span>
-          <span><strong style="color: var(--text-primary);">${order.qty}</strong> items</span>
-          <span style="color: var(--text-primary); font-weight: 600; min-width: 60px; text-align: right;">₹${Number(order.amount).toLocaleString()}</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.3; margin-left: 0.5rem;">
-             <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </div>
+        <div class="ctb-hide-mobile" style="font-size: 0.85rem; text-align: right; color: var(--text-secondary);"><strong style="color: var(--text-primary);">${order.qty}</strong> items</div>
+        <div style="font-size: 0.95rem; font-weight: 600; text-align: right; color: var(--text-primary);">₹${Number(order.amount).toLocaleString()}</div>
       `;
-      container.appendChild(card);
+      panel.appendChild(row);
     });
+
+    container.appendChild(panel);
   } catch (err) {
     container.innerHTML = `
       <div class="form-error" style="display:block;">

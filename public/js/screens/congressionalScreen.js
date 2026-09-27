@@ -33,7 +33,7 @@ export function renderCongressionalScreen(container) {
         <span style="font-size: 1.1rem; color: var(--text-primary); font-family: var(--font-serif); font-style: italic;">Active Orders</span>
         <a href="#workshop" class="btn btn-ghost btn-sm" style="font-size: 0.75rem;">View Workshop Kanban</a>
       </div>
-      <div id="active-orders-container" class="suits-grid" style="margin-top: 1rem;">
+      <div id="active-orders-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
         <div class="loading-state">Loading active orders…</div>
       </div>
     </div>
@@ -191,29 +191,29 @@ async function renderActiveOrders(container) {
       card.className = 'suit-card';
       card.style.textDecoration = 'none';
       card.style.color = 'inherit';
-      card.style.height = '100%';
+      card.style.padding = '0.75rem 1.25rem';
+      card.style.display = 'flex';
+      card.style.alignItems = 'center';
+      card.style.justifyContent = 'space-between';
+      card.style.flexWrap = 'wrap';
+      card.style.gap = '1rem';
       
       const dateStr = new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
       
       card.innerHTML = `
-        <div class="suit-card-inner" style="padding: 0;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary); font-family: var(--font-serif);">${escapeHTML(order.customer)}</h3>
-            <span class="vault-status-badge ${getBadgeClass(order.status)}" style="font-size: 0.65rem; text-transform: uppercase; padding: 0.2rem 0.5rem;">${escapeHTML(order.status.replace('_', ' '))}</span>
-          </div>
-          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
-            <strong>Ref:</strong> ${escapeHTML(order.order_ref)} &nbsp;|&nbsp; <strong>Date:</strong> ${dateStr}
-          </div>
-          <div style="display: flex; gap: 0.5rem; margin-top: auto; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
-            <div style="flex: 1; text-align: center; background: rgba(0,0,0,0.02); padding: 0.5rem; border-radius: 4px;">
-              <div style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em; margin-bottom: 0.25rem;">Garments</div>
-              <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">${order.qty}</div>
-            </div>
-            <div style="flex: 1; text-align: center; background: rgba(0,0,0,0.02); padding: 0.5rem; border-radius: 4px;">
-              <div style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em; margin-bottom: 0.25rem;">Amount</div>
-              <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">₹${Number(order.amount).toLocaleString()}</div>
-            </div>
-          </div>
+        <div style="display: flex; align-items: center; gap: 1rem; min-width: 200px;">
+          <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary); font-family: var(--font-serif);">${escapeHTML(order.customer)}</h3>
+          <span class="vault-status-badge ${getBadgeClass(order.status)}" style="font-size: 0.6rem; text-transform: uppercase; padding: 0.15rem 0.4rem; height: fit-content; line-height: 1.2;">${escapeHTML(order.status.replace('_', ' '))}</span>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 1.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+          <span style="font-variant-numeric: tabular-nums;">${escapeHTML(order.order_ref)}</span>
+          <span>${dateStr}</span>
+          <span><strong style="color: var(--text-primary);">${order.qty}</strong> items</span>
+          <span style="color: var(--text-primary); font-weight: 600; min-width: 60px; text-align: right;">₹${Number(order.amount).toLocaleString()}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.3; margin-left: 0.5rem;">
+             <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
         </div>
       `;
       container.appendChild(card);

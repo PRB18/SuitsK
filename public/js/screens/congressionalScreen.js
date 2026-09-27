@@ -28,12 +28,12 @@ export function renderCongressionalScreen(container) {
     </div>
 
     <!-- Active Orders Section -->
-    <div id="active-orders-section" class="active-orders-section" style="margin: 2rem auto; max-width: 1200px; padding: 0 1rem;">
+    <div id="active-orders-section" class="active-orders-section" style="margin: 2rem 0; width: 100%;">
       <div class="ctb-hero-sub" style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
         <span style="font-size: 1.1rem; color: var(--text-primary); font-family: var(--font-serif); font-style: italic;">Active Orders</span>
         <a href="#workshop" class="btn btn-ghost btn-sm" style="font-size: 0.75rem;">View Workshop Kanban</a>
       </div>
-      <div id="active-orders-container" class="suits-grid-container" style="display: grid; gap: 1rem;">
+      <div id="active-orders-container" class="suits-grid" style="margin-top: 1rem;">
         <div class="loading-state">Loading active orders…</div>
       </div>
     </div>
@@ -167,10 +167,6 @@ async function renderActiveOrders(container) {
     }
 
     container.innerHTML = '';
-    const grid = document.createElement('div');
-    grid.style.display = 'grid';
-    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
-    grid.style.gap = '1rem';
     
     const getBadgeClass = (status) => {
       if (status === 'pending') return 'badge--neutral';
@@ -192,40 +188,36 @@ async function renderActiveOrders(container) {
     orders.forEach(order => {
       const card = document.createElement('a');
       card.href = '#workshop';
-      card.className = 'ctb-tile';
+      card.className = 'suit-card';
       card.style.textDecoration = 'none';
       card.style.color = 'inherit';
-      card.style.display = 'flex';
-      card.style.flexDirection = 'column';
-      card.style.padding = '1.25rem';
-      card.style.height = 'auto';
-      card.style.alignItems = 'stretch';
+      card.style.height = '100%';
       
       const dateStr = new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
       
       card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-          <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary); font-family: var(--font-serif);">${escapeHTML(order.customer)}</h3>
-          <span class="vault-status-badge ${getBadgeClass(order.status)}" style="font-size: 0.65rem; text-transform: uppercase; padding: 0.2rem 0.5rem;">${escapeHTML(order.status.replace('_', ' '))}</span>
-        </div>
-        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
-          <strong>Ref:</strong> ${escapeHTML(order.order_ref)} &nbsp;|&nbsp; <strong>Date:</strong> ${dateStr}
-        </div>
-        <div style="display: flex; gap: 0.5rem; margin-top: auto; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
-          <div style="flex: 1; text-align: center; background: rgba(0,0,0,0.02); padding: 0.5rem; border-radius: 4px;">
-            <div style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em; margin-bottom: 0.25rem;">Garments</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">${order.qty}</div>
+        <div class="suit-card-inner" style="padding: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary); font-family: var(--font-serif);">${escapeHTML(order.customer)}</h3>
+            <span class="vault-status-badge ${getBadgeClass(order.status)}" style="font-size: 0.65rem; text-transform: uppercase; padding: 0.2rem 0.5rem;">${escapeHTML(order.status.replace('_', ' '))}</span>
           </div>
-          <div style="flex: 1; text-align: center; background: rgba(0,0,0,0.02); padding: 0.5rem; border-radius: 4px;">
-            <div style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em; margin-bottom: 0.25rem;">Amount</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">₹${Number(order.amount).toLocaleString()}</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            <strong>Ref:</strong> ${escapeHTML(order.order_ref)} &nbsp;|&nbsp; <strong>Date:</strong> ${dateStr}
+          </div>
+          <div style="display: flex; gap: 0.5rem; margin-top: auto; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+            <div style="flex: 1; text-align: center; background: rgba(0,0,0,0.02); padding: 0.5rem; border-radius: 4px;">
+              <div style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em; margin-bottom: 0.25rem;">Garments</div>
+              <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">${order.qty}</div>
+            </div>
+            <div style="flex: 1; text-align: center; background: rgba(0,0,0,0.02); padding: 0.5rem; border-radius: 4px;">
+              <div style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em; margin-bottom: 0.25rem;">Amount</div>
+              <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">₹${Number(order.amount).toLocaleString()}</div>
+            </div>
           </div>
         </div>
       `;
-      grid.appendChild(card);
+      container.appendChild(card);
     });
-
-    container.appendChild(grid);
   } catch (err) {
     container.innerHTML = `
       <div class="form-error" style="display:block;">

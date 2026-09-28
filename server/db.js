@@ -258,6 +258,25 @@ async function initDatabase() {
     )
   `),
 
+  // ── Fabric Receipts ────────────────────────────────────────────────────────
+  client.execute(`
+    CREATE TABLE IF NOT EXISTS fabric_receipts (
+      id               TEXT PRIMARY KEY,
+      client_id        TEXT NOT NULL DEFAULT '',
+      order_id         TEXT NOT NULL DEFAULT '',
+      client_code      TEXT NOT NULL DEFAULT '',
+      client_name      TEXT NOT NULL DEFAULT '',
+      inventory_id     TEXT NOT NULL DEFAULT '',
+      fabric_code      TEXT NOT NULL DEFAULT '',
+      accessories_desc TEXT NOT NULL DEFAULT '',
+      sample_notes     TEXT NOT NULL DEFAULT '',
+      order_date       TEXT NOT NULL DEFAULT '',
+      received_date    TEXT NOT NULL DEFAULT '',
+      created_at       TEXT NOT NULL,
+      updated_at       TEXT NOT NULL
+    )
+  `),
+
   ];
 
   // These tables are independent; run their DDL together to reduce cold-start latency.
@@ -266,6 +285,14 @@ async function initDatabase() {
 
   // ── Additive migrations for existing vaults ──────────────────────────────
   await ensureColumn(client, 'suits', 'client_id', `TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn(client, 'b2b_entries', 'client_code', `TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn(client, 'b2b_entries', 'style_product_name', `TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn(client, 'b2b_entries', 'brand_name', `TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn(client, 'b2b_entries', 'fabric_code', `TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn(client, 'b2b_entries', 'fabric_colour', `TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn(client, 'b2b_entries', 'inventory_id', `TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn(client, 'b2b_entries', 'transfer_to_workshop', `TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn(client, 'b2b_entries', 'delivered_date', `TEXT NOT NULL DEFAULT ''`);
   await backfillClientMeasurements(client);
 
   // ── Calendar OAuth Tokens ─────────────────────────────────────────────────
@@ -301,7 +328,7 @@ async function initDatabase() {
     console.log('[db] Seeded 7 default work hierarchy sections.');
   }
 
-  console.log('[db] Connected to Turso — schema ready (11 tables).');
+  console.log('[db] Connected to Turso — schema ready (12 tables).');
   return client;
 }
 

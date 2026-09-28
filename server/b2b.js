@@ -23,17 +23,22 @@ function safe(str) { return typeof str === 'string' ? str.trim() : ''; }
 router.get('/', async (req, res) => {
   try {
     const db = getDb();
-    let sql = 'SELECT * FROM b2b_entries WHERE 1=1';
+    let sql = `
+      SELECT b.*, i.name as inventory_name, i.article_number as inventory_article 
+      FROM b2b_entries b
+      LEFT JOIN inventory i ON b.inventory_id = i.id
+      WHERE 1=1
+    `;
     const args = [];
 
     if (req.query.type && ENTRY_TYPES.includes(req.query.type)) {
-      sql += ' AND entry_type = ?'; args.push(req.query.type);
+      sql += ' AND b.entry_type = ?'; args.push(req.query.type);
     }
     if (req.query.status && STATUSES.includes(req.query.status)) {
-      sql += ' AND status = ?'; args.push(req.query.status);
+      sql += ' AND b.status = ?'; args.push(req.query.status);
     }
 
-    sql += ' ORDER BY created_at DESC';
+    sql += ' ORDER BY b.created_at DESC';
     const result = await db.execute({ sql, args });
     res.json(result.rows.map(row => ({
       ...row,
@@ -56,6 +61,10 @@ router.post('/', async (req, res) => {
     vendor_name = '', items_ordered = '',
     // Common
     total_amount = 0, delivery_date = '', status = 'pending', notes = '',
+    // New B2B specific fields
+    client_code = '', style_product_name = '', brand_name = '',
+    fabric_code = '', fabric_colour = '', inventory_id = '',
+    transfer_to_workshop = '', delivered_date = ''
   } = req.body;
 
   if (!entry_type || !ENTRY_TYPES.includes(entry_type))
@@ -88,16 +97,22 @@ router.post('/', async (req, res) => {
       sql:  `INSERT INTO b2b_entries
                (id, entry_type, company_name, contact_person, contact_phone, contact_email,
                 quantity, garment_types, vendor_name, items_ordered, total_amount,
-                order_date, delivery_date, status, notes, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                order_date, delivery_date, status, notes,
+                client_code, style_product_name, brand_name, fabric_code, fabric_colour,
+                inventory_id, transfer_to_workshop, delivered_date,
+                created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         id, entry_type, safe(company_name), safe(contact_person), safe(contact_phone), safe(contact_email),
         Number(quantity), JSON.stringify(garment_types), safe(vendor_name), safe(items_ordered),
-        Number(total_amount), safe(order_date), safe(delivery_date), status, safe(notes), ts, ts,
+        Number(total_amount), safe(order_date), safe(delivery_date), status, safe(notes),
+        safe(client_code), safe(style_product_name), safe(brand_name), safe(fabric_code), safe(fabric_colour),
+        safe(inventory_id), safe(transfer_to_workshop), safe(delivered_date),
+        ts, ts,
       ],
     });
 
-    res.status(201).json({ id, entry_type, company_name: safe(company_name), contact_person: safe(contact_person), contact_phone: safe(contact_phone), contact_email: safe(contact_email), quantity: Number(quantity), garment_types, vendor_name: safe(vendor_name), items_ordered: safe(items_ordered), total_amount: Number(total_amount), order_date: safe(order_date), delivery_date: safe(delivery_date), status, notes: safe(notes), created_at: ts, updated_at: ts });
+    res.status(201).json({ id, entry_type, company_name: safe(company_name), contact_person: safe(contact_person), contact_phone: safe(contact_phone), contact_email: safe(contact_email), quantity: Number(quantity), garment_types, vendor_name: safe(vendor_name), items_ordered: safe(items_ordered), total_amount: Number(total_amount), order_date: safe(order_date), delivery_date: safe(delivery_date), status, notes: safe(notes), client_code: safe(client_code), style_product_name: safe(style_product_name), brand_name: safe(brand_name), fabric_code: safe(fabric_code), fabric_colour: safe(fabric_colour), inventory_id: safe(inventory_id), transfer_to_workshop: safe(transfer_to_workshop), delivered_date: safe(delivered_date), created_at: ts, updated_at: ts });
   } catch (err) {
     console.error('[b2b] POST / error:', err);
     res.status(500).json({ error: err.message });
@@ -112,7 +127,8 @@ router.put('/:id', async (req, res) => {
     if (existing.rows.length === 0) return res.status(404).json({ error: 'B2B entry not found.' });
     const row = existing.rows[0];
 
-    const { company_name, contact_person, contact_phone, contact_email, quantity, garment_types, vendor_name, items_ordered, total_amount, order_date, delivery_date, status, notes } = req.body;
+    const { company_name, contact_person, contact_phone, contact_email, quantity, garment_types, vendor_name, items_ordered, total_amount, order_date, delivery_date, status, notes,
+            client_code, style_product_name, brand_name, fabric_code, fabric_colour, inventory_id, transfer_to_workshop, delivered_date } = req.body;
 
     if (status && !STATUSES.includes(status))
       return res.status(400).json({ error: `status must be one of: ${STATUSES.join(', ')}` });
@@ -123,7 +139,10 @@ router.put('/:id', async (req, res) => {
     await db.execute({
       sql:  `UPDATE b2b_entries SET company_name=?, contact_person=?, contact_phone=?, contact_email=?,
              quantity=?, garment_types=?, vendor_name=?, items_ordered=?, total_amount=?,
-             order_date=?, delivery_date=?, status=?, notes=?, updated_at=? WHERE id=?`,
+             order_date=?, delivery_date=?, status=?, notes=?,
+             client_code=?, style_product_name=?, brand_name=?, fabric_code=?, fabric_colour=?,
+             inventory_id=?, transfer_to_workshop=?, delivered_date=?,
+             updated_at=? WHERE id=?`,
       args: [
         company_name   !== undefined ? safe(company_name)   : row.company_name,
         contact_person !== undefined ? safe(contact_person) : row.contact_person,
@@ -138,6 +157,14 @@ router.put('/:id', async (req, res) => {
         delivery_date  !== undefined ? safe(delivery_date)  : row.delivery_date,
         status         !== undefined ? status               : row.status,
         notes          !== undefined ? safe(notes)          : row.notes,
+        client_code    !== undefined ? safe(client_code)    : row.client_code,
+        style_product_name !== undefined ? safe(style_product_name) : row.style_product_name,
+        brand_name     !== undefined ? safe(brand_name)     : row.brand_name,
+        fabric_code    !== undefined ? safe(fabric_code)    : row.fabric_code,
+        fabric_colour  !== undefined ? safe(fabric_colour)  : row.fabric_colour,
+        inventory_id   !== undefined ? safe(inventory_id)   : row.inventory_id,
+        transfer_to_workshop !== undefined ? safe(transfer_to_workshop) : row.transfer_to_workshop,
+        delivered_date !== undefined ? safe(delivered_date) : row.delivered_date,
         ts, req.params.id,
       ],
     });

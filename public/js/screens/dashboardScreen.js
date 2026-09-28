@@ -76,8 +76,6 @@ export function renderDashboardScreen(container) {
           <div class="loading-state">Loading your vault…</div>
         </div>
         <div id="analytics-panel-container"></div>
-        <div class="ds-section-label" style="margin-top: 2rem;">B2B Logistics</div>
-        <div id="b2b-panel-container"></div>
       </div>
 
       <!-- FAB -->
@@ -148,13 +146,8 @@ export function renderDashboardScreen(container) {
   // ── Load and render suits & B2B ───────────────────────────────────────────
   const gridContainer = wrapper.querySelector('#suits-grid-container');
   const analyticsContainer = wrapper.querySelector('#analytics-panel-container');
-  const b2bContainer = wrapper.querySelector('#b2b-panel-container');
   
   loadSuits(gridContainer, analyticsContainer, wrapper);
-  renderB2bPanel(b2bContainer);
-  if (window.location.hash === '#b2b' || window.location.hash.includes('section=b2b')) {
-    setTimeout(() => b2bContainer.scrollIntoView({ behavior: 'auto', block: 'start' }), 0);
-  }
 
   // ── Cleanup keyboard listener when screen is torn down ───────────────────
   const obs = new MutationObserver(() => {

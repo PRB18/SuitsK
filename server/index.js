@@ -23,6 +23,7 @@ const scheduleRouter     = require('./schedule');
 const workshopRouter     = require('./workshop');
 const shortcomingsRouter = require('./shortcomings');
 const b2bRouter          = require('./b2b');
+const fabricReceiptsRouter = require('./fabricReceipts');
 const requireUnlocked    = require('./middleware/requireUnlocked');
 const { initDatabase }   = require('./db');
 
@@ -109,6 +110,7 @@ app.use('/api/suits',        requireUnlocked, suitsRouter);
 app.use('/api/inventory',    requireUnlocked, inventoryRouter);
 app.use('/api/shortcomings', requireUnlocked, shortcomingsRouter);
 app.use('/api/b2b',          requireUnlocked, b2bRouter);
+app.use('/api/fabric-receipts', requireUnlocked, fabricReceiptsRouter);
 
 // Routers that handle multiple prefixes internally:
 app.use('/api', requireUnlocked, clientsRouter);   // handles /clients and /projects

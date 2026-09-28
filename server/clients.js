@@ -79,7 +79,7 @@ router.get('/active-orders', async (req, res) => {
   try {
     const db = getDb();
     const result = await db.execute(`
-      SELECT o.id, o.order_ref, o.status, o.order_date as date, 
+      SELECT o.id, o.order_ref, o.status, o.order_date as date, o.delivery_date, o.notes,
              c.name as customer, o.total_amount as amount,
              (SELECT COUNT(*) FROM projects WHERE order_id = o.id AND status != 'delivered') as qty,
              o.client_id
@@ -89,9 +89,51 @@ router.get('/active-orders', async (req, res) => {
         AND (SELECT COUNT(*) FROM projects WHERE order_id = o.id AND status != 'delivered') > 0
       ORDER BY o.order_date DESC
     `);
-    res.json(result.rows);
+
+    const today = new Date().toISOString().split('T')[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const enhancedRows = result.rows.map(row => {
+      let urgency = 'none';
+      if (row.delivery_date) {
+        if (today > row.delivery_date) {
+          urgency = 'overdue';
+        } else if (row.delivery_date <= nextWeek) {
+          urgency = 'due_soon';
+        } else {
+          urgency = 'on_track';
+        }
+      }
+      return { ...row, urgency };
+    });
+
+    res.json(enhancedRows);
   } catch (err) {
     console.error('[clients] GET /active-orders error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/clients/:clientId/active-projects
+router.get('/clients/:clientId/active-projects', async (req, res) => {
+  try {
+    const db = getDb();
+    const result = await db.execute({
+      sql: `
+        SELECT p.id as project_id, p.garment_type, p.status, 
+               o.order_ref, o.id as order_id, o.delivery_date
+        FROM projects p
+        JOIN orders o ON p.order_id = o.id
+        WHERE p.client_id = ?
+          AND p.status != 'delivered'
+          AND o.status NOT IN ('completed', 'cancelled')
+        ORDER BY o.created_at DESC, p.created_at ASC
+      `,
+      args: [req.params.clientId]
+    });
+    res.json(result.rows);
+  } catch (err) {
+    console.error('[clients] GET /active-projects error:', err);
     res.status(500).json({ error: err.message });
   }
 });

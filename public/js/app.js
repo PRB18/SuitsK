@@ -21,6 +21,8 @@ import { renderScheduleScreen }      from './screens/scheduleScreen.js';
 import { renderWorkHierarchyScreen } from './screens/workHierarchyScreen.js';
 import { renderWorkshopScreen }      from './screens/workshopScreen.js';
 import { renderShortcomingsScreen }  from './screens/shortcomingsScreen.js';
+import { renderB2bScreen }           from './screens/b2bScreen.js';
+import { renderFabricReceiptsScreen } from './screens/fabricReceiptsScreen.js';
 import { renderStatusQuoScreen }     from './screens/statusQuoScreen.js';
 
 async function bootstrap() {
@@ -48,7 +50,8 @@ async function bootstrap() {
       '#lock':           renderLockScreen,
       '#congressional':  renderCongressionalScreen,
       '#dashboard':      renderDashboardScreen,
-      '#b2b':            renderDashboardScreen,
+      '#b2b':            renderB2bScreen,
+      '#fabric-receipts': renderFabricReceiptsScreen,
       '#configurator':   renderConfiguratorScreen,
       '#client-db':      renderClientDbScreen,
       '#client-profile': renderClientProfileScreen,

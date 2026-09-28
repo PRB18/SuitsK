@@ -63,6 +63,7 @@ export const api = {
   // ── Clients ───────────────────────────────────────────────────────────────
   async getClients()        { return request('/api/clients'); },
   async getClient(id)       { return request(`/api/clients/${encodeURIComponent(id)}`); },
+  async getClientActiveProjects(id) { return request(`/api/clients/${encodeURIComponent(id)}/active-projects`); },
   async createClient(data)  { return request('/api/clients', { method: 'POST', body: JSON.stringify(data) }); },
   async updateClient(id, data) {
     return request(`/api/clients/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) });
@@ -200,5 +201,20 @@ export const api = {
   },
   async deleteB2BEntry(id) {
     return request(`/api/b2b/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  },
+
+  // ── Fabric Receipts ───────────────────────────────────────────────────────
+  async getFabricReceipts(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/api/fabric-receipts${qs ? '?' + qs : ''}`);
+  },
+  async createFabricReceipt(data) {
+    return request('/api/fabric-receipts', { method: 'POST', body: JSON.stringify(data) });
+  },
+  async updateFabricReceipt(id, data) {
+    return request(`/api/fabric-receipts/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) });
+  },
+  async deleteFabricReceipt(id) {
+    return request(`/api/fabric-receipts/${encodeURIComponent(id)}`, { method: 'DELETE' });
   },
 };

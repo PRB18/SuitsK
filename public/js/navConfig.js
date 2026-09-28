@@ -111,7 +111,7 @@ export const NAV_MODULES = [
     roman: 'IX',
     title: 'B2B Logistics',
     subtitle: 'Vendor & Corporate',
-    route: '#dashboard',
+    route: '#b2b',
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
       <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
@@ -128,6 +128,16 @@ export const NAV_MODULES = [
       <polyline points="12 6 12 12 16 14"/>
     </svg>`,
   },
+  {
+    id: 'fabric-receipts',
+    roman: 'XI',
+    title: 'Fabric Receipts',
+    subtitle: 'Raw material intake log',
+    route: '#fabric-receipts',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 4h16v16H4zM4 12h16"/>
+    </svg>`,
+  },
 ];
 
 /** Hub tile grid omits the Hub home item (already on that screen). */
@@ -136,7 +146,7 @@ export const HUB_MODULES = NAV_MODULES.filter((m) => m.id !== 'hub');
 export const IMPLEMENTED_ROUTES = [
   '#congressional', '#dashboard', '#b2b', '#configurator', '#client-profile',
   '#client-db', '#inventory', '#schedule', '#work-hierarchy', '#workshop',
-  '#shortcomings', '#status-quo',
+  '#shortcomings', '#status-quo', '#fabric-receipts'
 ];
 
 /** Map hash → nav item id for active highlighting. */
@@ -146,6 +156,7 @@ export function routeToNavId(cleanHash) {
   // Prefer highlighting Measurements when on that screen; #dashboard keeps IX.
   if (cleanHash === '#b2b') return 'measurements';
   if (cleanHash === '#dashboard') return 'dashboard';
+  if (cleanHash === '#fabric-receipts') return 'fabric-receipts';
   if (cleanHash === '#configurator') return 'measurements';
   const match = NAV_MODULES.find((m) => m.route.split('?')[0] === cleanHash);
   return match?.id || null;

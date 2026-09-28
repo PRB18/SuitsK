@@ -209,9 +209,10 @@ async function renderActiveOrders(container) {
     
     const styleEl = document.createElement('style');
     styleEl.textContent = `
-      .ctb-order-row { transition: background-color 0.2s ease; cursor: pointer; }
-      .ctb-order-row:hover { background-color: rgba(201,168,76,0.06); }
-      .ctb-order-grid { display: grid; grid-template-columns: 2fr 1.3fr 1fr 1fr 1.5fr 90px 70px 90px 30px; align-items: center; gap: 1rem; }
+      .ctb-order-row { transition: background-color 0.2s ease, transform 0.1s ease; cursor: pointer; }
+      .ctb-order-row:hover { background-color: rgba(201,168,76,0.12); }
+      .ctb-order-row:active { background-color: rgba(201,168,76,0.18); }
+      .ctb-order-grid { display: grid; grid-template-columns: 2fr 1.3fr 1fr 1fr 1.5fr 90px 70px 90px 40px; align-items: center; gap: 1rem; }
       .ctb-order-header { 
         position: sticky; top: 0; z-index: 2; 
         background: var(--bg-card); 
@@ -243,15 +244,22 @@ async function renderActiveOrders(container) {
         overflow-y: auto;
       }
       .ctb-stage-pill {
-        display: inline-block; padding: 2px 8px; font-size: 0.7rem; border-radius: 12px;
-        background: var(--bg-page); border: 1px solid var(--border-color); color: var(--text-secondary);
+        display: inline-block; padding: 4px 10px; font-size: 0.75rem; border-radius: 4px;
+        background: #2C1810; border: 1px solid #2C1810; color: #FFFDF7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
       }
-      .ctb-stage-pill.active {
-        background: var(--accent-color); color: white; border-color: var(--accent-color); font-weight: 600;
+      
+      .ctb-expand-btn {
+        display: flex; align-items: center; justify-content: center;
+        width: 32px; height: 32px; border-radius: 50%;
+        background: rgba(201,168,76,0.15); color: #2C1810;
+        font-size: 1.2rem; transition: all 0.2s ease;
+      }
+      .ctb-order-row:hover .ctb-expand-btn {
+        background: rgba(201,168,76,0.3);
       }
       
       @media (max-width: 900px) {
-         .ctb-order-grid { grid-template-columns: 1fr auto 30px; gap: 0.75rem; }
+         .ctb-order-grid { grid-template-columns: 1fr auto 40px; gap: 0.75rem; }
          .ctb-hide-mobile { display: none !important; }
       }
     `;
@@ -314,7 +322,7 @@ async function renderActiveOrders(container) {
           </div>
           <div class="ctb-hide-mobile" style="font-size: 0.85rem; text-align: right; color: var(--text-secondary);"><strong style="color: var(--text-primary);">${order.qty}</strong></div>
           <div style="font-size: 0.95rem; font-weight: 600; text-align: right; color: var(--text-primary);">₹${Number(order.amount).toLocaleString()}</div>
-          <div style="text-align:center; color: var(--text-secondary); font-size: 1.2rem;" class="chevron">▾</div>
+          <div style="text-align:center;"><div class="ctb-expand-btn chevron">▾</div></div>
         `;
         panel.appendChild(row);
 
@@ -357,19 +365,11 @@ async function renderActiveOrders(container) {
                   const STAGES = ['pending', 'cutting', 'making', 'fitting', 'finishing', 'ready'];
                   
                   projects.forEach(p => {
-                    const currentStageIdx = STAGES.indexOf(p.status) >= 0 ? STAGES.indexOf(p.status) : 0;
-                    
-                    const stagesHtml = STAGES.map((s, i) => {
-                      if (i === currentStageIdx) return `<span class="ctb-stage-pill active">${s}</span>`;
-                      if (i < currentStageIdx) return `<span style="font-size:0.7rem; color:var(--text-muted);">✓</span>`;
-                      return `<span style="font-size:0.7rem; color:var(--text-muted);">·</span>`;
-                    }).join(' <span style="font-size:0.6rem; color:var(--text-muted);">→</span> ');
-
                     html += `
                       <tr style="border-bottom:1px solid rgba(0,0,0,0.05);">
-                        <td style="padding:6px 4px;">${escapeHTML(p.garment_type)}</td>
-                        <td style="padding:6px 4px;">${stagesHtml}</td>
-                        <td style="padding:6px 4px; font-family:monospace; color:var(--text-secondary);">${escapeHTML(p.order_ref)}</td>
+                        <td style="padding:10px 4px; font-weight: 500;">${escapeHTML(p.garment_type)}</td>
+                        <td style="padding:10px 4px;"><span class="ctb-stage-pill">${escapeHTML(p.status)}</span></td>
+                        <td style="padding:10px 4px; font-family:monospace; color:var(--text-secondary);">${escapeHTML(p.order_ref)}</td>
                       </tr>
                     `;
                   });

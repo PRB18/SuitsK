@@ -21,8 +21,8 @@ export async function renderFabricReceiptsScreen(container) {
         </div>
       </header>
 
-      <div class="table-container" style="flex: 1; overflow-y: auto;">
-        <table class="data-table" id="fr-table">
+      <div class="cdb-table-wrap" style="flex: 1; overflow-y: auto;">
+        <table class="cdb-table" id="fr-table">
           <thead>
             <tr>
               <th>#</th>

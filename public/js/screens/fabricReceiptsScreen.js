@@ -153,27 +153,27 @@ export async function renderFabricReceiptsScreen(container) {
     tbody.innerHTML = filtered.map((e, index) => {
       let fabricDisplay = e.fabric_code;
       if (e.inventory_id && e.inventory_name) {
-        fabricDisplay = \`<span class="badge badge--neutral" title="\${e.inventory_name}">🔗 \${e.inventory_article || e.fabric_code}</span>\`;
+        fabricDisplay = `<span class="badge badge--neutral" title="${e.inventory_name}">🔗 ${e.inventory_article || e.fabric_code}</span>`;
       }
       
       let rcvDate = e.received_date ? e.received_date : '<span style="color:#C9881A; font-weight:bold;">—</span>';
 
-      return \`
+      return `
         <tr>
-          <td>\${index + 1}</td>
-          <td><span class="mono">\${e.client_code || '—'}</span></td>
-          <td style="font-weight: 500;">\${e.client_name_lookup || e.client_name || '—'}</td>
-          <td>\${fabricDisplay || '—'}</td>
-          <td title="\${e.accessories_desc || ''}" style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">\${e.accessories_desc || '—'}</td>
-          <td>\${e.sample_notes || '—'}</td>
-          <td>\${e.order_date || '—'}</td>
-          <td>\${rcvDate}</td>
+          <td>${index + 1}</td>
+          <td><span class="mono">${e.client_code || '—'}</span></td>
+          <td style="font-weight: 500;">${e.client_name_lookup || e.client_name || '—'}</td>
+          <td>${fabricDisplay || '—'}</td>
+          <td title="${e.accessories_desc || ''}" style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${e.accessories_desc || '—'}</td>
+          <td>${e.sample_notes || '—'}</td>
+          <td>${e.order_date || '—'}</td>
+          <td>${rcvDate}</td>
           <td>
-            <button class="btn-icon ctb-edit-btn" data-id="\${e.id}">✎</button>
-            <button class="btn-icon ctb-del-btn" data-id="\${e.id}" style="color: var(--text-secondary);">✕</button>
+            <button class="btn-icon ctb-edit-btn" data-id="${e.id}">✎</button>
+            <button class="btn-icon ctb-del-btn" data-id="${e.id}" style="color: var(--text-secondary);">✕</button>
           </td>
         </tr>
-      \`;
+      `;
     }).join('');
     
     tbody.querySelectorAll('.ctb-edit-btn').forEach(btn => btn.addEventListener('click', () => openModal(btn.dataset.id)));
@@ -278,7 +278,7 @@ export async function renderFabricReceiptsScreen(container) {
     if (matches.length === 0) { clientDropdown.style.display = 'none'; return; }
     
     clientDropdown.innerHTML = matches.map(c => 
-      \`<div class="dropdown-item" style="padding:8px; cursor:pointer; border-bottom:1px solid #eee;" data-id="\${c.id}" data-name="\${c.name}" data-ref="\${c.client_ref}">\${c.client_ref || '-'} : \${c.name}</div>\`
+      `<div class="dropdown-item" style="padding:8px; cursor:pointer; border-bottom:1px solid #eee;" data-id="${c.id}" data-name="${c.name}" data-ref="${c.client_ref}">${c.client_ref || '-'} : ${c.name}</div>`
     ).join('');
     
     clientDropdown.querySelectorAll('.dropdown-item').forEach(el => {
@@ -297,7 +297,7 @@ export async function renderFabricReceiptsScreen(container) {
   function populateInventoryPicker() {
     const select = document.getElementById('fr-inv-select');
     select.innerHTML = inventoryItems.map(i => 
-      \`<option value="\${i.id}" data-code="\${i.article_number}" data-name="\${i.name}">\${i.article_number} - \${i.name}</option>\`
+      `<option value="${i.id}" data-code="${i.article_number}" data-name="${i.name}">${i.article_number} - ${i.name}</option>`
     ).join('');
   }
   
@@ -305,7 +305,7 @@ export async function renderFabricReceiptsScreen(container) {
     const disp = document.getElementById('fr-inv-display');
     if (!invId) { disp.textContent = ''; return; }
     const i = inventoryItems.find(x => x.id === invId);
-    if (i) disp.textContent = \`Linked: \${i.name}\`;
+    if (i) disp.textContent = `Linked: ${i.name}`;
   }
 
   document.getElementById('fr-f-link-inv').addEventListener('click', (e) => {

@@ -173,30 +173,30 @@ export async function renderB2bScreen(container) {
 
     tbody.innerHTML = filtered.map((e, index) => {
       let fabricDisplay = e.fabric_code;
-      if (e.fabric_colour) fabricDisplay += \` / \${e.fabric_colour}\`;
+      if (e.fabric_colour) fabricDisplay += ` / ${e.fabric_colour}`;
       if (e.inventory_id && e.inventory_name) {
-        fabricDisplay = \`<span class="badge badge--neutral" title="\${e.inventory_name}">🔗 \${e.inventory_article || e.fabric_code}</span>\`;
+        fabricDisplay = `<span class="badge badge--neutral" title="${e.inventory_name}">🔗 ${e.inventory_article || e.fabric_code}</span>`;
       }
 
-      return \`
+      return `
         <tr>
-          <td>\${index + 1}</td>
-          <td>\${e.order_date || '—'}</td>
-          <td style="font-weight: 500;">\${e.company_name || '—'}</td>
-          <td><span class="mono">\${e.client_code || '—'}</span></td>
-          <td>\${e.style_product_name || '—'}</td>
-          <td>\${fabricDisplay || '—'}</td>
-          <td>\${e.brand_name || '—'}</td>
-          <td>\${e.quantity || 0}</td>
-          <td style="color: \${e.transfer_to_workshop ? 'var(--accent-color)' : 'var(--text-secondary)'}">\${e.transfer_to_workshop || '—'}</td>
-          <td>\${e.delivered_date || '—'}</td>
-          <td><span class="badge">\${e.status}</span></td>
+          <td>${index + 1}</td>
+          <td>${e.order_date || '—'}</td>
+          <td style="font-weight: 500;">${e.company_name || '—'}</td>
+          <td><span class="mono">${e.client_code || '—'}</span></td>
+          <td>${e.style_product_name || '—'}</td>
+          <td>${fabricDisplay || '—'}</td>
+          <td>${e.brand_name || '—'}</td>
+          <td>${e.quantity || 0}</td>
+          <td style="color: ${e.transfer_to_workshop ? 'var(--accent-color)' : 'var(--text-secondary)'}">${e.transfer_to_workshop || '—'}</td>
+          <td>${e.delivered_date || '—'}</td>
+          <td><span class="badge">${e.status}</span></td>
           <td>
-            <button class="btn-icon ctb-edit-btn" data-id="\${e.id}">✎</button>
-            <button class="btn-icon ctb-del-btn" data-id="\${e.id}" style="color: var(--text-secondary);">✕</button>
+            <button class="btn-icon ctb-edit-btn" data-id="${e.id}">✎</button>
+            <button class="btn-icon ctb-del-btn" data-id="${e.id}" style="color: var(--text-secondary);">✕</button>
           </td>
         </tr>
-      \`;
+      `;
     }).join('');
     
     // Bind actions
@@ -306,7 +306,7 @@ export async function renderB2bScreen(container) {
   function populateInventoryPicker() {
     const select = document.getElementById('b2b-inv-select');
     select.innerHTML = inventoryItems.map(i => 
-      \`<option value="\${i.id}" data-code="\${i.article_number}" data-name="\${i.name}">\${i.article_number} - \${i.name}</option>\`
+      `<option value="${i.id}" data-code="${i.article_number}" data-name="${i.name}">${i.article_number} - ${i.name}</option>`
     ).join('');
   }
   
@@ -314,7 +314,7 @@ export async function renderB2bScreen(container) {
     const disp = document.getElementById('b2b-inv-display');
     if (!invId) { disp.textContent = ''; return; }
     const i = inventoryItems.find(x => x.id === invId);
-    if (i) disp.textContent = \`Linked: \${i.name}\`;
+    if (i) disp.textContent = `Linked: ${i.name}`;
   }
 
   document.getElementById('b2b-f-link-inv').addEventListener('click', (e) => {

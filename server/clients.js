@@ -83,6 +83,8 @@ router.get('/active-orders', async (req, res) => {
              o.trial_date, o.delivery_date, o.notes,
              c.name as customer, o.total_amount as amount,
              (SELECT COUNT(*) FROM projects WHERE order_id = o.id AND status != 'delivered') as qty,
+             (SELECT fabric_code FROM fabric_receipts WHERE order_id = o.id LIMIT 1) as fabric_code,
+             (SELECT fabric_color FROM fabric_receipts WHERE order_id = o.id LIMIT 1) as fabric_color,
              o.client_id
       FROM orders o
       JOIN clients c ON o.client_id = c.id

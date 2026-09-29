@@ -212,7 +212,7 @@ async function renderActiveOrders(container) {
       .ctb-order-row { transition: background-color 0.2s ease, transform 0.1s ease; cursor: pointer; }
       .ctb-order-row:hover { background-color: rgba(201,168,76,0.12); }
       .ctb-order-row:active { background-color: rgba(201,168,76,0.18); }
-      .ctb-order-grid { display: grid; grid-template-columns: 2fr 1.3fr 1fr 1fr 1fr 1.5fr 90px 70px 90px 40px; align-items: center; gap: 1rem; }
+      .ctb-order-grid { display: grid; grid-template-columns: 1.5fr 1.2fr 1fr 1fr 1fr 1.2fr 1fr 1fr 90px 50px 40px; min-width: 1100px; align-items: center; gap: 1rem; }
       .ctb-order-header { 
         position: sticky; top: 0; z-index: 2; 
         background: var(--bg-card); 
@@ -257,11 +257,7 @@ async function renderActiveOrders(container) {
       .ctb-order-row:hover .ctb-expand-btn {
         background: rgba(201,168,76,0.3);
       }
-      
-      @media (max-width: 900px) {
-         .ctb-order-grid { grid-template-columns: 1fr auto 40px; gap: 0.75rem; }
-         .ctb-hide-mobile { display: none !important; }
-      }    `;
+    `;
     
     const renderRows = (list) => {
       panel.innerHTML = '';
@@ -272,14 +268,15 @@ async function renderActiveOrders(container) {
       header.className = 'ctb-order-grid ctb-order-header';
       header.innerHTML = `
         <div>Client Name</div>
-        <div class="ctb-hide-mobile">Order Ref</div>
-        <div class="ctb-hide-mobile">Order Date</div>
-        <div class="ctb-hide-mobile">Trial Date</div>
-        <div class="ctb-hide-mobile">Delivery Date</div>
-        <div class="ctb-hide-mobile">Requirements</div>
+        <div>Order Ref</div>
+        <div>Order Date</div>
+        <div>Trial Date</div>
+        <div>Delivery Date</div>
+        <div>Requirements</div>
+        <div>Fabric Code</div>
+        <div>Fabric Color</div>
         <div>Status</div>
-        <div class="ctb-hide-mobile" style="text-align:right;">Qty</div>
-        <div style="text-align:right;">Amount</div>
+        <div style="text-align:right;">Qty</div>
         <div></div>
       `;
       panel.appendChild(header);
@@ -318,16 +315,17 @@ async function renderActiveOrders(container) {
 
         row.innerHTML = `
           <div style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.customer)}</div>
-          <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary); font-variant-numeric: tabular-nums;">${escapeHTML(order.order_ref)}</div>
-          <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary);">${dateStr}</div>
-          <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary);">${trialDisplay}</div>
-          <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: ${deadlineColor}; font-weight: ${order.urgency !== 'on_track' && order.urgency !== 'none' ? '600' : 'normal'};">${deadlineDisplay}</div>
-          <div class="ctb-hide-mobile" title="${reqStr}" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${reqStr || '—'}</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); font-variant-numeric: tabular-nums;">${escapeHTML(order.order_ref)}</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary);">${dateStr}</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary);">${trialDisplay}</div>
+          <div style="font-size: 0.8rem; color: ${deadlineColor}; font-weight: ${order.urgency !== 'on_track' && order.urgency !== 'none' ? '600' : 'normal'};">${deadlineDisplay}</div>
+          <div title="${reqStr}" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${reqStr || '—'}</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.fabric_code || '—')}</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.fabric_color || '—')}</div>
           <div>
             <span class="vault-status-badge ${getBadgeClass(order.status, order.urgency)}" style="font-size: 0.6rem; text-transform: uppercase; padding: 0.2rem 0.5rem; line-height: 1;">${escapeHTML(order.status.replace('_', ' '))}</span>
           </div>
-          <div class="ctb-hide-mobile" style="font-size: 0.85rem; text-align: right; color: var(--text-secondary);"><strong style="color: var(--text-primary);">${order.qty}</strong></div>
-          <div style="font-size: 0.95rem; font-weight: 600; text-align: right; color: var(--text-primary);">₹${Number(order.amount).toLocaleString()}</div>
+          <div style="font-size: 0.85rem; text-align: right; color: var(--text-secondary);"><strong style="color: var(--text-primary);">${order.qty}</strong></div>
           <div style="text-align:center;"><div class="ctb-expand-btn chevron">▾</div></div>
         `;
         panel.appendChild(row);

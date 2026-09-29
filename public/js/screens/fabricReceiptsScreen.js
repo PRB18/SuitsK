@@ -9,6 +9,21 @@ export async function renderFabricReceiptsScreen(container) {
   let entries = [];
   let inventoryItems = [];
   let allClients = [];
+  let allActiveOrders = [];
+  
+  function updateOrderDropdown(clientId, selectedOrderId = '') {
+    const select = document.getElementById('fr-f-order-id');
+    select.innerHTML = '<option value="">-- No Specific Order --</option>';
+    if (!clientId) return;
+    const clientOrders = allActiveOrders.filter(o => o.client_id === clientId);
+    clientOrders.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.id;
+      opt.textContent = `${o.order_ref} (${new Date(o.date).toLocaleDateString()}) - ${o.notes || 'No notes'}`;
+      select.appendChild(opt);
+    });
+    if (selectedOrderId) select.value = selectedOrderId;
+  }
   
   container.innerHTML = `
     <div class="screen-wrapper fabric-receipt-screen">
@@ -62,6 +77,12 @@ export async function renderFabricReceiptsScreen(container) {
             <div class="form-field">
               <label>Client Name</label>
               <input type="text" id="fr-f-client-name" class="input">
+            </div>
+            <div class="form-field form-field--full">
+              <label>Link to Active Order (Optional)</label>
+              <select id="fr-f-order-id" class="input">
+                <option value="">-- No Specific Order --</option>
+              </select>
             </div>
             <div class="form-field">
               <label>Fabric Code</label>
@@ -125,14 +146,16 @@ export async function renderFabricReceiptsScreen(container) {
 
   async function load() {
     try {
-      const [resFR, resInv, resClients] = await Promise.all([
+      const [resFR, resInv, resClients, resOrders] = await Promise.all([
         api.getFabricReceipts(),
         api.getInventory(),
-        api.getClients()
+        api.getClients(),
+        api.getActiveOrders()
       ]);
       entries = resFR;
       inventoryItems = resInv.filter(i => i.type === 'fabric');
       allClients = resClients;
+      allActiveOrders = resOrders;
       renderTable();
       populateInventoryPicker();
     } catch (err) {
@@ -208,6 +231,7 @@ export async function renderFabricReceiptsScreen(container) {
       document.getElementById('fr-f-sample').value = e.sample_notes || '';
       document.getElementById('fr-f-order-date').value = e.order_date || '';
       document.getElementById('fr-f-received-date').value = e.received_date || '';
+      updateOrderDropdown(e.client_id, e.order_id);
       updateInvDisplay(e.inventory_id);
     } else {
       document.getElementById('fr-f-client-id').value = '';
@@ -220,6 +244,7 @@ export async function renderFabricReceiptsScreen(container) {
       document.getElementById('fr-f-sample').value = '';
       document.getElementById('fr-f-order-date').value = '';
       document.getElementById('fr-f-received-date').value = '';
+      updateOrderDropdown('');
       updateInvDisplay('');
     }
     modal.style.display = 'flex';
@@ -238,6 +263,7 @@ export async function renderFabricReceiptsScreen(container) {
   document.getElementById('fr-modal-save').addEventListener('click', async () => {
     const data = {
       client_id: document.getElementById('fr-f-client-id').value,
+      order_id: document.getElementById('fr-f-order-id').value,
       client_code: document.getElementById('fr-f-client-code').value,
       client_name: document.getElementById('fr-f-client-name').value,
       fabric_code: document.getElementById('fr-f-fabric-code').value,
@@ -296,6 +322,7 @@ export async function renderFabricReceiptsScreen(container) {
         document.getElementById('fr-f-client-code').value = el.dataset.ref;
         document.getElementById('fr-f-client-name').value = el.dataset.name;
         clientDropdown.style.display = 'none';
+        updateOrderDropdown(el.dataset.id);
       });
     });
     

@@ -79,7 +79,8 @@ router.get('/active-orders', async (req, res) => {
   try {
     const db = getDb();
     const result = await db.execute(`
-      SELECT o.id, o.order_ref, o.status, o.order_date as date, o.delivery_date, o.notes,
+      SELECT o.id, o.order_ref, o.status, o.order_date as date,
+             o.trial_date, o.delivery_date, o.notes,
              c.name as customer, o.total_amount as amount,
              (SELECT COUNT(*) FROM projects WHERE order_id = o.id AND status != 'delivered') as qty,
              o.client_id

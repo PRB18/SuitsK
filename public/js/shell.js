@@ -33,6 +33,11 @@ export function ensureShell(rootElement) {
   shellEl = document.createElement('div');
   shellEl.className = 'ctb-shell';
   shellEl.innerHTML = `
+    <button type="button" id="shell-hamburger" class="ctb-hamburger" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <div id="sidebar-overlay" class="ctb-sidebar-overlay"></div>
+
     <aside class="ctb-sidebar" aria-label="Atelier navigation">
       <button type="button" class="ctb-sidebar-brand" id="shell-brand-home" aria-label="Go to Atelier Hub">
         <div class="ctb-brand-mark">CTB</div>
@@ -96,8 +101,31 @@ function bindShellOnce(shell) {
   if (bound) return;
   bound = true;
 
+  const sidebar  = shell.querySelector('.ctb-sidebar');
+  const hamburger = shell.querySelector('#shell-hamburger');
+  const overlay   = shell.querySelector('#sidebar-overlay');
+
+  function openSidebar() {
+    sidebar.classList.add('is-open');
+    overlay.classList.add('visible');
+    hamburger?.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('is-open');
+    overlay.classList.remove('visible');
+    hamburger?.setAttribute('aria-expanded', 'false');
+  }
+
+  hamburger?.addEventListener('click', () => {
+    sidebar.classList.contains('is-open') ? closeSidebar() : openSidebar();
+  });
+
+  overlay?.addEventListener('click', closeSidebar);
+
   shell.querySelector('#shell-brand-home')?.addEventListener('click', () => {
     navigate('#congressional');
+    closeSidebar();
   });
 
   shell.querySelectorAll('.ctb-nav-item').forEach((btn) => {
@@ -107,6 +135,7 @@ function bindShellOnce(shell) {
       if (IMPLEMENTED_ROUTES.includes(clean)) {
         navigate(route);
       }
+      closeSidebar();
     });
   });
 

@@ -212,7 +212,7 @@ async function renderActiveOrders(container) {
       .ctb-order-row { transition: background-color 0.2s ease, transform 0.1s ease; cursor: pointer; }
       .ctb-order-row:hover { background-color: rgba(201,168,76,0.12); }
       .ctb-order-row:active { background-color: rgba(201,168,76,0.18); }
-      .ctb-order-grid { display: grid; grid-template-columns: 2fr 1.3fr 1fr 1fr 1.5fr 90px 70px 90px 40px; align-items: center; gap: 1rem; }
+      .ctb-order-grid { display: grid; grid-template-columns: 2fr 1.3fr 1fr 1fr 1fr 1.5fr 90px 70px 90px 40px; align-items: center; gap: 1rem; }
       .ctb-order-header { 
         position: sticky; top: 0; z-index: 2; 
         background: var(--bg-card); 
@@ -261,8 +261,7 @@ async function renderActiveOrders(container) {
       @media (max-width: 900px) {
          .ctb-order-grid { grid-template-columns: 1fr auto 40px; gap: 0.75rem; }
          .ctb-hide-mobile { display: none !important; }
-      }
-    `;
+      }    `;
     
     const renderRows = (list) => {
       panel.innerHTML = '';
@@ -275,7 +274,8 @@ async function renderActiveOrders(container) {
         <div>Client Name</div>
         <div class="ctb-hide-mobile">Order Ref</div>
         <div class="ctb-hide-mobile">Order Date</div>
-        <div class="ctb-hide-mobile">Deadline</div>
+        <div class="ctb-hide-mobile">Trial Date</div>
+        <div class="ctb-hide-mobile">Delivery Date</div>
         <div class="ctb-hide-mobile">Requirements</div>
         <div>Status</div>
         <div class="ctb-hide-mobile" style="text-align:right;">Qty</div>
@@ -301,6 +301,11 @@ async function renderActiveOrders(container) {
         
         const dateStr = new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
         
+        let trialDisplay = '—';
+        if (order.trial_date) {
+          trialDisplay = new Date(order.trial_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
         let deadlineDisplay = '—';
         let deadlineColor = 'inherit';
         if (order.delivery_date) {
@@ -315,6 +320,7 @@ async function renderActiveOrders(container) {
           <div style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.customer)}</div>
           <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary); font-variant-numeric: tabular-nums;">${escapeHTML(order.order_ref)}</div>
           <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary);">${dateStr}</div>
+          <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: var(--text-secondary);">${trialDisplay}</div>
           <div class="ctb-hide-mobile" style="font-size: 0.8rem; color: ${deadlineColor}; font-weight: ${order.urgency !== 'on_track' && order.urgency !== 'none' ? '600' : 'normal'};">${deadlineDisplay}</div>
           <div class="ctb-hide-mobile" title="${reqStr}" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${reqStr || '—'}</div>
           <div>

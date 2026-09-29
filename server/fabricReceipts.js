@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const {
     client_id = '', order_id = '', client_code = '', client_name = '',
-    inventory_id = '', fabric_code = '', accessories_desc = '',
+    inventory_id = '', fabric_code = '', fabric_color = '', accessories_desc = '',
     sample_notes = '', order_date = '', received_date = ''
   } = req.body;
 
@@ -61,12 +61,12 @@ router.post('/', async (req, res) => {
     await db.execute({
       sql:  `INSERT INTO fabric_receipts
                (id, client_id, order_id, client_code, client_name,
-                inventory_id, fabric_code, accessories_desc, sample_notes,
+                inventory_id, fabric_code, fabric_color, accessories_desc, sample_notes,
                 order_date, received_date, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         id, safe(client_id), safe(order_id), safe(client_code), safe(client_name),
-        safe(inventory_id), safe(fabric_code), safe(accessories_desc), safe(sample_notes),
+        safe(inventory_id), safe(fabric_code), safe(fabric_color), safe(accessories_desc), safe(sample_notes),
         safe(order_date), safe(received_date), ts, ts,
       ],
     });
@@ -74,7 +74,7 @@ router.post('/', async (req, res) => {
     res.status(201).json({
       id, client_id: safe(client_id), order_id: safe(order_id), client_code: safe(client_code),
       client_name: safe(client_name), inventory_id: safe(inventory_id), fabric_code: safe(fabric_code),
-      accessories_desc: safe(accessories_desc), sample_notes: safe(sample_notes),
+      fabric_color: safe(fabric_color), accessories_desc: safe(accessories_desc), sample_notes: safe(sample_notes),
       order_date: safe(order_date), received_date: safe(received_date),
       created_at: ts, updated_at: ts
     });
@@ -94,7 +94,7 @@ router.put('/:id', async (req, res) => {
 
     const {
       client_id, order_id, client_code, client_name,
-      inventory_id, fabric_code, accessories_desc,
+      inventory_id, fabric_code, fabric_color, accessories_desc,
       sample_notes, order_date, received_date
     } = req.body;
 
@@ -103,7 +103,7 @@ router.put('/:id', async (req, res) => {
     await db.execute({
       sql:  `UPDATE fabric_receipts SET 
              client_id=?, order_id=?, client_code=?, client_name=?,
-             inventory_id=?, fabric_code=?, accessories_desc=?, sample_notes=?,
+             inventory_id=?, fabric_code=?, fabric_color=?, accessories_desc=?, sample_notes=?,
              order_date=?, received_date=?, updated_at=? WHERE id=?`,
       args: [
         client_id !== undefined ? safe(client_id) : row.client_id,
@@ -112,6 +112,7 @@ router.put('/:id', async (req, res) => {
         client_name !== undefined ? safe(client_name) : row.client_name,
         inventory_id !== undefined ? safe(inventory_id) : row.inventory_id,
         fabric_code !== undefined ? safe(fabric_code) : row.fabric_code,
+        fabric_color !== undefined ? safe(fabric_color) : row.fabric_color,
         accessories_desc !== undefined ? safe(accessories_desc) : row.accessories_desc,
         sample_notes !== undefined ? safe(sample_notes) : row.sample_notes,
         order_date !== undefined ? safe(order_date) : row.order_date,

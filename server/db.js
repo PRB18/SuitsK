@@ -293,6 +293,7 @@ async function initDatabase() {
   await ensureColumn(client, 'b2b_entries', 'inventory_id', `TEXT NOT NULL DEFAULT ''`);
   await ensureColumn(client, 'b2b_entries', 'transfer_to_workshop', `TEXT NOT NULL DEFAULT ''`);
   await ensureColumn(client, 'b2b_entries', 'delivered_date', `TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn(client, 'fabric_receipts', 'fabric_color', `TEXT NOT NULL DEFAULT ''`);
   await backfillClientMeasurements(client);
 
   // ── Calendar OAuth Tokens ─────────────────────────────────────────────────

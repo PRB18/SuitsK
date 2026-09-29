@@ -2564,24 +2564,188 @@ textarea:focus-visible, summary:focus-visible {
   opacity: 0.55;
 }
 
-/* ── Responsive collapse sidebar ──────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .ctb-sidebar { width: 60px; }
-  .ctb-sidebar-brand { padding: 16px 10px; flex-direction: column; gap: 4px; }
-  .ctb-brand-name, .ctb-brand-tag, .ctb-vault-status span { display: none; }
-  .ctb-lock-btn { justify-content: center; padding: 8px; font-size: 0; gap: 0; }
-  .ctb-lock-btn svg { width: 16px; height: 16px; }
-  .ctb-nav-label { display: none; }
-  .ctb-nav-item { padding: 12px; justify-content: center; }
-  .ctb-nav-roman { width: auto; font-size: 0.85rem; }
-  .ctb-shell--hub .ctb-shell-main,
-  .ctb-main-area { padding: 28px 24px 24px; }
-  .ctb-module-grid { grid-template-columns: repeat(2, 1fr); }
+/* ── Hamburger Button (always in DOM, only shown on mobile) ───────────────── */
+.ctb-hamburger {
+  display: none;
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 200;
+  width: 40px;
+  height: 40px;
+  background: #2C1810;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  transition: background 0.2s ease;
+}
+.ctb-hamburger:hover { background: #3D2316; }
+.ctb-hamburger span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: #C9A84C;
+  border-radius: 2px;
+  transition: all 0.25s ease;
+  pointer-events: none;
 }
 
+/* ── Sidebar Overlay (dims content behind open mobile sidebar) ─────────────── */
+.ctb-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 99;
+  -webkit-tap-highlight-color: transparent;
+}
+.ctb-sidebar-overlay.visible { display: block; }
+
+/* ── Tablet: 900px ────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  /* Hub padding */
+  .ctb-shell--hub .ctb-shell-main { padding: 32px 28px 28px; }
+
+  /* Status widget — 2-col grid */
+  .ctb-sq-strip { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+
+  /* Tables — allow horizontal scroll */
+  .cdb-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Wizard stepper */
+  .step-nav-item { font-size: 0.8rem; padding: 12px 10px; }
+
+  /* Screen headers */
+  .screen-header { flex-wrap: wrap; }
+  .screen-header-actions { margin-top: 8px; }
+}
+
+/* ── Mobile: 768px ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Show hamburger */
+  .ctb-hamburger { display: flex; }
+
+  /* Sidebar: off-canvas slide-in */
+  .ctb-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 240px;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+  }
+  .ctb-sidebar.is-open { transform: translateX(0); }
+
+  /* Restore full labels inside open sidebar */
+  .ctb-sidebar.is-open .ctb-brand-name,
+  .ctb-sidebar.is-open .ctb-brand-tag,
+  .ctb-sidebar.is-open .ctb-nav-label { display: block; }
+  .ctb-sidebar.is-open .ctb-vault-status span { display: inline; }
+  .ctb-sidebar.is-open .ctb-nav-item { padding: 12px 20px; justify-content: flex-start; }
+  .ctb-sidebar.is-open .ctb-lock-btn { font-size: inherit; gap: 8px; padding: 10px 20px; justify-content: flex-start; }
+
+  /* Default sidebar state on mobile: fully hidden (off-canvas) — no icon-only fallback */
+  .ctb-sidebar-brand { padding: 20px 16px; }
+  .ctb-brand-name, .ctb-brand-tag { display: block; }
+  .ctb-nav-label { display: block; }
+
+  /* Shell main: full-width (sidebar is overlay, not inline) */
+  .ctb-shell-main { width: 100%; }
+
+  /* Hub padding — leave room for hamburger */
+  .ctb-shell--hub .ctb-shell-main { padding: 64px 16px 24px; }
+
+  /* Status widget — 2 cols */
+  .ctb-sq-strip { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+
+  /* Module grid — 1 col */
+  .ctb-module-grid { grid-template-columns: 1fr; }
+
+  /* Hero text */
+  .ctb-hero-title { font-size: 2rem; }
+
+  /* Tables — horizontal scroll with minimum readable width */
+  .cdb-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .cdb-table { min-width: 700px; }
+
+  /* Modals — full-width on mobile */
+  .modal-panel { width: 95vw !important; max-width: none !important; margin: 16px auto; }
+  .modal-body { padding: 16px !important; }
+  .modal-header { padding: 14px 16px !important; }
+  .modal-footer { padding: 12px 16px !important; }
+
+  /* Form grids — single column */
+  .form-grid-2 { grid-template-columns: 1fr !important; }
+  .form-field--full { grid-column: span 1 !important; }
+
+  /* Screen headers */
+  .screen-header { flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+  .screen-header-title { width: 100%; }
+  .screen-header-actions { width: 100%; flex-wrap: wrap; gap: 8px; margin-top: 0; }
+  .screen-header-actions input[type="text"] { width: 100% !important; margin-right: 0 !important; }
+  .screen-header-actions .btn { flex: 1; min-width: 120px; }
+
+  /* Active Orders panel — no capped height on mobile */
+  .ctb-order-panel-scroll { max-height: none !important; }
+
+  /* Screen wrappers — top padding for hamburger clearance */
+  .screen-wrapper { padding-top: 56px; }
+
+  /* Wizard stepper — horizontally scrollable */
+  .stepper-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .step-nav-item { padding: 10px 8px; font-size: 0.75rem; white-space: nowrap; }
+
+  /* Wizard panels */
+  .wizard-panel-container { padding: 16px; padding-bottom: 80px; }
+  .step-panel-card { padding: 16px; }
+  .wizard-header-container { padding: 10px 16px; }
+  .wizard-suit-title { font-size: 1rem; }
+  .wizard-footer-container { padding: 10px 16px; }
+
+  /* Dashboard */
+  .header-container { padding: 12px 16px; flex-wrap: wrap; }
+  .header-actions { flex-wrap: wrap; justify-content: flex-start; }
+  .dashboard-main { padding: 20px 16px; }
+  .dashboard-intro { flex-direction: column; align-items: flex-start; }
+
+  /* Lock screen */
+  .lock-screen-wrapper { padding: 16px; align-items: flex-start; padding-top: 56px; }
+}
+
+/* ── Small phone: 480px ───────────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .ctb-module-grid { grid-template-columns: 1fr; }
-  .ctb-hero-title  { font-size: 2rem; }
+  .ctb-hero-title  { font-size: 1.7rem; }
+  .ctb-hero-eyebrow { font-size: 0.65rem; }
+
+  /* Status widget — tight 2×2 grid */
+  .ctb-sq-strip { grid-template-columns: 1fr 1fr; gap: 0.5rem; padding: 1rem; }
+  .ctb-sq-val { font-size: 1.5rem; }
+
+  /* Lock card */
+  .lock-card { padding: 24px 16px; }
+
+  /* Tables: slightly narrower minimum */
+  .cdb-table { min-width: 560px; }
+
+  /* Configurator foundation grid: single column */
+  .foundation-grid { grid-template-columns: 1fr; }
+
+  /* Suits grid: single column */
+  .suits-grid { grid-template-columns: 1fr; }
+
+  /* Wizard header */
+  .wizard-left { flex-wrap: wrap; }
+  .wizard-title-block { width: 100%; }
 }
 
 /* ==========================================================================

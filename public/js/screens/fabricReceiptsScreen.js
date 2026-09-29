@@ -29,6 +29,7 @@ export async function renderFabricReceiptsScreen(container) {
               <th>Client Code</th>
               <th>Client Name</th>
               <th>Fabric Code</th>
+              <th>Fabric Color</th>
               <th>Accessories / Lining / Fusing</th>
               <th>Sample / Others</th>
               <th>Order Date</th>
@@ -37,7 +38,7 @@ export async function renderFabricReceiptsScreen(container) {
             </tr>
           </thead>
           <tbody id="fr-tbody">
-            <tr><td colspan="9" style="text-align:center; padding: 20px;">Loading...</td></tr>
+            <tr><td colspan="10" style="text-align:center; padding: 20px;">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -70,6 +71,10 @@ export async function renderFabricReceiptsScreen(container) {
                 <input type="hidden" id="fr-f-inventory-id">
               </div>
               <div id="fr-inv-display" style="font-size: 0.85em; color: var(--text-secondary); margin-top: 4px;"></div>
+            </div>
+            <div class="form-field">
+              <label>Fabric Color</label>
+              <input type="text" id="fr-f-fabric-color" class="input" placeholder="e.g. Navy Blue, Charcoal Grey">
             </div>
             <div class="form-field form-field--full">
               <label>Accessories / Lining / Fusing / Monica Parts</label>
@@ -146,7 +151,7 @@ export async function renderFabricReceiptsScreen(container) {
     );
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding: 20px;">No receipts found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px;">No receipts found.</td></tr>';
       return;
     }
 
@@ -164,6 +169,7 @@ export async function renderFabricReceiptsScreen(container) {
           <td><span class="mono">${e.client_code || '—'}</span></td>
           <td style="font-weight: 500;">${e.client_name_lookup || e.client_name || '—'}</td>
           <td>${fabricDisplay || '—'}</td>
+          <td>${e.fabric_color || '—'}</td>
           <td title="${e.accessories_desc || ''}" style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${e.accessories_desc || '—'}</td>
           <td>${e.sample_notes || '—'}</td>
           <td>${e.order_date || '—'}</td>
@@ -196,6 +202,7 @@ export async function renderFabricReceiptsScreen(container) {
       document.getElementById('fr-f-client-code').value = e.client_code || '';
       document.getElementById('fr-f-client-name').value = e.client_name || '';
       document.getElementById('fr-f-fabric-code').value = e.fabric_code || '';
+      document.getElementById('fr-f-fabric-color').value = e.fabric_color || '';
       document.getElementById('fr-f-inventory-id').value = e.inventory_id || '';
       document.getElementById('fr-f-accessories').value = e.accessories_desc || '';
       document.getElementById('fr-f-sample').value = e.sample_notes || '';
@@ -207,6 +214,7 @@ export async function renderFabricReceiptsScreen(container) {
       document.getElementById('fr-f-client-code').value = '';
       document.getElementById('fr-f-client-name').value = '';
       document.getElementById('fr-f-fabric-code').value = '';
+      document.getElementById('fr-f-fabric-color').value = '';
       document.getElementById('fr-f-inventory-id').value = '';
       document.getElementById('fr-f-accessories').value = '';
       document.getElementById('fr-f-sample').value = '';
@@ -233,6 +241,7 @@ export async function renderFabricReceiptsScreen(container) {
       client_code: document.getElementById('fr-f-client-code').value,
       client_name: document.getElementById('fr-f-client-name').value,
       fabric_code: document.getElementById('fr-f-fabric-code').value,
+      fabric_color: document.getElementById('fr-f-fabric-color').value,
       inventory_id: document.getElementById('fr-f-inventory-id').value,
       accessories_desc: document.getElementById('fr-f-accessories').value,
       sample_notes: document.getElementById('fr-f-sample').value,

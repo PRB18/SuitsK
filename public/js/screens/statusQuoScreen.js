@@ -158,15 +158,40 @@ export async function renderStatusQuoScreen(container) {
     if (e.target.id === 'wr-modal') document.getElementById('wr-modal').style.display = 'none';
   });
 
-  document.getElementById('wr-download-btn').addEventListener('click', () => {
+  document.getElementById('wr-download-btn').addEventListener('click', async () => {
     if (!wrFrom || !wrTo) return;
-    const a = document.createElement('a');
-    a.href = api.getWeeklyReportUrl(wrFrom, wrTo);
-    a.download = `Weekly-Report_${wrTo.replace(/-/g,'')}.xlsx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('📥 Downloading Weekly Report…');
+    const btn = document.getElementById('wr-download-btn');
+    btn.textContent = '⏳ Generating…';
+    btn.disabled = true;
+    try {
+      const url = api.getWeeklyReportUrl(wrFrom, wrTo);
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('Server error');
+
+      const iCloudSaved = resp.headers.get('X-ICloud-Saved') === 'true';
+      const blob = await resp.blob();
+      const filename = `Weekly-Report_${wrTo.replace(/-/g,'')}.xlsx`;
+
+      // Trigger browser download
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+
+      if (iCloudSaved) {
+        showToast('✅ Downloaded & saved to iCloud Drive → Krishna Suits / Weekly Reports');
+      } else {
+        showToast('📥 Downloaded! (iCloud Drive not found on this machine)');
+      }
+    } catch (err) {
+      showToast('❌ Download failed: ' + err.message);
+    } finally {
+      btn.textContent = '📥 Download Excel';
+      btn.disabled = false;
+    }
   });
 
   document.getElementById('wr-tabs').addEventListener('click', (e) => {

@@ -16,7 +16,17 @@
 
 const express  = require('express');
 const ExcelJS  = require('exceljs');
+const path     = require('path');
+const fs       = require('fs');
+const os       = require('os');
 const { getDb } = require('./db');
+
+// macOS iCloud Drive path (works on any Mac with iCloud Drive enabled)
+const ICLOUD_DIR = path.join(
+  os.homedir(),
+  'Library', 'Mobile Documents', 'com~apple~CloudDocs',
+  'Krishna Suits', 'Weekly Reports'
+);
 
 const router = express.Router();
 
@@ -341,13 +351,27 @@ router.get('/weekly-report', async (req, res) => {
       ));
     }
 
-    // ── Stream the workbook to the client ────────────────────────────────────
+    // ── Save a copy to iCloud Drive (macOS) ──────────────────────────────────
     const safeDate = toDate.replace(/-/g, '');
     const filename  = `Weekly-Report_${safeDate}.xlsx`;
+    let iCloudSaved = false;
+    let iCloudPath  = '';
+    try {
+      fs.mkdirSync(ICLOUD_DIR, { recursive: true });
+      iCloudPath = path.join(ICLOUD_DIR, filename);
+      await workbook.xlsx.writeFile(iCloudPath);
+      iCloudSaved = true;
+      console.log(`[weekly-report] Saved to iCloud Drive: ${iCloudPath}`);
+    } catch (icloudErr) {
+      // Non-fatal: iCloud Drive may not be available on this machine
+      console.warn('[weekly-report] Could not save to iCloud Drive:', icloudErr.message);
+    }
 
+    // ── Stream the workbook to the browser ───────────────────────────────────
     res.setHeader('Content-Type',        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Cache-Control',       'no-cache');
+    res.setHeader('X-ICloud-Saved',      iCloudSaved ? 'true' : 'false');
 
     await workbook.xlsx.write(res);
     res.end();

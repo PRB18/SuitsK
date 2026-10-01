@@ -13,6 +13,8 @@
 const express      = require('express');
 const path         = require('path');
 const session      = require('express-session');
+const MemoryStore  = require('memorystore')(session);
+const rateLimit    = require('express-rate-limit');
 const compression  = require('compression');
 
 const authRouter         = require('./auth');
@@ -31,6 +33,24 @@ const { initDatabase }   = require('./db');
 const app  = express();
 const PORT = process.env.PORT || 3737;
 const HOST = '0.0.0.0'; // Render requires 0.0.0.0
+
+// ---------------------------------------------------------------------------
+// Rate Limiting (Phase 1 Security Hardening)
+// ---------------------------------------------------------------------------
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 requests per `window` (here, per 15 minutes)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts, please try again after 15 minutes.' }
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 300, // Limit each IP to 300 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ---------------------------------------------------------------------------
 // Trust Render's reverse proxy so secure cookies work over HTTPS
@@ -58,9 +78,14 @@ app.use((req, res, next) => {
 // Session middleware
 // ---------------------------------------------------------------------------
 app.use(session({
+  name: 'ks_sid', // don't use default connect.sid
   secret:            process.env.SESSION_SECRET || 'dev-secret-change-in-production',
   resave:            false,
   saveUninitialized: false,
+  rolling:           true, // reset maxAge on every request
+  store: new MemoryStore({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  }),
   cookie: {
     httpOnly: true,
     sameSite: 'strict',
@@ -106,7 +131,12 @@ app.use(express.static(path.join(__dirname, '..', 'public'), {
 // ---------------------------------------------------------------------------
 // API routes
 // ---------------------------------------------------------------------------
-app.use('/api/auth',         authRouter);
+// Apply strict rate limiting to auth routes
+app.use('/api/auth',         authLimiter, authRouter);
+
+// Apply general rate limiting to all other API routes
+app.use('/api', apiLimiter);
+
 app.use('/api/suits',        requireUnlocked, suitsRouter);
 app.use('/api/inventory',    requireUnlocked, inventoryRouter);
 app.use('/api/shortcomings', requireUnlocked, shortcomingsRouter);

@@ -38,9 +38,38 @@ router.get('/status', (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// IP-based Lockout (Mitigates brute-force if rate limiter is bypassed)
+// ---------------------------------------------------------------------------
+const failedAttempts = new Map();
+const MAX_FAILURES = 5;
+const LOCKOUT_MS = 30 * 60 * 1000; // 30 minutes
+
+function checkLockout(ip) {
+  const record = failedAttempts.get(ip);
+  if (!record) return false;
+  if (record.count >= MAX_FAILURES) {
+    if (Date.now() - record.lastTime < LOCKOUT_MS) return true;
+    failedAttempts.delete(ip); // lock expired
+  }
+  return false;
+}
+
+function recordFailure(ip) {
+  const record = failedAttempts.get(ip) || { count: 0, lastTime: Date.now() };
+  record.count++;
+  record.lastTime = Date.now();
+  failedAttempts.set(ip, record);
+  if (record.count === MAX_FAILURES) {
+    console.warn(`[auth] 🚨 IP ${ip} blocked for 30 minutes due to excessive failed logins.`);
+  }
+}
+
+function clearFailures(ip) {
+  failedAttempts.delete(ip);
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/auth/setup  { password: string }
-// Only works if VAULT_PASSWORD_HASH is not yet set.
-// Prints the hash to server logs — operator copies it to env vars.
 // ---------------------------------------------------------------------------
 router.post('/setup', async (req, res) => {
   if (process.env.VAULT_PASSWORD_HASH) {
@@ -55,7 +84,6 @@ router.post('/setup', async (req, res) => {
   try {
     const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    // Print to server logs (Render's log panel) — operator pastes into env vars
     console.log('\n  ╔══════════════════════════════════════════════════════╗');
     console.log('  ║  VAULT PASSWORD HASH — copy this to Render env vars ║');
     console.log('  ║  Variable name: VAULT_PASSWORD_HASH                 ║');
@@ -63,13 +91,14 @@ router.post('/setup', async (req, res) => {
     console.log(`  ║  ${hash}`);
     console.log('  ╚══════════════════════════════════════════════════════╝\n');
 
-    // Also unlock this session so the user can immediately use the app
-    req.session.unlocked = true;
-
-    res.json({
-      ok: true,
-      message: 'Password set for this session. Check server logs for the hash to save permanently.',
-      hash, // also returned so the operator can copy from the API response if needed
+    req.session.regenerate((err) => {
+      if (err) return res.status(500).json({ error: 'Session error' });
+      req.session.unlocked = true;
+      res.json({
+        ok: true,
+        message: 'Password set for this session. Check server logs for the hash to save permanently.',
+        // Security fix: the hash is NO LONGER returned in the response payload
+      });
     });
   } catch (err) {
     console.error('[setup] Error:', err);
@@ -91,6 +120,11 @@ router.post('/unlock', async (req, res) => {
     return res.json({ ok: true, message: 'Already unlocked.' });
   }
 
+  const clientIp = req.ip || req.connection.remoteAddress;
+  if (checkLockout(clientIp)) {
+    return res.status(429).json({ error: 'Too many failed attempts. Try again in 30 minutes.' });
+  }
+
   const { password } = req.body;
   if (!password || typeof password !== 'string') {
     return res.status(400).json({ error: 'Password is required.' });
@@ -100,12 +134,19 @@ router.post('/unlock', async (req, res) => {
     const correct = await bcrypt.compare(password, hash);
 
     if (!correct) {
+      recordFailure(clientIp);
       await new Promise(resolve => setTimeout(resolve, FAIL_DELAY_MS));
       return res.status(401).json({ error: 'Incorrect password.' });
     }
 
-    req.session.unlocked = true;
-    res.json({ ok: true, message: 'Vault unlocked.' });
+    clearFailures(clientIp);
+    
+    // Regenerate session ID on login to prevent session fixation
+    req.session.regenerate((err) => {
+      if (err) return res.status(500).json({ error: 'Session error' });
+      req.session.unlocked = true;
+      res.json({ ok: true, message: 'Vault unlocked.' });
+    });
   } catch (err) {
     console.error('[unlock] Error:', err);
     res.status(500).json({ error: 'Unlock failed: ' + err.message });

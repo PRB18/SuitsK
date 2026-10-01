@@ -13,8 +13,10 @@
     "compression": "^1.8.2",
     "exceljs": "^4.4.0",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.7.0",
     "express-session": "^1.18.0",
     "googleapis": "^144.0.0",
+    "memorystore": "^1.6.8",
     "node-ical": "^0.27.2",
     "uuid": "^9.0.1"
   },

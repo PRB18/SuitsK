@@ -124,7 +124,7 @@ app.use(session({
 // CSRF Protection (Phase 3)
 // ---------------------------------------------------------------------------
 const { doubleCsrf } = require("csrf-csrf");
-const { doubleCsrfProtection, generateToken } = doubleCsrf({
+const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
   getSecret: () => process.env.SESSION_SECRET || 'dev-secret-change-in-production',
   cookieName: "x-csrf-token",
   cookieOptions: {
@@ -137,7 +137,7 @@ const { doubleCsrfProtection, generateToken } = doubleCsrf({
 
 // Endpoint for frontend to retrieve the token
 app.get('/api/auth/csrf-token', (req, res) => {
-  res.json({ token: generateToken(req, res) });
+  res.json({ token: generateCsrfToken(req, res) });
 });
 
 // Apply CSRF protection to all other API routes

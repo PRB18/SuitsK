@@ -19,8 +19,15 @@
 const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
+const { validate }   = require('./middleware/validate');
+const { idSchema, scheduleEventSchema } = require('./middleware/schemas');
+const { safeJsonParse } = require('./middleware/safeJson');
 
 const router = express.Router();
+
+function isValidId(id) {
+  return idSchema.safeParse(id).success;
+}
 
 const EVENT_TYPES  = ['trial', 'delivery', 'client_visit', 'other'];
 const EVENT_STATUS = ['scheduled', 'completed', 'cancelled'];
@@ -81,19 +88,12 @@ router.get('/schedule/upcoming', async (req, res) => {
 });
 
 // POST /api/schedule — create event
-router.post('/schedule', async (req, res) => {
+router.post('/schedule', validate(scheduleEventSchema), async (req, res) => {
   const {
     client_id = '', project_id = '', event_type = 'other',
     title, description = '', event_date,
     event_time = '', all_day = 1,
   } = req.body;
-
-  if (!title || safe(title).length === 0)
-    return res.status(400).json({ error: 'title is required.' });
-  if (!event_date)
-    return res.status(400).json({ error: 'event_date is required (YYYY-MM-DD).' });
-  if (!EVENT_TYPES.includes(event_type))
-    return res.status(400).json({ error: `event_type must be one of: ${EVENT_TYPES.join(', ')}` });
 
   try {
     const db = getDb();
@@ -117,18 +117,14 @@ router.post('/schedule', async (req, res) => {
 });
 
 // PUT /api/schedule/:id
-router.put('/schedule/:id', async (req, res) => {
+router.put('/schedule/:id', validate(scheduleEventSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const existing = await db.execute({ sql: 'SELECT * FROM schedule_events WHERE id=?', args: [req.params.id] });
     if (existing.rows.length === 0) return res.status(404).json({ error: 'Event not found.' });
     const row = existing.rows[0];
     const { client_id, project_id, event_type, title, description, event_date, event_time, all_day, status } = req.body;
-
-    if (event_type && !EVENT_TYPES.includes(event_type))
-      return res.status(400).json({ error: `event_type must be one of: ${EVENT_TYPES.join(', ')}` });
-    if (status && !EVENT_STATUS.includes(status))
-      return res.status(400).json({ error: `status must be one of: ${EVENT_STATUS.join(', ')}` });
 
     const ts = now();
     await db.execute({
@@ -157,6 +153,7 @@ router.put('/schedule/:id', async (req, res) => {
 
 // DELETE /api/schedule/:id
 router.delete('/schedule/:id', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const result = await db.execute({ sql: 'DELETE FROM schedule_events WHERE id=?', args: [req.params.id] });
@@ -273,7 +270,7 @@ router.post('/calendar/sync', async (req, res) => {
     const results = { synced: 0, errors: [] };
 
     for (const tokenRow of tokens.rows) {
-      const providerTokens = JSON.parse(tokenRow.tokens);
+      const providerTokens = safeJsonParse(tokenRow.tokens, {});
       if (tokenRow.provider === 'google') {
         await syncToGoogle(db, events.rows, providerTokens, results);
       } else {
@@ -297,7 +294,7 @@ router.post('/calendar/pull', async (req, res) => {
     if (tokens.rows.length === 0)
       return res.json({ ok: true, pulled: 0, message: 'No Google Calendar connected.' });
 
-    const providerTokens = JSON.parse(tokens.rows[0].tokens);
+    const providerTokens = safeJsonParse(tokens.rows[0].tokens, {});
     const pulled = await pullFromGoogle(db, providerTokens);
     res.json({ ok: true, ...pulled });
   } catch (err) {

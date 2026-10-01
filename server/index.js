@@ -16,6 +16,7 @@ const session      = require('express-session');
 const MemoryStore  = require('memorystore')(session);
 const rateLimit    = require('express-rate-limit');
 const compression  = require('compression');
+const timeout      = require('connect-timeout');
 
 const authRouter         = require('./auth');
 const suitsRouter        = require('./suits');
@@ -112,10 +113,8 @@ app.use(session({
 }));
 
 // ---------------------------------------------------------------------------
-// Body parsing
+// Body parsing (Removed global parser — moved to individual routes for Phase 7 DoS Protection)
 // ---------------------------------------------------------------------------
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
 // ---------------------------------------------------------------------------
 // CSRF Protection (Phase 3)
@@ -170,23 +169,33 @@ app.use(express.static(path.join(__dirname, '..', 'public'), {
 // ---------------------------------------------------------------------------
 // API routes
 // ---------------------------------------------------------------------------
-// Apply strict rate limiting to auth routes
-app.use('/api/auth',         authLimiter, authRouter);
+
+// Global API timeout (30 seconds) — protect against slow-POST attacks
+app.use('/api', timeout('30s'));
+
+// Apply strict rate limiting and body limit (2kb) to auth routes
+app.use('/api/auth', authLimiter, express.json({ limit: '2kb' }), express.urlencoded({ extended: false, limit: '2kb' }), authRouter);
 
 // Apply general rate limiting to all other API routes
 app.use('/api', apiLimiter);
 
-app.use('/api/suits',        requireUnlocked, suitsRouter);
-app.use('/api/inventory',    requireUnlocked, inventoryRouter);
-app.use('/api/shortcomings', requireUnlocked, shortcomingsRouter);
-app.use('/api/b2b',          requireUnlocked, b2bRouter);
-app.use('/api/fabric-receipts', requireUnlocked, fabricReceiptsRouter);
+// File-heavy or data-heavy routes (1MB limit)
+app.use('/api/suits',        requireUnlocked, express.json({ limit: '1mb' }), express.urlencoded({ extended: false, limit: '1mb' }), suitsRouter);
+app.use('/api',              requireUnlocked, express.json({ limit: '1mb' }), express.urlencoded({ extended: false, limit: '1mb' }), clientsRouter); // handles /clients and /projects
 
-// Routers that handle multiple prefixes internally:
-app.use('/api', requireUnlocked, clientsRouter);   // handles /clients and /projects
-app.use('/api', requireUnlocked, scheduleRouter);  // handles /schedule and /calendar
-app.use('/api', requireUnlocked, workshopRouter);  // handles /hierarchy and /workshop
-app.use('/api', requireUnlocked, weeklyReportRouter); // handles /weekly-report
+// Normal routes (50KB limit)
+app.use('/api/inventory',    requireUnlocked, express.json({ limit: '50kb' }), express.urlencoded({ extended: false, limit: '50kb' }), inventoryRouter);
+app.use('/api/shortcomings', requireUnlocked, express.json({ limit: '50kb' }), express.urlencoded({ extended: false, limit: '50kb' }), shortcomingsRouter);
+app.use('/api/b2b',          requireUnlocked, express.json({ limit: '50kb' }), express.urlencoded({ extended: false, limit: '50kb' }), b2bRouter);
+app.use('/api/fabric-receipts', requireUnlocked, express.json({ limit: '50kb' }), express.urlencoded({ extended: false, limit: '50kb' }), fabricReceiptsRouter);
+app.use('/api',              requireUnlocked, express.json({ limit: '50kb' }), express.urlencoded({ extended: false, limit: '50kb' }), scheduleRouter);
+app.use('/api',              requireUnlocked, express.json({ limit: '50kb' }), express.urlencoded({ extended: false, limit: '50kb' }), workshopRouter);
+
+// Weekly report can take longer (60 seconds)
+app.use('/api',              requireUnlocked, express.json({ limit: '5kb' }), express.urlencoded({ extended: false, limit: '5kb' }), (req, res, next) => {
+  if (req.path.startsWith('/weekly-report')) req.clearTimeout(); // Let weekly report run longer (Render's native timeout is 100s)
+  next();
+}, weeklyReportRouter);
 
 // Catch unhandled /api/* routes
 app.all('/api/*', (req, res) => {
@@ -201,6 +210,17 @@ app.get('*', (req, res) => {
 // Global Error Handler (prevents stack trace / internal msg leakage)
 const errorHandler = require('./middleware/errorHandler');
 app.use(errorHandler);
+
+// ---------------------------------------------------------------------------
+// Security Environment Validator (Phase 8)
+// ---------------------------------------------------------------------------
+if (process.env.NODE_ENV === 'production' && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET === 'dev-secret-change-in-production')) {
+  console.error('[startup] FATAL: Insecure SESSION_SECRET in production.');
+  process.exit(1);
+}
+if (!process.env.VAULT_PASSWORD_HASH) {
+  console.warn('[startup] WARNING: VAULT_PASSWORD_HASH is not set. The application may not unlock properly.');
+}
 
 // ---------------------------------------------------------------------------
 // Start — initialise DB first, then listen

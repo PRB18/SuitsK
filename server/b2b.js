@@ -9,8 +9,15 @@
 const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
+const { validate }   = require('./middleware/validate');
+const { idSchema, b2bSchema } = require('./middleware/schemas');
+const { safeJsonParse } = require('./middleware/safeJson');
 
 const router = express.Router();
+
+function isValidId(id) {
+  return idSchema.safeParse(id).success;
+}
 
 const ENTRY_TYPES = ['corporate_order', 'vendor_purchase'];
 const STATUSES    = ['pending', 'in_progress', 'completed', 'cancelled'];
@@ -42,7 +49,7 @@ router.get('/', async (req, res) => {
     const result = await db.execute({ sql, args });
     res.json(result.rows.map(row => ({
       ...row,
-      garment_types: JSON.parse(row.garment_types || '[]'),
+      garment_types: safeJsonParse(row.garment_types || '[]', []),
     })));
   } catch (err) {
     console.error('[b2b] GET / error:', err);
@@ -51,7 +58,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/b2b — create entry
-router.post('/', async (req, res) => {
+router.post('/', validate(b2bSchema), async (req, res) => {
   const {
     entry_type, order_date,
     // Corporate order fields
@@ -66,27 +73,6 @@ router.post('/', async (req, res) => {
     fabric_code = '', fabric_colour = '', inventory_id = '',
     transfer_to_workshop = '', delivered_date = ''
   } = req.body;
-
-  if (!entry_type || !ENTRY_TYPES.includes(entry_type))
-    return res.status(400).json({ error: `entry_type must be one of: ${ENTRY_TYPES.join(', ')}` });
-  if (!order_date)
-    return res.status(400).json({ error: 'order_date is required.' });
-  if (status && !STATUSES.includes(status))
-    return res.status(400).json({ error: `status must be one of: ${STATUSES.join(', ')}` });
-
-  // Validate garment_types array
-  if (!Array.isArray(garment_types))
-    return res.status(400).json({ error: 'garment_types must be an array.' });
-  for (const g of garment_types) {
-    if (!GARMENT_TYPES.includes(g))
-      return res.status(400).json({ error: `Invalid garment type: "${g}". Must be one of: ${GARMENT_TYPES.join(', ')}` });
-  }
-
-  // Type-specific validation
-  if (entry_type === 'corporate_order' && !company_name)
-    return res.status(400).json({ error: 'company_name is required for corporate orders.' });
-  if (entry_type === 'vendor_purchase' && !vendor_name)
-    return res.status(400).json({ error: 'vendor_name is required for vendor purchases.' });
 
   try {
     const db = getDb();
@@ -120,7 +106,8 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/b2b/:id
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(b2bSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const existing = await db.execute({ sql: 'SELECT * FROM b2b_entries WHERE id=?', args: [req.params.id] });
@@ -129,9 +116,6 @@ router.put('/:id', async (req, res) => {
 
     const { company_name, contact_person, contact_phone, contact_email, quantity, garment_types, vendor_name, items_ordered, total_amount, order_date, delivery_date, status, notes,
             client_code, style_product_name, brand_name, fabric_code, fabric_colour, inventory_id, transfer_to_workshop, delivered_date } = req.body;
-
-    if (status && !STATUSES.includes(status))
-      return res.status(400).json({ error: `status must be one of: ${STATUSES.join(', ')}` });
 
     const resolvedGarmentTypes = garment_types !== undefined ? JSON.stringify(garment_types) : row.garment_types;
     const ts = now();
@@ -171,7 +155,7 @@ router.put('/:id', async (req, res) => {
 
     const updated = await db.execute({ sql: 'SELECT * FROM b2b_entries WHERE id=?', args: [req.params.id] });
     const r = updated.rows[0];
-    res.json({ ...r, garment_types: JSON.parse(r.garment_types || '[]') });
+    res.json({ ...r, garment_types: safeJsonParse(r.garment_types || '[]', []) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -179,6 +163,7 @@ router.put('/:id', async (req, res) => {
 
 // DELETE /api/b2b/:id
 router.delete('/:id', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const result = await db.execute({ sql: 'DELETE FROM b2b_entries WHERE id=?', args: [req.params.id] });

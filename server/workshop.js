@@ -13,8 +13,15 @@
 const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
+const { validate }   = require('./middleware/validate');
+const { idSchema, hierarchySectionSchema, hierarchyPersonnelSchema } = require('./middleware/schemas');
+const { safeJsonParse } = require('./middleware/safeJson');
 
 const router = express.Router();
+
+function isValidId(id) {
+  return idSchema.safeParse(id).success;
+}
 
 function now() { return new Date().toISOString(); }
 function safe(str) { return typeof str === 'string' ? str.trim() : ''; }
@@ -30,7 +37,7 @@ router.get('/hierarchy', async (req, res) => {
     const result = await db.execute('SELECT * FROM work_hierarchy ORDER BY sort_order ASC');
     res.json(result.rows.map(row => ({
       ...row,
-      personnel: JSON.parse(row.personnel || '[]'),
+      personnel: safeJsonParse(row.personnel || '[]', []),
     })));
   } catch (err) {
     console.error('[hierarchy] GET error:', err);
@@ -39,10 +46,8 @@ router.get('/hierarchy', async (req, res) => {
 });
 
 // POST /api/hierarchy — add new section
-router.post('/hierarchy', async (req, res) => {
+router.post('/hierarchy', validate(hierarchySectionSchema), async (req, res) => {
   const { section_name, sort_order } = req.body;
-  if (!section_name || safe(section_name).length === 0)
-    return res.status(400).json({ error: 'section_name is required.' });
 
   try {
     const db = getDb();
@@ -68,7 +73,8 @@ router.post('/hierarchy', async (req, res) => {
 });
 
 // PUT /api/hierarchy/:id — rename or reorder section
-router.put('/hierarchy/:id', async (req, res) => {
+router.put('/hierarchy/:id', validate(hierarchySectionSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const existing = await db.execute({ sql: 'SELECT * FROM work_hierarchy WHERE id=?', args: [req.params.id] });
@@ -88,7 +94,7 @@ router.put('/hierarchy/:id', async (req, res) => {
 
     const updated = await db.execute({ sql: 'SELECT * FROM work_hierarchy WHERE id=?', args: [req.params.id] });
     const r = updated.rows[0];
-    res.json({ ...r, personnel: JSON.parse(r.personnel || '[]') });
+    res.json({ ...r, personnel: safeJsonParse(r.personnel || '[]', []) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -96,10 +102,9 @@ router.put('/hierarchy/:id', async (req, res) => {
 
 // PUT /api/hierarchy/:id/personnel — replace full personnel list
 // Body: { personnel: ["Name 1", "Name 2"] }
-router.put('/hierarchy/:id/personnel', async (req, res) => {
+router.put('/hierarchy/:id/personnel', validate(hierarchyPersonnelSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   const { personnel } = req.body;
-  if (!Array.isArray(personnel))
-    return res.status(400).json({ error: 'personnel must be an array of name strings.' });
 
   const cleanedPersonnel = personnel.map(n => safe(String(n))).filter(Boolean);
 
@@ -119,6 +124,7 @@ router.put('/hierarchy/:id/personnel', async (req, res) => {
 
 // DELETE /api/hierarchy/:id
 router.delete('/hierarchy/:id', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const result = await db.execute({ sql: 'DELETE FROM work_hierarchy WHERE id=?', args: [req.params.id] });

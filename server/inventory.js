@@ -14,8 +14,14 @@
 const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
+const { validate }   = require('./middleware/validate');
+const { idSchema, inventorySchema, inventoryTransactionSchema } = require('./middleware/schemas');
 
 const router = express.Router();
+
+function isValidId(id) {
+  return idSchema.safeParse(id).success;
+}
 
 const ITEM_TYPES = ['fabric', 'accessory'];
 const UNIT_MAP   = { fabric: 'm', accessory: 'pcs' };
@@ -48,7 +54,7 @@ router.get('/', async (req, res) => {
 // ────────────────────────────────────────────────────────────────────────────
 // POST /api/inventory — create inventory item
 // ────────────────────────────────────────────────────────────────────────────
-router.post('/', async (req, res) => {
+router.post('/', validate(inventorySchema), async (req, res) => {
   const {
     item_type = 'fabric',
     name,
@@ -62,13 +68,6 @@ router.post('/', async (req, res) => {
     low_stock_alert = 0,
     notes = '',
   } = req.body;
-
-  if (!name || safe(name).length === 0)
-    return res.status(400).json({ error: 'Item name is required.' });
-  if (!ITEM_TYPES.includes(item_type))
-    return res.status(400).json({ error: `item_type must be one of: ${ITEM_TYPES.join(', ')}` });
-  if (Number(quantity) < 0)
-    return res.status(400).json({ error: 'quantity cannot be negative.' });
 
   // Unit defaults to type-appropriate value if not supplied
   const resolvedUnit = unit || UNIT_MAP[item_type];
@@ -102,6 +101,7 @@ router.post('/', async (req, res) => {
 // GET /api/inventory/:id — single item
 // ────────────────────────────────────────────────────────────────────────────
 router.get('/:id', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const result = await db.execute({ sql: 'SELECT * FROM inventory WHERE id=?', args: [req.params.id] });
@@ -116,7 +116,8 @@ router.get('/:id', async (req, res) => {
 // ────────────────────────────────────────────────────────────────────────────
 // PUT /api/inventory/:id — update metadata (NOT quantity — use transact for that)
 // ────────────────────────────────────────────────────────────────────────────
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(inventorySchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const existing = await db.execute({ sql: 'SELECT * FROM inventory WHERE id=?', args: [req.params.id] });
@@ -156,6 +157,7 @@ router.put('/:id', async (req, res) => {
 // Blocks deletion if quantity > 0 unless force=true is sent in body.
 // ────────────────────────────────────────────────────────────────────────────
 router.delete('/:id', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const existing = await db.execute({ sql: 'SELECT * FROM inventory WHERE id=?', args: [req.params.id] });
@@ -182,16 +184,10 @@ router.delete('/:id', async (req, res) => {
 // Body: { type: 'add'|'deduct', quantity: number, note?: string,
 //         project_id?: string, client_id?: string }
 // ────────────────────────────────────────────────────────────────────────────
-router.post('/:id/transact', async (req, res) => {
+router.post('/:id/transact', validate(inventoryTransactionSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   const { type, quantity, note = '', project_id = '', client_id = '' } = req.body;
-
-  // ── Edge case guards ──────────────────────────────────────────────────────
-  if (!TRANS_TYPES.includes(type))
-    return res.status(400).json({ error: `type must be 'add' or 'deduct'.` });
-
   const qty = Number(quantity);
-  if (!isFinite(qty) || qty <= 0)
-    return res.status(400).json({ error: 'quantity must be a number greater than 0.' });
 
   try {
     const db = getDb();
@@ -250,6 +246,7 @@ router.post('/:id/transact', async (req, res) => {
 // GET /api/inventory/:id/transactions — full audit trail for one item
 // ────────────────────────────────────────────────────────────────────────────
 router.get('/:id/transactions', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const result = await db.execute({

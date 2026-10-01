@@ -13,8 +13,18 @@
 const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
+const { validate }   = require('./middleware/validate');
+const { 
+  idSchema, clientSchema, clientMeasurementsSchema, 
+  clientVisitSchema, orderSchema, projectSchema, projectStatusSchema 
+} = require('./middleware/schemas');
+const { safeJsonParse } = require('./middleware/safeJson');
 
 const router = express.Router();
+
+function isValidId(id) {
+  return idSchema.safeParse(id).success;
+}
 
 // ── Allowed garment types ────────────────────────────────────────────────────
 const GARMENT_TYPES = [
@@ -167,11 +177,9 @@ router.get('/clients', async (req, res) => {
 });
 
 // POST /api/clients — create new client
-router.post('/clients', async (req, res) => {
+router.post('/clients', validate(clientSchema), async (req, res) => {
   const { name, phone, email = '', address = '', city = '', notes = '' } = req.body;
 
-  if (!name || safe(name).length === 0)
-    return res.status(400).json({ error: 'Client name is required.' });
   try {
     const db = getDb();
 
@@ -216,6 +224,7 @@ router.post('/clients', async (req, res) => {
 
 // GET /api/clients/:id — full profile: client + orders (with projects nested)
 router.get('/clients/:id', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const clientResult = await db.execute({
@@ -243,7 +252,7 @@ router.get('/clients/:id', async (req, res) => {
       });
       const projects = projectsResult.rows.map(p => ({
         ...p,
-        measurements: JSON.parse(p.measurements || '{}'),
+        measurements: safeJsonParse(p.measurements || '{}', {}),
       }));
       orders.push({ ...order, projects });
     }
@@ -261,7 +270,7 @@ router.get('/clients/:id', async (req, res) => {
     const measurementPayload = measurement
       ? {
           ...measurement,
-          values: (() => { try { return JSON.parse(measurement.values_json || '{}'); } catch { return {}; } })(),
+          values: safeJsonParse(measurement.values_json || '{}', {}),
         }
       : null;
 
@@ -286,17 +295,19 @@ router.get('/clients/:id', async (req, res) => {
 
 // GET /api/clients/:id/measurements — client-level measurement profile
 router.get('/clients/:id/measurements', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const result = await db.execute({ sql: 'SELECT * FROM client_measurements WHERE client_id=?', args: [req.params.id] });
     if (result.rows.length === 0) return res.status(404).json({ error: 'Measurement profile not found.' });
     const row = result.rows[0];
-    res.json({ ...row, values: JSON.parse(row.values_json || '{}') });
+    res.json({ ...row, values: safeJsonParse(row.values_json || '{}', {}) });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // PUT /api/clients/:id/measurements — replace client-level measurement values
-router.put('/clients/:id/measurements', async (req, res) => {
+router.put('/clients/:id/measurements', validate(clientMeasurementsSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const ts = now();
@@ -322,7 +333,7 @@ async function pushMeasurementsToActiveProjects(db, clientId, values, ts) {
   });
   for (const row of projects.rows) {
     let current = {};
-    try { current = JSON.parse(row.measurements || '{}'); } catch { current = {}; }
+    current = safeJsonParse(row.measurements || '{}', {});
     const merged = { ...current, ...values };
     await db.execute({
       sql: 'UPDATE projects SET measurements = ?, updated_at = ? WHERE id = ?',
@@ -332,9 +343,9 @@ async function pushMeasurementsToActiveProjects(db, clientId, values, ts) {
 }
 
 // POST /api/clients/:id/visits — add a dated client visit
-router.post('/clients/:id/visits', async (req, res) => {
+router.post('/clients/:id/visits', validate(clientVisitSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   const visitDate = safe(req.body.visit_date);
-  if (!visitDate) return res.status(400).json({ error: 'visit_date is required.' });
   try {
     const db = getDb();
     const clientCheck = await db.execute({ sql: 'SELECT id FROM clients WHERE id=?', args: [req.params.id] });
@@ -346,7 +357,8 @@ router.post('/clients/:id/visits', async (req, res) => {
 });
 
 // PUT /api/clients/:id — update client fields
-router.put('/clients/:id', async (req, res) => {
+router.put('/clients/:id', validate(clientSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const existing = await db.execute({
@@ -401,6 +413,7 @@ router.put('/clients/:id', async (req, res) => {
 
 // DELETE /api/clients/:id — cascade deletes orders + projects
 router.delete('/clients/:id', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const result = await db.execute({
@@ -421,6 +434,7 @@ router.delete('/clients/:id', async (req, res) => {
 
 // GET /api/clients/:id/orders
 router.get('/clients/:id/orders', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const result = await db.execute({
@@ -434,9 +448,9 @@ router.get('/clients/:id/orders', async (req, res) => {
 });
 
 // POST /api/clients/:id/orders — create order for a client
-router.post('/clients/:id/orders', async (req, res) => {
-  const { order_date, trial_date = '', delivery_date = '', total_amount = 0, advance_paid = 0, notes = '' } = req.body;
-  if (!order_date) return res.status(400).json({ error: 'order_date is required.' });
+router.post('/clients/:id/orders', validate(orderSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  const { order_date, trial_date = '', delivery_date = '', total_amount = 0, advance_paid = 0, status, notes = '' } = req.body;
 
   try {
     const db = getDb();
@@ -463,7 +477,8 @@ router.post('/clients/:id/orders', async (req, res) => {
 });
 
 // PUT /api/clients/:id/orders/:orderId — update order
-router.put('/clients/:id/orders/:orderId', async (req, res) => {
+router.put('/clients/:id/orders/:orderId', validate(orderSchema), async (req, res) => {
+  if (!isValidId(req.params.id) || !isValidId(req.params.orderId)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const existing = await db.execute({ sql: 'SELECT * FROM orders WHERE id = ? AND client_id = ?', args: [req.params.orderId, req.params.id] });
@@ -496,11 +511,9 @@ router.put('/clients/:id/orders/:orderId', async (req, res) => {
 });
 
 // POST /api/clients/:id/orders/:orderId/projects — add a garment to an order
-router.post('/clients/:id/orders/:orderId/projects', async (req, res) => {
+router.post('/clients/:id/orders/:orderId/projects', validate(projectSchema), async (req, res) => {
+  if (!isValidId(req.params.id) || !isValidId(req.params.orderId)) return res.status(404).json({ error: 'Not found' });
   const { garment_type, measurements = {}, suit_config_id = '' } = req.body;
-  if (!garment_type) return res.status(400).json({ error: 'garment_type is required.' });
-  if (!GARMENT_TYPES.includes(garment_type))
-    return res.status(400).json({ error: `Invalid garment_type. Must be one of: ${GARMENT_TYPES.join(', ')}` });
 
   try {
     const db = getDb();
@@ -516,7 +529,7 @@ router.post('/clients/:id/orders/:orderId/projects', async (req, res) => {
         args: [req.params.id],
       });
       if (meas.rows.length > 0) {
-        try { seeded = JSON.parse(meas.rows[0].values_json || '{}'); } catch { seeded = {}; }
+        seeded = safeJsonParse(meas.rows[0].values_json || '{}', {});
       }
     }
 
@@ -538,7 +551,8 @@ router.post('/clients/:id/orders/:orderId/projects', async (req, res) => {
 // ────────────────────────────────────────────────────────────────────────────
 
 // PUT /api/projects/:projectId — update project (status, measurements, suit_config_id)
-router.put('/projects/:projectId', async (req, res) => {
+router.put('/projects/:projectId', validate(projectSchema), async (req, res) => {
+  if (!isValidId(req.params.projectId)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const existing = await db.execute({ sql: 'SELECT * FROM projects WHERE id = ?', args: [req.params.projectId] });
@@ -570,7 +584,7 @@ router.put('/projects/:projectId', async (req, res) => {
       let merged = {};
       let unit = 'in';
       if (existingMeas.rows.length > 0) {
-        try { merged = JSON.parse(existingMeas.rows[0].values_json || '{}'); } catch { merged = {}; }
+        merged = safeJsonParse(existingMeas.rows[0].values_json || '{}', {});
         unit = existingMeas.rows[0].unit || 'in';
       }
       merged = { ...merged, ...(measurements || {}) };
@@ -589,17 +603,16 @@ router.put('/projects/:projectId', async (req, res) => {
 
     const updated = await db.execute({ sql: 'SELECT * FROM projects WHERE id = ?', args: [req.params.projectId] });
     const p = updated.rows[0];
-    res.json({ ...p, measurements: JSON.parse(p.measurements || '{}') });
+    res.json({ ...p, measurements: safeJsonParse(p.measurements || '{}', {}) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // PUT /api/projects/:projectId/status — move to next stage (used by Workshop Kanban)
-router.put('/projects/:projectId/status', async (req, res) => {
+router.put('/projects/:projectId/status', validate(projectStatusSchema), async (req, res) => {
+  if (!isValidId(req.params.projectId)) return res.status(404).json({ error: 'Not found' });
   const { status } = req.body;
-  if (!status || !PROJECT_STAGES.includes(status))
-    return res.status(400).json({ error: `Invalid status. Must be one of: ${PROJECT_STAGES.join(', ')}` });
   try {
     const db = getDb();
     const ts = now();
@@ -625,6 +638,7 @@ router.put('/projects/:projectId/status', async (req, res) => {
 
 // DELETE /api/projects/:projectId
 router.delete('/projects/:projectId', async (req, res) => {
+  if (!isValidId(req.params.projectId)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const result = await db.execute({ sql: 'DELETE FROM projects WHERE id=?', args: [req.params.projectId] });

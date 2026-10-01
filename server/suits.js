@@ -9,8 +9,15 @@
 const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
+const { validate }   = require('./middleware/validate');
+const { idSchema, suitSchema, duplicateSuitSchema } = require('./middleware/schemas');
+const { safeJsonParse } = require('./middleware/safeJson');
 
 const router = express.Router();
+
+function isValidId(id) {
+  return idSchema.safeParse(id).success;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -25,7 +32,7 @@ function now() {
  */
 function makeSummary(dataJson) {
   try {
-    const d = JSON.parse(dataJson);
+    const d = safeJsonParse(dataJson, {});
     let filled = 0;
     const cats = ['jacket', 'shirt', 'trouser', 'waistcoat', 'embroidery'];
     for (const cat of cats) {
@@ -77,6 +84,7 @@ router.get('/', async (req, res) => {
 // GET /api/suits/:id — full suit
 // ---------------------------------------------------------------------------
 router.get('/:id', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db     = getDb();
     const result = await db.execute({ sql: 'SELECT * FROM suits WHERE id = ?', args: [req.params.id] });
@@ -90,7 +98,7 @@ router.get('/:id', async (req, res) => {
       clientId:  row.client_id || '',
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      data:      JSON.parse(row.data),
+      data:      safeJsonParse(row.data, {}),
     });
   } catch (err) {
     console.error('[suits] GET /:id error:', err);
@@ -101,13 +109,9 @@ router.get('/:id', async (req, res) => {
 // ---------------------------------------------------------------------------
 // POST /api/suits — create
 // ---------------------------------------------------------------------------
-router.post('/', async (req, res) => {
+router.post('/', validate(suitSchema), async (req, res) => {
   const { name, notes = '', data = {}, client_id = '', clientId = '' } = req.body;
   const linkedClientId = String(client_id || clientId || '').trim();
-
-  if (!name || typeof name !== 'string' || name.trim().length === 0) {
-    return res.status(400).json({ error: 'Suit name is required.' });
-  }
 
   try {
     const db = getDb();
@@ -141,7 +145,8 @@ router.post('/', async (req, res) => {
 // ---------------------------------------------------------------------------
 // PUT /api/suits/:id — full replace
 // ---------------------------------------------------------------------------
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(suitSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db     = getDb();
     const result = await db.execute({ sql: 'SELECT * FROM suits WHERE id = ?', args: [req.params.id] });
@@ -150,10 +155,6 @@ router.put('/:id', async (req, res) => {
     if (!row) return res.status(404).json({ error: 'Suit not found.' });
 
     const { name, notes, data, client_id, clientId } = req.body;
-
-    if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0)) {
-      return res.status(400).json({ error: 'Suit name cannot be empty.' });
-    }
 
     const ts       = now();
     const newName  = name  !== undefined ? name.trim()         : row.name;
@@ -179,7 +180,7 @@ router.put('/:id', async (req, res) => {
       await syncClientMeasurements(db, newClientId, data.measurements, ts);
     }
 
-    res.json({ id: req.params.id, name: newName, notes: newNotes, clientId: newClientId, updatedAt: ts, data: JSON.parse(newData) });
+    res.json({ id: req.params.id, name: newName, notes: newNotes, clientId: newClientId, updatedAt: ts, data: safeJsonParse(newData, {}) });
   } catch (err) {
     console.error('[suits] PUT /:id error:', err);
     res.status(500).json({ error: err.message });
@@ -189,7 +190,8 @@ router.put('/:id', async (req, res) => {
 // ---------------------------------------------------------------------------
 // POST /api/suits/:id/duplicate
 // ---------------------------------------------------------------------------
-router.post('/:id/duplicate', async (req, res) => {
+router.post('/:id/duplicate', validate(duplicateSuitSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db     = getDb();
     const result = await db.execute({ sql: 'SELECT * FROM suits WHERE id = ?', args: [req.params.id] });
@@ -209,7 +211,7 @@ router.post('/:id/duplicate', async (req, res) => {
       args: [newId, newName, row.notes, clientId, ts, ts, row.data],
     });
 
-    res.status(201).json({ id: newId, name: newName, notes: row.notes, clientId, createdAt: ts, updatedAt: ts, data: JSON.parse(row.data) });
+    res.status(201).json({ id: newId, name: newName, notes: row.notes, clientId, createdAt: ts, updatedAt: ts, data: safeJsonParse(row.data, {}) });
   } catch (err) {
     console.error('[suits] POST /:id/duplicate error:', err);
     res.status(500).json({ error: err.message });
@@ -246,7 +248,7 @@ async function syncClientMeasurements(db, clientId, measurements, ts) {
   });
   for (const row of projects.rows) {
     let current = {};
-    try { current = JSON.parse(row.measurements || '{}'); } catch { current = {}; }
+    current = safeJsonParse(row.measurements || '{}', {});
     await db.execute({
       sql: 'UPDATE projects SET measurements = ?, updated_at = ? WHERE id = ?',
       args: [JSON.stringify({ ...current, ...values }), ts, row.id],
@@ -258,6 +260,7 @@ async function syncClientMeasurements(db, clientId, measurements, ts) {
 // DELETE /api/suits/:id
 // ---------------------------------------------------------------------------
 router.delete('/:id', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db     = getDb();
     const result = await db.execute({ sql: 'DELETE FROM suits WHERE id = ?', args: [req.params.id] });

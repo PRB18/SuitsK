@@ -182,7 +182,7 @@ export async function renderStatusQuoScreen(container) {
       URL.revokeObjectURL(a.href);
 
       if (iCloudSaved) {
-        showToast('✅ Downloaded & saved to iCloud Drive → Krishna Suits / Weekly Reports');
+        showToast('✅ Downloaded & saved to iCloud Drive → Congressional The Bespoke / Weekly Reports');
       } else {
         showToast('📥 Downloaded! (iCloud Drive not found on this machine)');
       }

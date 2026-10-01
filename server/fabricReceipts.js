@@ -9,8 +9,14 @@
 const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
+const { validate }   = require('./middleware/validate');
+const { idSchema, fabricReceiptSchema } = require('./middleware/schemas');
 
 const router = express.Router();
+
+function isValidId(id) {
+  return idSchema.safeParse(id).success;
+}
 
 function now() { return new Date().toISOString(); }
 function safe(str) { return typeof str === 'string' ? str.trim() : ''; }
@@ -46,7 +52,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/fabric-receipts — create receipt
-router.post('/', async (req, res) => {
+router.post('/', validate(fabricReceiptSchema), async (req, res) => {
   const {
     client_id = '', order_id = '', client_code = '', client_name = '',
     inventory_id = '', fabric_code = '', fabric_color = '', accessories_desc = '',
@@ -85,7 +91,8 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/fabric-receipts/:id
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(fabricReceiptSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const existing = await db.execute({ sql: 'SELECT * FROM fabric_receipts WHERE id=?', args: [req.params.id] });
@@ -130,6 +137,7 @@ router.put('/:id', async (req, res) => {
 
 // DELETE /api/fabric-receipts/:id
 router.delete('/:id', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const result = await db.execute({ sql: 'DELETE FROM fabric_receipts WHERE id=?', args: [req.params.id] });

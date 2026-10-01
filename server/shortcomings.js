@@ -9,8 +9,14 @@
 const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
+const { validate }   = require('./middleware/validate');
+const { idSchema, shortcomingSchema, shortcomingResolveSchema } = require('./middleware/schemas');
 
 const router = express.Router();
+
+function isValidId(id) {
+  return idSchema.safeParse(id).success;
+}
 
 const CATEGORIES  = ['tailoring', 'managerial', 'client'];
 const SEVERITIES  = ['high', 'medium', 'low'];
@@ -59,15 +65,8 @@ router.get('/stats', async (req, res) => {
 });
 
 // POST /api/shortcomings — create issue
-router.post('/', async (req, res) => {
+router.post('/', validate(shortcomingSchema), async (req, res) => {
   const { category, severity = 'medium', client_id = '', project_id = '', title, description = '' } = req.body;
-
-  if (!category || !CATEGORIES.includes(category))
-    return res.status(400).json({ error: `category must be one of: ${CATEGORIES.join(', ')}` });
-  if (!SEVERITIES.includes(severity))
-    return res.status(400).json({ error: `severity must be one of: ${SEVERITIES.join(', ')}` });
-  if (!title || safe(title).length === 0)
-    return res.status(400).json({ error: 'title is required.' });
 
   try {
     const db = getDb();
@@ -89,7 +88,8 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/shortcomings/:id — update issue (except resolving — use /resolve)
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(shortcomingSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const existing = await db.execute({ sql: 'SELECT * FROM shortcomings WHERE id=?', args: [req.params.id] });
@@ -97,14 +97,8 @@ router.put('/:id', async (req, res) => {
     const row = existing.rows[0];
     const { category, severity, client_id, project_id, title, description, status } = req.body;
 
-    if (category && !CATEGORIES.includes(category))
-      return res.status(400).json({ error: `category must be one of: ${CATEGORIES.join(', ')}` });
-    if (severity && !SEVERITIES.includes(severity))
-      return res.status(400).json({ error: `severity must be one of: ${SEVERITIES.join(', ')}` });
     if (status === 'resolved')
       return res.status(400).json({ error: 'Use PUT /shortcomings/:id/resolve to resolve issues.' });
-    if (status && !STATUSES.includes(status))
-      return res.status(400).json({ error: `status must be one of: ${STATUSES.join(', ')}` });
 
     const ts = now();
     await db.execute({
@@ -129,10 +123,9 @@ router.put('/:id', async (req, res) => {
 });
 
 // PUT /api/shortcomings/:id/resolve — mark resolved with a mandatory resolution note
-router.put('/:id/resolve', async (req, res) => {
+router.put('/:id/resolve', validate(shortcomingResolveSchema), async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   const { resolved_note } = req.body;
-  if (!resolved_note || safe(resolved_note).length === 0)
-    return res.status(400).json({ error: 'resolved_note is required when resolving an issue.' });
 
   try {
     const db = getDb();
@@ -156,6 +149,7 @@ router.put('/:id/resolve', async (req, res) => {
 
 // DELETE /api/shortcomings/:id
 router.delete('/:id', async (req, res) => {
+  if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
     const result = await db.execute({ sql: 'DELETE FROM shortcomings WHERE id=?', args: [req.params.id] });

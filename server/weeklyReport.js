@@ -25,7 +25,7 @@ const { getDb } = require('./db');
 const ICLOUD_DIR = path.join(
   os.homedir(),
   'Library', 'Mobile Documents', 'com~apple~CloudDocs',
-  'Krishna Suits', 'Weekly Reports'
+  'Congressional The Bespoke', 'Weekly Reports'
 );
 
 const router = express.Router();
@@ -106,6 +106,14 @@ function addTitleBlock(sheet, title, dateRange) {
 
 // GET /api/weekly-report
 router.get('/weekly-report', async (req, res) => {
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (req.query.from && !dateRegex.test(req.query.from.slice(0, 10))) {
+    return res.status(400).json({ error: "Invalid 'from' date format." });
+  }
+  if (req.query.to && !dateRegex.test(req.query.to.slice(0, 10))) {
+    return res.status(400).json({ error: "Invalid 'to' date format." });
+  }
+
   try {
     const db  = getDb();
     const now = new Date();
@@ -358,7 +366,10 @@ router.get('/weekly-report', async (req, res) => {
     let iCloudPath  = '';
     try {
       fs.mkdirSync(ICLOUD_DIR, { recursive: true });
-      iCloudPath = path.join(ICLOUD_DIR, filename);
+      iCloudPath = path.resolve(ICLOUD_DIR, filename);
+      if (!iCloudPath.startsWith(ICLOUD_DIR)) {
+        throw new Error('Path traversal detected');
+      }
       await workbook.xlsx.writeFile(iCloudPath);
       iCloudSaved = true;
       console.log(`[weekly-report] Saved to iCloud Drive: ${iCloudPath}`);
@@ -385,6 +396,14 @@ router.get('/weekly-report', async (req, res) => {
 
 // GET /api/weekly-report/preview — returns JSON for the browser preview modal
 router.get('/weekly-report/preview', async (req, res) => {
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (req.query.from && !dateRegex.test(req.query.from.slice(0, 10))) {
+    return res.status(400).json({ error: "Invalid 'from' date format." });
+  }
+  if (req.query.to && !dateRegex.test(req.query.to.slice(0, 10))) {
+    return res.status(400).json({ error: "Invalid 'to' date format." });
+  }
+
   try {
     const db  = getDb();
     const now = new Date();

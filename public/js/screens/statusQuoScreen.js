@@ -242,8 +242,8 @@ export async function renderStatusQuoScreen(container) {
   function renderDeliveriesTab(d) {
     return `
       <h3 style="color:var(--accent-color);margin:0 0 12px;">✅ Garments Delivered This Week (${d.deliveries.length})</h3>
-      ${wrTable(['Order Ref','Client','Garment Type','Delivery Date','Notes'],
-        d.deliveries.map(p => [p.order, `${p.client} (${p.clientRef||''})`, p.type, p.delivery||'—', p.notes||'—']))}`;
+      ${wrTable(['Order Ref','Client','Garment Type','Delivery Date'],
+        d.deliveries.map(p => [p.order, `${p.client} (${p.clientRef||''})`, p.type, p.delivery||'—']))}`;
   }
 
   function renderIssuesTab(d) {

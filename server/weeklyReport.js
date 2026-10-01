@@ -274,7 +274,7 @@ router.get('/weekly-report', async (req, res) => {
       addEmptyNote(activeSheet, 'No active garments found.');
     } else {
       activeGarments.forEach((p, i) => addDataRow(activeSheet,
-        [p.order_ref || '', p.client_name || '', p.type || '', p.status || '', fmtDate(p.trial_date), fmtDate(p.delivery_date), p.notes || ''],
+        [p.order_ref || '', p.client_name || '', p.garment_type || '', p.status || '', fmtDate(p.trial_date), fmtDate(p.delivery_date), p.notes || ''],
         i
       ));
     }
@@ -290,7 +290,7 @@ router.get('/weekly-report', async (req, res) => {
       addEmptyNote(delivSheet, 'No garments were delivered this week.');
     } else {
       deliveredProj.forEach((p, i) => addDataRow(delivSheet,
-        [p.order_ref || '', p.client_name || '', p.client_ref || '', p.type || '', fmtDate(p.delivery_date || p.updated_at), p.notes || ''],
+        [p.order_ref || '', p.client_name || '', p.client_ref || '', p.garment_type || '', fmtDate(p.delivery_date || p.updated_at), p.notes || ''],
         i
       ));
     }
@@ -378,7 +378,7 @@ router.get('/weekly-report/preview', async (req, res) => {
     ] = await Promise.all([
       db.execute(`SELECT id, client_ref, name, phone, email, created_at, notes FROM clients ORDER BY created_at DESC`),
       db.execute(`SELECT o.id, o.order_ref, o.status, o.order_date, o.trial_date, o.delivery_date, o.notes, c.name as client_name, c.client_ref FROM orders o JOIN clients c ON o.client_id = c.id ORDER BY o.order_date DESC`),
-      db.execute(`SELECT p.id, p.type, p.status, p.notes, p.updated_at, p.created_at, o.order_ref, o.delivery_date, o.trial_date, c.name as client_name, c.client_ref FROM projects p JOIN orders o ON p.order_id = o.id JOIN clients c ON o.client_id = c.id ORDER BY p.created_at DESC`),
+      db.execute(`SELECT p.id, p.garment_type, p.status, p.notes, p.updated_at, p.created_at, o.order_ref, o.delivery_date, o.trial_date, c.name as client_name, c.client_ref FROM projects p JOIN orders o ON p.order_id = o.id JOIN clients c ON o.client_id = c.id ORDER BY p.created_at DESC`),
       db.execute(`SELECT s.*, c.name as client_name FROM shortcomings s LEFT JOIN clients c ON c.id = s.client_id ORDER BY s.created_at DESC`),
       db.execute(`SELECT f.*, c.name as client_name FROM fabric_receipts f LEFT JOIN clients c ON f.client_id = c.id ORDER BY f.created_at DESC`),
       db.execute(`SELECT o.id, o.order_ref, o.status, o.order_date, o.trial_date, o.delivery_date, c.name as client_name, c.client_ref, (SELECT COUNT(*) FROM projects WHERE order_id = o.id) as total_garments, (SELECT fabric_code FROM fabric_receipts WHERE order_id = o.id OR (order_id = '' AND client_id = o.client_id) ORDER BY created_at DESC LIMIT 1) as fabric_code, (SELECT fabric_color FROM fabric_receipts WHERE order_id = o.id OR (order_id = '' AND client_id = o.client_id) ORDER BY created_at DESC LIMIT 1) as fabric_color FROM orders o JOIN clients c ON o.client_id = c.id WHERE o.status NOT IN ('completed', 'cancelled') ORDER BY o.order_date DESC`),
@@ -405,7 +405,7 @@ router.get('/weekly-report/preview', async (req, res) => {
       newClients:       newClients.map(c => ({ ref: c.client_ref, name: c.name, phone: c.phone, email: c.email, added: fmtDate(c.created_at), notes: c.notes })),
       newOrders:        newOrders.map(o => ({ ref: o.order_ref, client: o.client_name, clientRef: o.client_ref, date: fmtDate(o.order_date), trial: fmtDate(o.trial_date), delivery: fmtDate(o.delivery_date), status: o.status, notes: o.notes })),
       activeOrders:     activeOrders.map(o => ({ ref: o.order_ref, client: o.client_name, clientRef: o.client_ref, status: o.status, date: fmtDate(o.order_date), trial: fmtDate(o.trial_date), delivery: fmtDate(o.delivery_date), fabricCode: o.fabric_code, fabricColor: o.fabric_color, garments: o.total_garments })),
-      deliveries:       deliveredProj.map(p => ({ order: p.order_ref, client: p.client_name, clientRef: p.client_ref, type: p.type, delivery: fmtDate(p.delivery_date || p.updated_at), notes: p.notes })),
+      deliveries:       deliveredProj.map(p => ({ order: p.order_ref, client: p.client_name, clientRef: p.client_ref, type: p.garment_type, delivery: fmtDate(p.delivery_date || p.updated_at), notes: p.notes })),
       issues:           weekShortcomings.map(s => ({ category: s.category, severity: s.severity, status: s.status, client: s.client_name || 'General', description: s.description, logged: fmtDate(s.created_at), resolved: fmtDate(s.resolved_at), note: s.resolved_note })),
       fabricReceipts:   weekFabric.map(f => ({ clientRef: f.client_code, client: f.client_name, fabricCode: f.fabric_code, fabricColor: f.fabric_color, accessories: f.accessories_desc, orderDate: fmtDate(f.order_date), received: fmtDate(f.received_date), notes: f.sample_notes })),
     });

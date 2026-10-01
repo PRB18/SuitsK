@@ -64,15 +64,31 @@ app.set('trust proxy', 1);
 app.use(compression({ level: 6, threshold: 1024 }));  // level 6 = best speed/size tradeoff
 
 // ---------------------------------------------------------------------------
-// Security headers
+// Security headers (Phase 2 - Helmet & CSP)
 // ---------------------------------------------------------------------------
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  next();
-});
+const helmet = require('helmet');
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      fontSrc: ["'self'", "fonts.gstatic.com", "fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"],
+      frameAncestors: ["'none'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+    }
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+  },
+  referrerPolicy: {
+    policy: 'strict-origin-when-cross-origin'
+  }
+}));
 
 // ---------------------------------------------------------------------------
 // Session middleware
@@ -100,6 +116,29 @@ app.use(session({
 // ---------------------------------------------------------------------------
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
+
+// ---------------------------------------------------------------------------
+// CSRF Protection (Phase 3)
+// ---------------------------------------------------------------------------
+const { doubleCsrf } = require("csrf-csrf");
+const { doubleCsrfProtection, generateToken } = doubleCsrf({
+  getSecret: () => process.env.SESSION_SECRET || 'dev-secret-change-in-production',
+  cookieName: "x-csrf-token",
+  cookieOptions: {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+  },
+  getTokenFromRequest: (req) => req.headers["x-csrf-token"],
+});
+
+// Endpoint for frontend to retrieve the token
+app.get('/api/auth/csrf-token', (req, res) => {
+  res.json({ token: generateToken(req, res) });
+});
+
+// Apply CSRF protection to all other API routes
+app.use('/api', doubleCsrfProtection);
 
 // ---------------------------------------------------------------------------
 // Health endpoint — hit this every 5 min with UptimeRobot to keep Render awake
@@ -158,6 +197,10 @@ app.all('/api/*', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
+
+// Global Error Handler (prevents stack trace / internal msg leakage)
+const errorHandler = require('./middleware/errorHandler');
+app.use(errorHandler);
 
 // ---------------------------------------------------------------------------
 // Start — initialise DB first, then listen

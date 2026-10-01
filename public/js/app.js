@@ -30,6 +30,10 @@ async function bootstrap() {
   const root = document.getElementById('app');
 
   try {
+    // 1. Fetch CSRF token so subsequent requests are authenticated
+    await api.fetchCsrfToken();
+
+    // 2. Check vault status
     const status = await api.getStatus();
     state.setStatus(status);
 

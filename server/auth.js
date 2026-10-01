@@ -20,8 +20,14 @@
 
 const express = require('express');
 const bcrypt  = require('bcrypt');
+const { z }   = require('zod');
+const { validate } = require('./middleware/validate');
 
 const router = express.Router();
+
+const passwordSchema = z.object({
+  password: z.string().min(8, "Password must be at least 8 characters").max(128, "Password too long")
+});
 
 const FAIL_DELAY_MS  = 300;
 const BCRYPT_ROUNDS  = 12;
@@ -71,15 +77,12 @@ function clearFailures(ip) {
 // ---------------------------------------------------------------------------
 // POST /api/auth/setup  { password: string }
 // ---------------------------------------------------------------------------
-router.post('/setup', async (req, res) => {
+router.post('/setup', validate(passwordSchema), async (req, res) => {
   if (process.env.VAULT_PASSWORD_HASH) {
     return res.status(409).json({ error: 'Password already set. Use /unlock instead.' });
   }
 
   const { password } = req.body;
-  if (!password || typeof password !== 'string' || password.length < 8) {
-    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
-  }
 
   try {
     const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
@@ -109,7 +112,7 @@ router.post('/setup', async (req, res) => {
 // ---------------------------------------------------------------------------
 // POST /api/auth/unlock  { password: string }
 // ---------------------------------------------------------------------------
-router.post('/unlock', async (req, res) => {
+router.post('/unlock', validate(passwordSchema), async (req, res) => {
   const hash = process.env.VAULT_PASSWORD_HASH;
 
   if (!hash) {
@@ -126,9 +129,6 @@ router.post('/unlock', async (req, res) => {
   }
 
   const { password } = req.body;
-  if (!password || typeof password !== 'string') {
-    return res.status(400).json({ error: 'Password is required.' });
-  }
 
   try {
     const correct = await bcrypt.compare(password, hash);

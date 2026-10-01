@@ -7,14 +7,23 @@
  *   Shortcomings, B2B
  */
 
+let csrfToken = '';
+
 async function request(url, options = {}) {
+  const isMutating = options.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method.toUpperCase());
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+  };
+
+  if (isMutating && csrfToken) {
+    headers['x-csrf-token'] = csrfToken;
+  }
+
   const response = await fetch(url, {
     credentials: 'same-origin', // Ensure session cookies are sent
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
+    headers,
   });
 
   const isJson = response.headers.get('content-type')?.includes('application/json');
@@ -33,6 +42,11 @@ async function request(url, options = {}) {
 export const api = {
 
   // ── Auth ──────────────────────────────────────────────────────────────────
+  async fetchCsrfToken() {
+    const data = await request('/api/auth/csrf-token');
+    csrfToken = data.token;
+    return csrfToken;
+  },
   async getStatus()         { return request('/api/auth/status'); },
   async setup(password)     { return request('/api/auth/setup',  { method: 'POST', body: JSON.stringify({ password }) }); },
   async unlock(password)    { return request('/api/auth/unlock', { method: 'POST', body: JSON.stringify({ password }) }); },

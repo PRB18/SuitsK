@@ -138,6 +138,9 @@ const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
 
 // Endpoint for frontend to retrieve the token
 app.get('/api/auth/csrf-token', (req, res) => {
+  if (req.session && !req.session.csrfInit) {
+    req.session.csrfInit = true;
+  }
   res.json({ token: generateCsrfToken(req, res) });
 });
 

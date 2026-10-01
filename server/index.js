@@ -24,6 +24,7 @@ const workshopRouter     = require('./workshop');
 const shortcomingsRouter = require('./shortcomings');
 const b2bRouter          = require('./b2b');
 const fabricReceiptsRouter = require('./fabricReceipts');
+const weeklyReportRouter  = require('./weeklyReport');
 const requireUnlocked    = require('./middleware/requireUnlocked');
 const { initDatabase }   = require('./db');
 
@@ -116,6 +117,7 @@ app.use('/api/fabric-receipts', requireUnlocked, fabricReceiptsRouter);
 app.use('/api', requireUnlocked, clientsRouter);   // handles /clients and /projects
 app.use('/api', requireUnlocked, scheduleRouter);  // handles /schedule and /calendar
 app.use('/api', requireUnlocked, workshopRouter);  // handles /hierarchy and /workshop
+app.use('/api', requireUnlocked, weeklyReportRouter); // handles /weekly-report
 
 // Catch unhandled /api/* routes
 app.all('/api/*', (req, res) => {

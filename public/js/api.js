@@ -217,4 +217,14 @@ export const api = {
   async deleteFabricReceipt(id) {
     return request(`/api/fabric-receipts/${encodeURIComponent(id)}`, { method: 'DELETE' });
   },
+
+  // ── Weekly Report ─────────────────────────────────────────────────────────
+  async getWeeklyReportPreview(from, to) {
+    const qs = new URLSearchParams({ from, to }).toString();
+    return request(`/api/weekly-report/preview?${qs}`);
+  },
+  getWeeklyReportUrl(from, to) {
+    const qs = new URLSearchParams({ from, to }).toString();
+    return `/api/weekly-report?${qs}`;
+  },
 };

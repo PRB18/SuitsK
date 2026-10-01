@@ -196,29 +196,29 @@ export async function renderStatusQuoScreen(container) {
 
   function renderSummaryTab(d) {
     const stats = [
-      ['🧑 New Clients Added',     d.summary.newClients,        '#4CAF50'],
-      ['📦 New Orders Created',    d.summary.newOrders,         '#2196F3'],
-      ['🚧 Active Orders Total',   d.summary.activeOrders,      '#FF9800'],
-      ['✅ Garments Delivered',    d.summary.deliveredGarments, '#4CAF50'],
-      ['⚠️ Issues Logged',        d.summary.issuesLogged,      '#f44336'],
-      ['🔧 Issues Resolved',      d.summary.issuesResolved,    '#4CAF50'],
-      ['🧶 Fabric Receipts',      d.summary.fabricReceived,    '#9C27B0'],
+      ['🧑 New Clients Added',     d.summary.newClients],
+      ['📦 New Orders Created',    d.summary.newOrders],
+      ['🚧 Active Orders Total',   d.summary.activeOrders],
+      ['✅ Garments Delivered',    d.summary.deliveredGarments],
+      ['⚠️ Issues Logged',        d.summary.issuesLogged],
+      ['🔧 Issues Resolved',      d.summary.issuesResolved],
+      ['🧶 Fabric Receipts',      d.summary.fabricReceived],
     ];
     return `
       <div style="margin-bottom:20px;">
         <h3 style="color:var(--accent-color);margin:0 0 4px;">Congressional The Bespoke</h3>
         <p style="color:var(--text-secondary);margin:0;font-size:0.9rem;">Weekly Atelier Report — ${fmtDateFull(wrFrom)} to ${fmtDateFull(wrTo)}</p>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:24px;">
-        ${stats.map(([label, val, color]) => `
-          <div style="background:var(--bg-secondary);border-radius:10px;padding:16px;border-left:4px solid ${color};">
-            <div style="font-size:1.8rem;font-weight:700;color:${color};">${val}</div>
-            <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;">${label}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
+        ${stats.map(([label, val]) => `
+          <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:18px 12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);display:flex;flex-direction:column;align-items:center;text-align:center;">
+            <div style="font-size:2.2rem;font-weight:700;color:var(--text-primary);line-height:1;">${val}</div>
+            <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:10px;font-weight:500;">${label}</div>
           </div>
         `).join('')}
       </div>
-      <div style="background:var(--bg-secondary);border-radius:8px;padding:14px;font-size:0.82rem;color:var(--text-secondary);">
-        ℹ️ This preview mirrors what will be in your Excel file. Click <strong>📥 Download Excel</strong> above to get all 6 sheets in a beautifully formatted spreadsheet.
+      <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:14px;font-size:0.85rem;color:var(--text-secondary);">
+        ℹ️ This preview mirrors what will be in your Excel file. Click <strong style="color:var(--text-primary);">📥 Download Excel</strong> above to get all 6 sheets in a beautifully formatted spreadsheet.
       </div>`;
   }
 

@@ -67,7 +67,7 @@ export async function renderStatusQuoScreen(container) {
     <!-- Weekly Report Preview Modal -->
     <div class="modal-overlay" id="wr-modal" style="display:none;" role="dialog" aria-modal="true">
       <div style="
-        background: var(--bg-card);
+        background: #FAF7F2;
         border-radius: 12px;
         width: 95vw;
         max-width: 1100px;
@@ -196,86 +196,89 @@ export async function renderStatusQuoScreen(container) {
 
   function renderSummaryTab(d) {
     const stats = [
-      ['🧑 New Clients Added',     d.summary.newClients],
-      ['📦 New Orders Created',    d.summary.newOrders],
-      ['🚧 Active Orders Total',   d.summary.activeOrders],
-      ['✅ Garments Delivered',    d.summary.deliveredGarments],
-      ['⚠️ Issues Logged',        d.summary.issuesLogged],
-      ['🔧 Issues Resolved',      d.summary.issuesResolved],
-      ['🧶 Fabric Receipts',      d.summary.fabricReceived],
+      ['🧑', 'New Clients Added',     d.summary.newClients],
+      ['📦', 'New Orders Created',    d.summary.newOrders],
+      ['🚧', 'Active Orders Total',   d.summary.activeOrders],
+      ['✅', 'Garments Delivered',    d.summary.deliveredGarments],
+      ['⚠️', 'Issues Logged',        d.summary.issuesLogged],
+      ['🔧', 'Issues Resolved',      d.summary.issuesResolved],
+      ['🧶', 'Fabric Receipts',      d.summary.fabricReceived],
     ];
     return `
-      <div style="margin-bottom:20px;">
-        <h3 style="color:var(--accent-color);margin:0 0 4px;">Congressional The Bespoke</h3>
-        <p style="color:var(--text-secondary);margin:0;font-size:0.9rem;">Weekly Atelier Report — ${fmtDateFull(wrFrom)} to ${fmtDateFull(wrTo)}</p>
+      <div style="margin-bottom:24px; border-bottom:1px solid #E5DCC5; padding-bottom:16px;">
+        <h3 style="color:#2C1810; margin:0 0 4px; font-size:1.4rem;">Congressional The Bespoke</h3>
+        <p style="color:#66544A; margin:0; font-size:0.95rem;">Weekly Atelier Report &nbsp;|&nbsp; ${fmtDateFull(wrFrom)} to ${fmtDateFull(wrTo)}</p>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
-        ${stats.map(([label, val]) => `
-          <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:18px 12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);display:flex;flex-direction:column;align-items:center;text-align:center;">
-            <div style="font-size:2.2rem;font-weight:700;color:var(--text-primary);line-height:1;">${val}</div>
-            <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:10px;font-weight:500;">${label}</div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:20px; margin-bottom:30px;">
+        ${stats.map(([icon, label, val]) => `
+          <div style="background:#FFFFFF; border:1px solid #E5DCC5; border-radius:12px; padding:24px 16px; box-shadow:0 6px 16px rgba(44,24,16,0.06); display:flex; align-items:center; gap:16px;">
+            <div style="font-size:2.5rem; background:#F5F0E6; width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">${icon}</div>
+            <div>
+              <div style="font-size:2rem; font-weight:700; color:#2C1810; line-height:1;">${val}</div>
+              <div style="font-size:0.8rem; color:#66544A; margin-top:6px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${label}</div>
+            </div>
           </div>
         `).join('')}
       </div>
-      <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:14px;font-size:0.85rem;color:var(--text-secondary);">
-        ℹ️ This preview mirrors what will be in your Excel file. Click <strong style="color:var(--text-primary);">📥 Download Excel</strong> above to get all 6 sheets in a beautifully formatted spreadsheet.
+      <div style="background:#F5F0E6; border-left:4px solid #C9A84C; padding:16px 20px; font-size:0.95rem; color:#4A3B32; border-radius:4px;">
+        <strong>ℹ️ Note:</strong> This preview matches your Excel file. Click <strong style="color:#2C1810;">📥 Download Excel</strong> above to get all 6 sheets in a perfectly formatted spreadsheet.
       </div>`;
   }
 
   function renderClientsOrdersTab(d) {
     return `
-      <h3 style="color:var(--accent-color);margin:0 0 12px;">🧑 New Clients This Week (${d.newClients.length})</h3>
+      <h3 style="color:#2C1810;margin:0 0 12px;">🧑 New Clients This Week (${d.newClients.length})</h3>
       ${wrTable(['Client Ref','Name','Phone','Email','Date Added'],
         d.newClients.map(c => [c.ref||'—', c.name, c.phone||'—', c.email||'—', c.added]))}
-      <h3 style="color:var(--accent-color);margin:24px 0 12px;">📦 New Orders This Week (${d.newOrders.length})</h3>
+      <h3 style="color:#2C1810;margin:24px 0 12px;">📦 New Orders This Week (${d.newOrders.length})</h3>
       ${wrTable(['Order Ref','Client','Trial Date','Delivery Date','Status'],
         d.newOrders.map(o => [o.ref, `${o.client} (${o.clientRef||''})`, o.trial||'—', o.delivery||'—', statusBadge(o.status)]))}`;
   }
 
   function renderActiveOrdersTab(d) {
     return `
-      <h3 style="color:var(--accent-color);margin:0 0 12px;">🚧 All Active Orders (${d.activeOrders.length})</h3>
+      <h3 style="color:#2C1810;margin:0 0 12px;">🚧 All Active Orders (${d.activeOrders.length})</h3>
       ${wrTable(['Order Ref','Client','Status','Trial Date','Delivery Date','Fabric Code','Fabric Color','Garments'],
         d.activeOrders.map(o => [o.ref, `${o.client} (${o.clientRef||''})`, statusBadge(o.status), o.trial||'—', o.delivery||'—', o.fabricCode||'—', o.fabricColor||'—', o.garments||0]))}`;
   }
 
   function renderDeliveriesTab(d) {
     return `
-      <h3 style="color:var(--accent-color);margin:0 0 12px;">✅ Garments Delivered This Week (${d.deliveries.length})</h3>
+      <h3 style="color:#2C1810;margin:0 0 12px;">✅ Garments Delivered This Week (${d.deliveries.length})</h3>
       ${wrTable(['Order Ref','Client','Garment Type','Delivery Date'],
         d.deliveries.map(p => [p.order, `${p.client} (${p.clientRef||''})`, p.type, p.delivery||'—']))}`;
   }
 
   function renderIssuesTab(d) {
     return `
-      <h3 style="color:var(--accent-color);margin:0 0 12px;">⚠️ Issues This Week (${d.issues.length})</h3>
+      <h3 style="color:#2C1810;margin:0 0 12px;">⚠️ Issues This Week (${d.issues.length})</h3>
       ${wrTable(['Category','Severity','Status','Client','Description','Logged','Resolved'],
         d.issues.map(s => [s.category, statusBadge(s.severity), statusBadge(s.status), s.client, s.description, s.logged||'—', s.resolved||'—']))}`;
   }
 
   function renderFabricTab(d) {
     return `
-      <h3 style="color:var(--accent-color);margin:0 0 12px;">🧶 Fabric Received This Week (${d.fabricReceipts.length})</h3>
+      <h3 style="color:#2C1810;margin:0 0 12px;">🧶 Fabric Received This Week (${d.fabricReceipts.length})</h3>
       ${wrTable(['Client Ref','Client','Fabric Code','Fabric Color','Accessories','Order Date','Received'],
         d.fabricReceipts.map(f => [f.clientRef||'—', f.client||'—', f.fabricCode||'—', f.fabricColor||'—', f.accessories||'—', f.orderDate||'—', f.received||'—']))}`;
   }
 
   function wrTable(headers, rows) {
     if (rows.length === 0) {
-      return `<p style="color:var(--text-secondary);font-style:italic;padding:12px 0;">No data for this period.</p>`;
+      return `<p style="color:#66544A;font-style:italic;padding:12px 0;">No data for this period.</p>`;
     }
     return `
-      <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+      <div style="overflow-x:auto; border:1px solid #E5DCC5; border-radius:8px; background:#FFFFFF; margin-bottom:24px;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
           <thead>
             <tr style="background:#2C1810;">
-              ${headers.map(h => `<th style="padding:10px 12px;color:#C9A84C;font-weight:700;text-align:left;white-space:nowrap;border:1px solid #3a2218;">${escHtml(String(h))}</th>`).join('')}
+              ${headers.map(h => `<th style="padding:12px 14px;color:#C9A84C;font-weight:700;text-align:left;white-space:nowrap;">${escHtml(String(h))}</th>`).join('')}
             </tr>
           </thead>
           <tbody>
             ${rows.map((row, i) => `
-              <tr style="background:${i%2===0?'var(--bg-card)':'var(--bg-secondary)'};border-bottom:1px solid var(--border-color);">
-                ${row.map(cell => `<td style="padding:9px 12px;color:var(--text-primary);vertical-align:middle;">${cell}</td>`).join('')}
+              <tr style="background:${i%2===0?'#FFFFFF':'#FAF7F2'};border-bottom:1px solid #E5DCC5;">
+                ${row.map(cell => `<td style="padding:10px 14px;color:#2C1810;vertical-align:middle;">${cell}</td>`).join('')}
               </tr>`).join('')}
           </tbody>
         </table>

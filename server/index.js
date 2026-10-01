@@ -126,6 +126,7 @@ app.use(session({
 const { doubleCsrf } = require("csrf-csrf");
 const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
   getSecret: () => process.env.SESSION_SECRET || 'dev-secret-change-in-production',
+  getSessionIdentifier: (req) => req.session ? req.session.id : "missing-session",
   cookieName: "x-csrf-token",
   cookieOptions: {
     httpOnly: true,

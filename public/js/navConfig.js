@@ -138,6 +138,16 @@ export const NAV_MODULES = [
       <path d="M4 4h16v16H4zM4 12h16"/>
     </svg>`,
   },
+  {
+    id: 'care-support',
+    roman: 'XII',
+    title: 'Care Support',
+    subtitle: 'Garment maintenance guide',
+    route: '#care-support',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18z"/><path d="M12 8v4l3 3"/>
+    </svg>`,
+  }
 ];
 
 /** Hub tile grid omits the Hub home item (already on that screen). */
@@ -146,7 +156,7 @@ export const HUB_MODULES = NAV_MODULES.filter((m) => m.id !== 'hub');
 export const IMPLEMENTED_ROUTES = [
   '#congressional', '#dashboard', '#b2b', '#b2b-logistics', '#configurator', '#client-profile',
   '#client-db', '#inventory', '#schedule', '#work-hierarchy', '#workshop',
-  '#shortcomings', '#status-quo', '#fabric-receipts'
+  '#shortcomings', '#status-quo', '#fabric-receipts', '#care-support'
 ];
 
 /** Map hash → nav item id for active highlighting. */
@@ -158,6 +168,7 @@ export function routeToNavId(cleanHash) {
   if (cleanHash === '#dashboard') return 'measurements';
   if (cleanHash === '#b2b-logistics') return 'dashboard';
   if (cleanHash === '#fabric-receipts') return 'fabric-receipts';
+  if (cleanHash === '#care-support') return 'care-support';
   if (cleanHash === '#configurator') return 'measurements';
   const match = NAV_MODULES.find((m) => m.route.split('?')[0] === cleanHash);
   return match?.id || null;

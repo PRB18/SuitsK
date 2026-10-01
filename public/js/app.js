@@ -24,6 +24,7 @@ import { renderShortcomingsScreen }  from './screens/shortcomingsScreen.js';
 import { renderB2bScreen }           from './screens/b2bScreen.js';
 import { renderFabricReceiptsScreen } from './screens/fabricReceiptsScreen.js';
 import { renderStatusQuoScreen }     from './screens/statusQuoScreen.js';
+import { renderCareSupportScreen }   from './screens/careSupportScreen.js';
 
 async function bootstrap() {
   const root = document.getElementById('app');
@@ -62,6 +63,7 @@ async function bootstrap() {
       '#workshop':       renderWorkshopScreen,
       '#shortcomings':   renderShortcomingsScreen,
       '#status-quo':     renderStatusQuoScreen,
+      '#care-support':   renderCareSupportScreen,
     };
 
     router.init(root, routes);

@@ -17,6 +17,7 @@ const MemoryStore  = require('memorystore')(session);
 const rateLimit    = require('express-rate-limit');
 const compression  = require('compression');
 const timeout      = require('connect-timeout');
+const cookieParser = require('cookie-parser');
 
 const authRouter         = require('./auth');
 const suitsRouter        = require('./suits');
@@ -46,6 +47,8 @@ const authLimiter = rateLimit({
   message: { error: 'Too many authentication attempts, please try again after 15 minutes.' }
 });
 
+app.use(cookieParser(process.env.SESSION_SECRET || 'dev-secret-change-in-production'));
+
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 300, // Limit each IP to 300 requests per minute
@@ -72,7 +75,8 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       fontSrc: ["'self'", "fonts.gstatic.com", "fonts.googleapis.com"],
       imgSrc: ["'self'", "data:"],

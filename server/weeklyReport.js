@@ -3,13 +3,18 @@
  * weeklyReport.js — Weekly Atelier Report generator
  * Route: GET /api/weekly-report?from=ISO_DATE&to=ISO_DATE
  *
- * Generates a branded .xlsx workbook with 6 sheets covering the past 7 days:
- *   1. Summary
- *   2. New Clients & Orders
- *   3. Active Orders & Garments
- *   4. Deliveries This Week
- *   5. Issues (Shortcomings)
- *   6. Fabric Receipts
+ * Generates a branded .xlsx workbook with 11 sheets covering the past 7 days:
+ *   1.  Summary
+ *   2.  New Clients & Orders
+ *   3.  Active Orders & Garments
+ *   4.  Deliveries This Week
+ *   5.  Issues (Shortcomings)
+ *   6.  Fabric Receipts
+ *   7.  Inventory
+ *   8.  Schedule & Calendar
+ *   9.  Workshop Kanban
+ *   10. B2C Work in Progress
+ *   11. Work Hierarchy
  *
  * Protected by requireUnlocked middleware (mounted in index.js).
  */
@@ -131,6 +136,11 @@ router.get('/weekly-report', async (req, res) => {
       shortcomingsResult,
       fabricResult,
       activeOrdersResult,
+      inventoryResult,
+      scheduleResult,
+      workshopResult,
+      b2bResult,
+      hierarchyResult,
     ] = await Promise.all([
       db.execute(`SELECT * FROM clients ORDER BY created_at DESC`),
       db.execute(`SELECT o.*, c.name as client_name, c.client_ref FROM orders o JOIN clients c ON o.client_id = c.id ORDER BY o.order_date DESC`),
@@ -148,6 +158,11 @@ router.get('/weekly-report', async (req, res) => {
         WHERE o.status NOT IN ('completed', 'cancelled')
         ORDER BY o.order_date DESC
       `),
+      db.execute(`SELECT * FROM inventory ORDER BY name ASC`),
+      db.execute(`SELECT e.*, c.name as client_name, c.client_ref FROM schedule_events e LEFT JOIN clients c ON c.id = e.client_id ORDER BY e.event_date DESC`),
+      db.execute(`SELECT p.*, o.order_ref, o.delivery_date, o.trial_date, c.name as client_name, c.client_ref FROM projects p JOIN orders o ON p.order_id = o.id JOIN clients c ON o.client_id = c.id ORDER BY p.updated_at DESC`),
+      db.execute(`SELECT * FROM b2b_entries ORDER BY created_at DESC`),
+      db.execute(`SELECT * FROM work_hierarchy ORDER BY sort_order ASC`),
     ]);
 
     const allClients      = clientsResult.rows;
@@ -156,6 +171,11 @@ router.get('/weekly-report', async (req, res) => {
     const allShortcomings = shortcomingsResult.rows;
     const allFabric       = fabricResult.rows;
     const allActiveOrders = activeOrdersResult.rows;
+    const allInventory    = inventoryResult.rows;
+    const allSchedule     = scheduleResult.rows;
+    const allWorkshop     = workshopResult.rows;
+    const allB2B          = b2bResult.rows;
+    const allHierarchy    = hierarchyResult.rows;
 
     // Filter by window
     const newClients      = allClients.filter(c => isInWindow(c.created_at, fromDate, toDate));
@@ -163,6 +183,7 @@ router.get('/weekly-report', async (req, res) => {
     const deliveredProj   = allProjects.filter(p => p.status === 'delivered' && isInWindow(p.updated_at || p.created_at, fromDate, toDate));
     const weekShortcomings= allShortcomings.filter(s => isInWindow(s.created_at, fromDate, toDate) || isInWindow(s.resolved_at, fromDate, toDate));
     const weekFabric      = allFabric.filter(f => isInWindow(f.received_date || f.created_at, fromDate, toDate));
+    const weekSchedule    = allSchedule.filter(e => isInWindow(e.event_date || e.created_at, fromDate, toDate));
 
     // ── Build Excel workbook ─────────────────────────────────────────────────
     const workbook = new ExcelJS.Workbook();
@@ -359,6 +380,171 @@ router.get('/weekly-report', async (req, res) => {
       ));
     }
 
+    // ── SHEET 7: Inventory ────────────────────────────────────────────────────
+    const invSheet = workbook.addWorksheet('Inventory');
+    addTitleBlock(invSheet, '📦 Full Inventory Snapshot', dateRange);
+    applyHeaderRow(invSheet,
+      ['Article No.', 'Item Name', 'Category', 'Quantity', 'Unit', 'Reorder Level', 'Status', 'Notes'],
+      [14, 26, 14, 10, 8, 14, 14, 28]
+    );
+    if (allInventory.length === 0) {
+      addEmptyNote(invSheet, 'No inventory items found.');
+    } else {
+      allInventory.forEach((item, i) => {
+        const row = addDataRow(invSheet,
+          [item.article_number || '', item.name || '', item.category || '', item.quantity ?? '', item.unit || '', item.reorder_level ?? '', item.stock_status || '', item.notes || ''],
+          i
+        );
+        // Colour-code the status cell (col 7)
+        const statusCell = invSheet.lastRow.getCell(7);
+        if (item.stock_status === 'out_of_stock') statusCell.font = { bold: true, color: { argb: 'FFCC3300' }, size: 10 };
+        else if (item.stock_status === 'low_stock') statusCell.font = { bold: true, color: { argb: 'FFB8860B' }, size: 10 };
+        else statusCell.font = { bold: true, color: { argb: 'FF2E7D32' }, size: 10 };
+      });
+    }
+
+    // ── SHEET 8: Schedule & Calendar ─────────────────────────────────────────
+    const schedSheet = workbook.addWorksheet('Schedule & Calendar');
+    addTitleBlock(schedSheet, '📅 Schedule Events This Week', dateRange);
+    applyHeaderRow(schedSheet,
+      ['Event Type', 'Client', 'Client Ref', 'Event Date', 'Start Time', 'End Time', 'Status', 'Notes'],
+      [14, 22, 13, 14, 12, 12, 12, 30]
+    );
+    if (weekSchedule.length === 0) {
+      addEmptyNote(schedSheet, 'No schedule events this week.');
+    } else {
+      weekSchedule.forEach((e, i) => addDataRow(schedSheet,
+        [
+          (e.event_type || '').replace(/_/g, ' '),
+          e.client_name || '—', e.client_ref || '—',
+          fmtDate(e.event_date), e.start_time || '—', e.end_time || '—',
+          (e.status || '').replace(/_/g, ' '), e.notes || '',
+        ],
+        i
+      ));
+    }
+    // Also show upcoming (future) events for full picture
+    const upcomingSchedule = allSchedule.filter(e => e.event_date > toDate && e.status === 'scheduled');
+    schedSheet.addRow([]);
+    const upHdr = schedSheet.addRow(['📆 Upcoming Events (After This Period)']);
+    upHdr.getCell(1).font = { bold: true, size: 12, color: { argb: 'FF' + BRAND_GOLD } };
+    schedSheet.addRow([]);
+    applyHeaderRow(schedSheet,
+      ['Event Type', 'Client', 'Client Ref', 'Event Date', 'Start Time', 'End Time', 'Notes'],
+      [14, 22, 13, 14, 12, 12, 30]
+    );
+    if (upcomingSchedule.length === 0) {
+      addEmptyNote(schedSheet, 'No upcoming events scheduled.');
+    } else {
+      upcomingSchedule.forEach((e, i) => addDataRow(schedSheet,
+        [
+          (e.event_type || '').replace(/_/g, ' '),
+          e.client_name || '—', e.client_ref || '—',
+          fmtDate(e.event_date), e.start_time || '—', e.end_time || '—', e.notes || '',
+        ],
+        i
+      ));
+    }
+
+    // ── SHEET 9: Workshop Kanban ──────────────────────────────────────────────
+    const wsSheet = workbook.addWorksheet('Workshop Kanban');
+    addTitleBlock(wsSheet, '🔧 Workshop Kanban — All Garments', dateRange);
+    applyHeaderRow(wsSheet,
+      ['Order Ref', 'Client', 'Client Ref', 'Garment Type', 'Stage / Status', 'Trial Date', 'Delivery Date', 'Overdue?', 'Notes'],
+      [14, 22, 13, 18, 14, 14, 14, 10, 28]
+    );
+    if (allWorkshop.length === 0) {
+      addEmptyNote(wsSheet, 'No garments in workshop.');
+    } else {
+      const today = now().slice(0, 10);
+      allWorkshop.forEach((p, i) => {
+        const isOverdue = p.delivery_date && p.delivery_date < today && p.status !== 'delivered';
+        const row = wsSheet.addRow([
+          p.order_ref || '', p.client_name || '', p.client_ref || '',
+          p.garment_type || '', (p.status || '').replace(/_/g, ' '),
+          fmtDate(p.trial_date), fmtDate(p.delivery_date),
+          isOverdue ? 'YES' : 'No', p.notes || '',
+        ]);
+        const bg = i % 2 === 0 ? BRAND_WHITE : BRAND_LIGHT;
+        row.eachCell(cell => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + bg } };
+          cell.font = { size: 10 };
+          cell.alignment = { vertical: 'middle', wrapText: true };
+        });
+        const overdueCell = row.getCell(8);
+        if (isOverdue) overdueCell.font = { bold: true, color: { argb: 'FFCC3300' }, size: 10 };
+        row.height = 18;
+      });
+    }
+
+    // ── SHEET 10: B2C Work in Progress ────────────────────────────────────────
+    const b2cSheet = workbook.addWorksheet('B2C Work in Progress');
+    addTitleBlock(b2cSheet, '📋 B2C — Vendor & Corporate Entries', dateRange);
+    applyHeaderRow(b2cSheet,
+      ['Entry Type', 'Party Name', 'Contact', 'Order Date', 'Delivery Date', 'Amount', 'Status', 'Notes'],
+      [16, 24, 20, 14, 14, 14, 14, 28]
+    );
+    if (allB2B.length === 0) {
+      addEmptyNote(b2cSheet, 'No B2C entries found.');
+    } else {
+      allB2B.forEach((e, i) => {
+        const partyName = e.entry_type === 'vendor_purchase' ? (e.vendor_name || '') : (e.company_name || '');
+        const contact   = e.entry_type === 'vendor_purchase' ? (e.vendor_contact || '') : (e.contact_person || '');
+        addDataRow(b2cSheet,
+          [
+            (e.entry_type || '').replace(/_/g, ' '), partyName, contact,
+            fmtDate(e.order_date), fmtDate(e.delivery_date),
+            e.amount ? `${e.currency || 'PKR'} ${e.amount}` : '—',
+            (e.status || '').replace(/_/g, ' '), e.notes || '',
+          ],
+          i
+        );
+      });
+    }
+    // Week-filtered sub-section
+    const weekB2B = allB2B.filter(e => isInWindow(e.created_at || e.order_date, fromDate, toDate));
+    b2cSheet.addRow([]);
+    const b2cWkHdr = b2cSheet.addRow([`📌 New This Week (${weekB2B.length})`]);
+    b2cWkHdr.getCell(1).font = { bold: true, size: 12, color: { argb: 'FF' + BRAND_GOLD } };
+    b2cSheet.addRow([]);
+    applyHeaderRow(b2cSheet,
+      ['Entry Type', 'Party Name', 'Order Date', 'Status'],
+      [16, 24, 14, 14]
+    );
+    if (weekB2B.length === 0) {
+      addEmptyNote(b2cSheet, 'No new B2C entries this week.');
+    } else {
+      weekB2B.forEach((e, i) => addDataRow(b2cSheet,
+        [
+          (e.entry_type || '').replace(/_/g, ' '),
+          e.entry_type === 'vendor_purchase' ? (e.vendor_name || '') : (e.company_name || ''),
+          fmtDate(e.order_date), (e.status || '').replace(/_/g, ' '),
+        ],
+        i
+      ));
+    }
+
+    // ── SHEET 11: Work Hierarchy ──────────────────────────────────────────────
+    const hierSheet = workbook.addWorksheet('Work Hierarchy');
+    addTitleBlock(hierSheet, '🏗️ Work Hierarchy — Sections & Personnel', dateRange);
+    applyHeaderRow(hierSheet,
+      ['Sort Order', 'Section Name', 'Personnel'],
+      [12, 28, 50]
+    );
+    if (allHierarchy.length === 0) {
+      addEmptyNote(hierSheet, 'No work hierarchy sections defined.');
+    } else {
+      const { safeJsonParse: safeParse } = require('./middleware/safeJson');
+      allHierarchy.forEach((sec, i) => {
+        const personnel = safeParse(sec.personnel || '[]', []);
+        const personnelStr = Array.isArray(personnel) ? personnel.join(', ') : String(personnel);
+        addDataRow(hierSheet,
+          [sec.sort_order ?? i, sec.section_name || '', personnelStr || '—'],
+          i
+        );
+      });
+    }
+
     // ── Save a copy to iCloud Drive (macOS) ──────────────────────────────────
     const safeDate = toDate.replace(/-/g, '');
     const filename  = `Weekly-Report_${safeDate}.xlsx`;
@@ -418,6 +604,11 @@ router.get('/weekly-report/preview', async (req, res) => {
       shortcomingsResult,
       fabricResult,
       activeOrdersResult,
+      inventoryResult,
+      scheduleResult,
+      workshopResult,
+      b2bResult,
+      hierarchyResult,
     ] = await Promise.all([
       db.execute(`SELECT id, client_ref, name, phone, email, created_at, notes FROM clients ORDER BY created_at DESC`),
       db.execute(`SELECT o.id, o.order_ref, o.status, o.order_date, o.trial_date, o.delivery_date, o.notes, c.name as client_name, c.client_ref FROM orders o JOIN clients c ON o.client_id = c.id ORDER BY o.order_date DESC`),
@@ -425,32 +616,59 @@ router.get('/weekly-report/preview', async (req, res) => {
       db.execute(`SELECT s.*, c.name as client_name FROM shortcomings s LEFT JOIN clients c ON c.id = s.client_id ORDER BY s.created_at DESC`),
       db.execute(`SELECT f.*, c.name as client_name FROM fabric_receipts f LEFT JOIN clients c ON f.client_id = c.id ORDER BY f.created_at DESC`),
       db.execute(`SELECT o.id, o.order_ref, o.status, o.order_date, o.trial_date, o.delivery_date, c.name as client_name, c.client_ref, (SELECT COUNT(*) FROM projects WHERE order_id = o.id) as total_garments, (SELECT fabric_code FROM fabric_receipts WHERE order_id = o.id OR (order_id = '' AND client_id = o.client_id) ORDER BY created_at DESC LIMIT 1) as fabric_code, (SELECT fabric_color FROM fabric_receipts WHERE order_id = o.id OR (order_id = '' AND client_id = o.client_id) ORDER BY created_at DESC LIMIT 1) as fabric_color FROM orders o JOIN clients c ON o.client_id = c.id WHERE o.status NOT IN ('completed', 'cancelled') ORDER BY o.order_date DESC`),
+      db.execute(`SELECT * FROM inventory ORDER BY name ASC`),
+      db.execute(`SELECT e.*, c.name as client_name, c.client_ref FROM schedule_events e LEFT JOIN clients c ON c.id = e.client_id ORDER BY e.event_date DESC`),
+      db.execute(`SELECT p.*, o.order_ref, o.delivery_date, o.trial_date, c.name as client_name, c.client_ref FROM projects p JOIN orders o ON p.order_id = o.id JOIN clients c ON o.client_id = c.id ORDER BY p.updated_at DESC`),
+      db.execute(`SELECT * FROM b2b_entries ORDER BY created_at DESC`),
+      db.execute(`SELECT * FROM work_hierarchy ORDER BY sort_order ASC`),
     ]);
 
     const newClients       = clientsResult.rows.filter(c => isInWindow(c.created_at, fromDate, toDate));
     const newOrders        = ordersResult.rows.filter(o => isInWindow(o.order_date || o.created_at, fromDate, toDate));
     const activeOrders     = activeOrdersResult.rows;
-    const deliveredProj    = projectsResult.rows.filter(p => p.status === 'delivered' && isInWindow(p.updated_at || p.created_at, fromDate, toDate));
+    const allProjects      = projectsResult.rows;
+    const deliveredProj    = allProjects.filter(p => p.status === 'delivered' && isInWindow(p.updated_at || p.created_at, fromDate, toDate));
     const weekShortcomings = shortcomingsResult.rows.filter(s => isInWindow(s.created_at, fromDate, toDate) || isInWindow(s.resolved_at, fromDate, toDate));
     const weekFabric       = fabricResult.rows.filter(f => isInWindow(f.received_date || f.created_at, fromDate, toDate));
+    const allInventory     = inventoryResult.rows;
+    const allSchedule      = scheduleResult.rows;
+    const allWorkshop      = workshopResult.rows;
+    const allB2B           = b2bResult.rows;
+    const allHierarchy     = hierarchyResult.rows;
+    const { safeJsonParse: safeParse } = require('./middleware/safeJson');
+
+    const weekSchedule   = allSchedule.filter(e => isInWindow(e.event_date || e.created_at, fromDate, toDate));
+    const upcomingEvents = allSchedule.filter(e => e.event_date > toDate && e.status === 'scheduled');
+    const weekB2B        = allB2B.filter(e => isInWindow(e.created_at || e.order_date, fromDate, toDate));
+    const today          = now.toISOString().slice(0, 10);
 
     res.json({
       dateRange: { from: fromDate, to: toDate },
       summary: {
-        newClients:      newClients.length,
-        newOrders:       newOrders.length,
-        activeOrders:    activeOrders.length,
+        newClients:        newClients.length,
+        newOrders:         newOrders.length,
+        activeOrders:      activeOrders.length,
         deliveredGarments: deliveredProj.length,
-        issuesLogged:    weekShortcomings.filter(s => isInWindow(s.created_at, fromDate, toDate)).length,
-        issuesResolved:  weekShortcomings.filter(s => s.status === 'resolved' && isInWindow(s.resolved_at, fromDate, toDate)).length,
-        fabricReceived:  weekFabric.length,
+        issuesLogged:      weekShortcomings.filter(s => isInWindow(s.created_at, fromDate, toDate)).length,
+        issuesResolved:    weekShortcomings.filter(s => s.status === 'resolved' && isInWindow(s.resolved_at, fromDate, toDate)).length,
+        fabricReceived:    weekFabric.length,
+        inventoryItems:    allInventory.length,
+        scheduleEvents:    weekSchedule.length,
       },
-      newClients:       newClients.map(c => ({ ref: c.client_ref, name: c.name, phone: c.phone, email: c.email, added: fmtDate(c.created_at), notes: c.notes })),
-      newOrders:        newOrders.map(o => ({ ref: o.order_ref, client: o.client_name, clientRef: o.client_ref, date: fmtDate(o.order_date), trial: fmtDate(o.trial_date), delivery: fmtDate(o.delivery_date), status: o.status, notes: o.notes })),
-      activeOrders:     activeOrders.map(o => ({ ref: o.order_ref, client: o.client_name, clientRef: o.client_ref, status: o.status, date: fmtDate(o.order_date), trial: fmtDate(o.trial_date), delivery: fmtDate(o.delivery_date), fabricCode: o.fabric_code, fabricColor: o.fabric_color, garments: o.total_garments })),
-      deliveries:       deliveredProj.map(p => ({ order: p.order_ref, client: p.client_name, clientRef: p.client_ref, type: p.garment_type, delivery: fmtDate(p.delivery_date || p.updated_at) })),
-      issues:           weekShortcomings.map(s => ({ category: s.category, severity: s.severity, status: s.status, client: s.client_name || 'General', description: s.description, logged: fmtDate(s.created_at), resolved: fmtDate(s.resolved_at), note: s.resolved_note })),
-      fabricReceipts:   weekFabric.map(f => ({ clientRef: f.client_code, client: f.client_name, fabricCode: f.fabric_code, fabricColor: f.fabric_color, accessories: f.accessories_desc, orderDate: fmtDate(f.order_date), received: fmtDate(f.received_date), notes: f.sample_notes })),
+      newClients:     newClients.map(c => ({ ref: c.client_ref, name: c.name, phone: c.phone, email: c.email, added: fmtDate(c.created_at), notes: c.notes })),
+      newOrders:      newOrders.map(o => ({ ref: o.order_ref, client: o.client_name, clientRef: o.client_ref, date: fmtDate(o.order_date), trial: fmtDate(o.trial_date), delivery: fmtDate(o.delivery_date), status: o.status, notes: o.notes })),
+      activeOrders:   activeOrders.map(o => ({ ref: o.order_ref, client: o.client_name, clientRef: o.client_ref, status: o.status, date: fmtDate(o.order_date), trial: fmtDate(o.trial_date), delivery: fmtDate(o.delivery_date), fabricCode: o.fabric_code, fabricColor: o.fabric_color, garments: o.total_garments })),
+      deliveries:     deliveredProj.map(p => ({ order: p.order_ref, client: p.client_name, clientRef: p.client_ref, type: p.garment_type, delivery: fmtDate(p.delivery_date || p.updated_at) })),
+      issues:         weekShortcomings.map(s => ({ category: s.category, severity: s.severity, status: s.status, client: s.client_name || 'General', description: s.description, logged: fmtDate(s.created_at), resolved: fmtDate(s.resolved_at), note: s.resolved_note })),
+      fabricReceipts: weekFabric.map(f => ({ clientRef: f.client_code, client: f.client_name, fabricCode: f.fabric_code, fabricColor: f.fabric_color, accessories: f.accessories_desc, orderDate: fmtDate(f.order_date), received: fmtDate(f.received_date), notes: f.sample_notes })),
+      // New sections
+      inventory:      allInventory.map(i => ({ article_number: i.article_number, name: i.name, category: i.category, quantity: i.quantity, unit: i.unit, reorder_level: i.reorder_level, stock_status: i.stock_status, notes: i.notes })),
+      scheduleEvents: weekSchedule.map(e => ({ event_type: e.event_type, client_name: e.client_name, client_ref: e.client_ref, event_date: fmtDate(e.event_date), start_time: e.start_time, end_time: e.end_time, status: e.status, notes: e.notes })),
+      upcomingEvents: upcomingEvents.map(e => ({ event_type: e.event_type, client_name: e.client_name, client_ref: e.client_ref, event_date: fmtDate(e.event_date), start_time: e.start_time, end_time: e.end_time, notes: e.notes })),
+      workshopGarments: allWorkshop.map(p => ({ order_ref: p.order_ref, client_name: p.client_name, client_ref: p.client_ref, garment_type: p.garment_type, status: p.status, trial_date: fmtDate(p.trial_date), delivery_date: fmtDate(p.delivery_date), overdue: !!(p.delivery_date && p.delivery_date < today && p.status !== 'delivered') })),
+      b2cEntries:     allB2B.map(e => ({ entry_type: e.entry_type, party_name: e.entry_type === 'vendor_purchase' ? e.vendor_name : e.company_name, contact: e.entry_type === 'vendor_purchase' ? e.vendor_contact : e.contact_person, order_date: fmtDate(e.order_date), delivery_date: fmtDate(e.delivery_date), amount: e.amount ? `${e.currency || 'PKR'} ${e.amount}` : null, status: e.status })),
+      b2cWeek:        weekB2B.map(e => ({ entry_type: e.entry_type, party_name: e.entry_type === 'vendor_purchase' ? e.vendor_name : e.company_name, order_date: fmtDate(e.order_date), status: e.status })),
+      workHierarchy:  allHierarchy.map(s => ({ sort_order: s.sort_order, section_name: s.section_name, personnel: safeParse(s.personnel || '[]', []) })),
     });
   } catch (err) {
     console.error('[weekly-report/preview] Error:', err);

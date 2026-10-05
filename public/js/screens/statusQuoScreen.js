@@ -88,7 +88,7 @@ export async function renderStatusQuoScreen(container) {
           </div>
         </div>
         <div id="wr-tabs" style="background:#3a2218;display:flex;gap:0;overflow-x:auto;flex-shrink:0;border-bottom:2px solid #C9A84C;">
-          ${['Summary','New Clients & Orders','Active Orders','Deliveries','Issues','Fabric Receipts'].map((t,i) => `
+          ${['Summary','New Clients & Orders','Active Orders','Deliveries','Issues','Fabric Receipts','Inventory','Schedule','Workshop','B2C Progress','Work Hierarchy'].map((t,i) => `
             <button class="wr-tab" data-tab="${i}" style="
               padding:12px 18px;background:${i===0?'#2C1810':'transparent'};
               color:${i===0?'#C9A84C':'rgba(255,255,255,0.6)'};border:none;
@@ -215,7 +215,12 @@ export async function renderStatusQuoScreen(container) {
   function renderTab(idx) {
     const body = document.getElementById('wr-body');
     if (!wrData) return;
-    const fns = [renderSummaryTab, renderClientsOrdersTab, renderActiveOrdersTab, renderDeliveriesTab, renderIssuesTab, renderFabricTab];
+    const fns = [
+      renderSummaryTab, renderClientsOrdersTab, renderActiveOrdersTab,
+      renderDeliveriesTab, renderIssuesTab, renderFabricTab,
+      renderInventoryTab, renderScheduleTab, renderWorkshopTab,
+      renderB2CTab, renderHierarchyTab,
+    ];
     body.innerHTML = (fns[idx] || renderSummaryTab)(wrData);
   }
 
@@ -228,6 +233,8 @@ export async function renderStatusQuoScreen(container) {
       ['⚠️', 'Issues Logged',        d.summary.issuesLogged],
       ['🔧', 'Issues Resolved',      d.summary.issuesResolved],
       ['🧶', 'Fabric Receipts',      d.summary.fabricReceived],
+      ['📦', 'Inventory Items',      d.summary.inventoryItems ?? '—'],
+      ['📅', 'Schedule Events',      d.summary.scheduleEvents ?? '—'],
     ];
     return `
       <div style="margin-bottom:24px; border-bottom:1px solid #E5DCC5; padding-bottom:16px;">
@@ -246,7 +253,7 @@ export async function renderStatusQuoScreen(container) {
         `).join('')}
       </div>
       <div style="background:#F5F0E6; border-left:4px solid #C9A84C; padding:16px 20px; font-size:0.95rem; color:#4A3B32; border-radius:4px;">
-        <strong>ℹ️ Note:</strong> This preview matches your Excel file. Click <strong style="color:#2C1810;">📥 Download Excel</strong> above to get all 6 sheets in a perfectly formatted spreadsheet.
+        <strong>ℹ️ Note:</strong> This preview matches your Excel file. Click <strong style="color:#2C1810;">📥 Download Excel</strong> above to get all 11 sheets in a perfectly formatted spreadsheet.
       </div>`;
   }
 
@@ -286,6 +293,67 @@ export async function renderStatusQuoScreen(container) {
       <h3 style="color:#2C1810;margin:0 0 12px;">🧶 Fabric Received This Week (${d.fabricReceipts.length})</h3>
       ${wrTable(['Client Ref','Client','Fabric Code','Fabric Color','Accessories','Order Date','Received'],
         d.fabricReceipts.map(f => [f.clientRef||'—', f.client||'—', f.fabricCode||'—', f.fabricColor||'—', f.accessories||'—', f.orderDate||'—', f.received||'—']))}`;
+  }
+
+  function renderInventoryTab(d) {
+    const items = d.inventory || [];
+    const outOf = items.filter(i => i.stock_status === 'out_of_stock').length;
+    const low   = items.filter(i => i.stock_status === 'low_stock').length;
+    return `
+      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+        <span style="background:#CC3300;color:#fff;padding:6px 14px;border-radius:20px;font-size:0.82rem;font-weight:700;">🔴 Out of Stock: ${outOf}</span>
+        <span style="background:#B8860B;color:#fff;padding:6px 14px;border-radius:20px;font-size:0.82rem;font-weight:700;">🟡 Low Stock: ${low}</span>
+        <span style="background:#2E7D32;color:#fff;padding:6px 14px;border-radius:20px;font-size:0.82rem;font-weight:700;">🟢 In Stock: ${items.length - outOf - low}</span>
+      </div>
+      <h3 style="color:#2C1810;margin:0 0 12px;">📦 Full Inventory (${items.length})</h3>
+      ${wrTable(['Article No.','Item Name','Category','Qty','Unit','Reorder Level','Status'],
+        items.map(i => [i.article_number||'—', i.name||'—', i.category||'—', i.quantity??'—', i.unit||'—', i.reorder_level??'—',
+          `<span style="font-weight:700;color:${i.stock_status==='out_of_stock'?'#CC3300':i.stock_status==='low_stock'?'#B8860B':'#2E7D32'}">${(i.stock_status||'').replace(/_/g,' ')}</span>`
+        ]))}` ;
+  }
+
+  function renderScheduleTab(d) {
+    const events  = d.scheduleEvents  || [];
+    const upcoming = d.upcomingEvents || [];
+    return `
+      <h3 style="color:#2C1810;margin:0 0 12px;">📅 Events This Week (${events.length})</h3>
+      ${wrTable(['Type','Client','Date','Start','End','Status','Notes'],
+        events.map(e => [(e.event_type||'').replace(/_/g,' '), e.client_name||'—', e.event_date||'—', e.start_time||'—', e.end_time||'—', (e.status||'').replace(/_/g,' '), e.notes||'']))}
+      <h3 style="color:#2C1810;margin:24px 0 12px;">📆 Upcoming Events (${upcoming.length})</h3>
+      ${wrTable(['Type','Client','Date','Start','End','Notes'],
+        upcoming.map(e => [(e.event_type||'').replace(/_/g,' '), e.client_name||'—', e.event_date||'—', e.start_time||'—', e.end_time||'—', e.notes||'']))}`;
+  }
+
+  function renderWorkshopTab(d) {
+    const garments = d.workshopGarments || [];
+    const overdue  = garments.filter(g => g.overdue).length;
+    return `
+      ${overdue > 0 ? `<div style="background:#FFF3F0;border-left:4px solid #CC3300;padding:12px 16px;border-radius:4px;margin-bottom:16px;font-weight:700;color:#CC3300;">⚠️ ${overdue} garment(s) overdue!</div>` : ''}
+      <h3 style="color:#2C1810;margin:0 0 12px;">🔧 All Workshop Garments (${garments.length})</h3>
+      ${wrTable(['Order Ref','Client','Garment','Stage','Trial Date','Delivery Date','Overdue?'],
+        garments.map(g => [g.order_ref||'—', g.client_name||'—', g.garment_type||'—', (g.status||'').replace(/_/g,' '), g.trial_date||'—', g.delivery_date||'—',
+          g.overdue ? '<span style="color:#CC3300;font-weight:700;">YES</span>' : 'No'
+        ]))}` ;
+  }
+
+  function renderB2CTab(d) {
+    const entries = d.b2cEntries || [];
+    const weekNew = d.b2cWeek   || [];
+    return `
+      <h3 style="color:#2C1810;margin:0 0 12px;">📋 All B2C Entries (${entries.length})</h3>
+      ${wrTable(['Type','Party','Contact','Order Date','Delivery Date','Amount','Status'],
+        entries.map(e => [(e.entry_type||'').replace(/_/g,' '), e.party_name||'—', e.contact||'—', e.order_date||'—', e.delivery_date||'—', e.amount||'—', (e.status||'').replace(/_/g,' ')]))}
+      <h3 style="color:#2C1810;margin:24px 0 12px;">📌 New This Week (${weekNew.length})</h3>
+      ${wrTable(['Type','Party','Order Date','Status'],
+        weekNew.map(e => [(e.entry_type||'').replace(/_/g,' '), e.party_name||'—', e.order_date||'—', (e.status||'').replace(/_/g,' ')]))}` ;
+  }
+
+  function renderHierarchyTab(d) {
+    const sections = d.workHierarchy || [];
+    return `
+      <h3 style="color:#2C1810;margin:0 0 12px;">🏗️ Work Hierarchy — ${sections.length} Section(s)</h3>
+      ${wrTable(['Sort Order','Section Name','Personnel'],
+        sections.map(s => [s.sort_order ?? '—', s.section_name||'—', (s.personnel||[]).join(', ')||'—']))}`;
   }
 
   function wrTable(headers, rows) {

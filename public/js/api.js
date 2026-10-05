@@ -9,7 +9,7 @@
 
 let csrfToken = '';
 
-async function request(url, options = {}) {
+async function request(url, options = {}, isRetry = false) {
   const isMutating = options.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method.toUpperCase());
   const headers = {
     'Content-Type': 'application/json',
@@ -20,14 +20,25 @@ async function request(url, options = {}) {
     headers['x-csrf-token'] = csrfToken;
   }
 
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     credentials: 'same-origin', // Ensure session cookies are sent
     ...options,
     headers,
   });
 
-  const isJson = response.headers.get('content-type')?.includes('application/json');
-  const data   = isJson ? await response.json() : null;
+  let isJson = response.headers.get('content-type')?.includes('application/json');
+  let data   = isJson ? await response.json() : null;
+
+  // Auto-retry once for CSRF token expiration
+  if (!response.ok && !isRetry && isMutating && (response.status === 403 || response.status === 500)) {
+    const errorMsg = data?.error?.toLowerCase() || '';
+    if (errorMsg.includes('csrf') || errorMsg.includes('token')) {
+      // Fetch fresh CSRF token
+      await api.fetchCsrfToken();
+      // Retry original request with new token
+      return request(url, options, true);
+    }
+  }
 
   if (!response.ok) {
     const error   = new Error(data?.error || `Request failed with status ${response.status}`);

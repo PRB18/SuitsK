@@ -14,7 +14,7 @@ function validate(schema) {
       next();
     } catch (err) {
       if (err.name === 'ZodError') {
-        const errors = err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        const errors = err.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
         return res.status(400).json({ error: `Validation Error: ${errors}` });
       }
       next(err);

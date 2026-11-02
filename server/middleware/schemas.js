@@ -17,10 +17,8 @@ const clientSchema = z.object({
 });
 
 const clientMeasurementsSchema = z.object({
-  unit: z.enum(['in', 'cm']),
-  values_json: z.string().refine(val => {
-    try { JSON.parse(val); return true; } catch { return false; }
-  }, { message: "Invalid JSON for measurements" })
+  unit: z.enum(['in', 'cm']).optional(),
+  values: z.record(z.string(), z.any()),
 });
 
 const clientVisitSchema = z.object({

@@ -15,7 +15,12 @@ const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
 const { validate }   = require('./middleware/validate');
-const { idSchema, inventorySchema, inventoryTransactionSchema } = require('./middleware/schemas');
+const {
+  idSchema,
+  inventorySchema,
+  inventoryUpdateSchema,
+  inventoryTransactionSchema,
+} = require('./middleware/schemas');
 
 const router = express.Router();
 
@@ -116,7 +121,7 @@ router.get('/:id', async (req, res) => {
 // ────────────────────────────────────────────────────────────────────────────
 // PUT /api/inventory/:id — update metadata (NOT quantity — use transact for that)
 // ────────────────────────────────────────────────────────────────────────────
-router.put('/:id', validate(inventorySchema), async (req, res) => {
+router.put('/:id', validate(inventoryUpdateSchema), async (req, res) => {
   if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();

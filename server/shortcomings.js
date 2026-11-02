@@ -10,7 +10,12 @@ const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
 const { validate }   = require('./middleware/validate');
-const { idSchema, shortcomingSchema, shortcomingResolveSchema } = require('./middleware/schemas');
+const {
+  idSchema,
+  shortcomingSchema,
+  shortcomingUpdateSchema,
+  shortcomingResolveSchema,
+} = require('./middleware/schemas');
 
 const router = express.Router();
 
@@ -88,7 +93,7 @@ router.post('/', validate(shortcomingSchema), async (req, res) => {
 });
 
 // PUT /api/shortcomings/:id — update issue (except resolving — use /resolve)
-router.put('/:id', validate(shortcomingSchema), async (req, res) => {
+router.put('/:id', validate(shortcomingUpdateSchema), async (req, res) => {
   if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();

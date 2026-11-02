@@ -10,7 +10,7 @@ const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
 const { validate }   = require('./middleware/validate');
-const { idSchema, b2bSchema } = require('./middleware/schemas');
+const { idSchema, b2bEntrySchema, b2bEntryUpdateSchema } = require('./middleware/schemas');
 const { safeJsonParse } = require('./middleware/safeJson');
 
 const router = express.Router();
@@ -58,7 +58,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/b2b — create entry
-router.post('/', validate(b2bSchema), async (req, res) => {
+router.post('/', validate(b2bEntrySchema), async (req, res) => {
   const {
     entry_type, order_date,
     // Corporate order fields
@@ -106,7 +106,7 @@ router.post('/', validate(b2bSchema), async (req, res) => {
 });
 
 // PUT /api/b2b/:id
-router.put('/:id', validate(b2bSchema), async (req, res) => {
+router.put('/:id', validate(b2bEntryUpdateSchema), async (req, res) => {
   if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();

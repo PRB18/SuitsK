@@ -4,6 +4,7 @@
   "description": "Bespoke Suit Configurator — cloud-hosted, multi-device, encrypted vault",
   "main": "server/index.js",
   "scripts": {
+    "test": "node --test server/middleware/schemas.test.js",
     "start": "node server/index.js",
     "dev": "node server/index.js"
   },

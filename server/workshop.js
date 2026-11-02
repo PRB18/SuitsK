@@ -14,7 +14,12 @@ const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
 const { validate }   = require('./middleware/validate');
-const { idSchema, hierarchySectionSchema, hierarchyPersonnelSchema } = require('./middleware/schemas');
+const {
+  idSchema,
+  hierarchySectionSchema,
+  hierarchySectionUpdateSchema,
+  hierarchyPersonnelSchema,
+} = require('./middleware/schemas');
 const { safeJsonParse } = require('./middleware/safeJson');
 
 const router = express.Router();
@@ -73,7 +78,7 @@ router.post('/hierarchy', validate(hierarchySectionSchema), async (req, res) => 
 });
 
 // PUT /api/hierarchy/:id — rename or reorder section
-router.put('/hierarchy/:id', validate(hierarchySectionSchema), async (req, res) => {
+router.put('/hierarchy/:id', validate(hierarchySectionUpdateSchema), async (req, res) => {
   if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();

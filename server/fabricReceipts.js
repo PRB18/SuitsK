@@ -10,7 +10,11 @@ const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
 const { validate }   = require('./middleware/validate');
-const { idSchema, fabricReceiptSchema } = require('./middleware/schemas');
+const {
+  idSchema,
+  fabricReceiptSchema,
+  fabricReceiptUpdateSchema,
+} = require('./middleware/schemas');
 
 const router = express.Router();
 
@@ -91,7 +95,7 @@ router.post('/', validate(fabricReceiptSchema), async (req, res) => {
 });
 
 // PUT /api/fabric-receipts/:id
-router.put('/:id', validate(fabricReceiptSchema), async (req, res) => {
+router.put('/:id', validate(fabricReceiptUpdateSchema), async (req, res) => {
   if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();

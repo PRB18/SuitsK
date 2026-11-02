@@ -1,3 +1,10 @@
+## 2026-11-02: Align API validation with UI payloads
+
+- **Decision:** Use distinct partial schemas for update routes, validate project measurements as objects while normalizing legacy JSON strings, and retain all submitted B2B and fabric receipt fields.
+- **Why:** Several UI requests were rejected by create-shaped schemas, B2B referenced a nonexistent schema export, and Zod stripped fields the receipt handlers needed.
+- **Alternatives considered:** Loosen all schemas globally (rejected: would weaken create validation); change every screen to send full records (rejected: unnecessary and brittle for partial updates).
+- **Status:** Implemented with schema regression tests; full browser smoke testing remains blocked until its configured Playwright package and a test app/database are available.
+
 ## 2026-09-26: Measurements nav opens B2B vault
 
 - **Decision:** Sidebar/hub **Measurements** (III) routes to `#b2b` (same vault screen as B2B Logistics), not the bare configurator wizard.

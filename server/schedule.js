@@ -20,7 +20,7 @@ const express        = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb }      = require('./db');
 const { validate }   = require('./middleware/validate');
-const { idSchema, scheduleEventSchema } = require('./middleware/schemas');
+const { idSchema, scheduleEventSchema, scheduleEventUpdateSchema } = require('./middleware/schemas');
 const { safeJsonParse } = require('./middleware/safeJson');
 
 const router = express.Router();
@@ -117,7 +117,7 @@ router.post('/schedule', validate(scheduleEventSchema), async (req, res) => {
 });
 
 // PUT /api/schedule/:id
-router.put('/schedule/:id', validate(scheduleEventSchema), async (req, res) => {
+router.put('/schedule/:id', validate(scheduleEventUpdateSchema), async (req, res) => {
   if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();

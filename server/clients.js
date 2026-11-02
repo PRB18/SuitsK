@@ -16,7 +16,8 @@ const { getDb }      = require('./db');
 const { validate }   = require('./middleware/validate');
 const { 
   idSchema, clientSchema, clientMeasurementsSchema, 
-  clientVisitSchema, orderSchema, projectSchema, projectStatusSchema 
+  clientVisitSchema, orderSchema, orderUpdateSchema, projectSchema,
+  projectUpdateSchema, projectStatusSchema
 } = require('./middleware/schemas');
 const { safeJsonParse } = require('./middleware/safeJson');
 
@@ -477,7 +478,7 @@ router.post('/clients/:id/orders', validate(orderSchema), async (req, res) => {
 });
 
 // PUT /api/clients/:id/orders/:orderId — update order
-router.put('/clients/:id/orders/:orderId', validate(orderSchema), async (req, res) => {
+router.put('/clients/:id/orders/:orderId', validate(orderUpdateSchema), async (req, res) => {
   if (!isValidId(req.params.id) || !isValidId(req.params.orderId)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();
@@ -551,7 +552,7 @@ router.post('/clients/:id/orders/:orderId/projects', validate(projectSchema), as
 // ────────────────────────────────────────────────────────────────────────────
 
 // PUT /api/projects/:projectId — update project (status, measurements, suit_config_id)
-router.put('/projects/:projectId', validate(projectSchema), async (req, res) => {
+router.put('/projects/:projectId', validate(projectUpdateSchema), async (req, res) => {
   if (!isValidId(req.params.projectId)) return res.status(404).json({ error: 'Not found' });
   try {
     const db = getDb();

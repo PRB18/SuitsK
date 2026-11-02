@@ -31,11 +31,32 @@ const orderSchema = z.object({
   order_date: dateSchema,
   trial_date: dateSchema.optional().nullable(),
   delivery_date: dateSchema.optional().nullable(),
-  status: z.enum(['pending', 'in_progress', 'ready', 'completed', 'cancelled']),
+  status: z.enum(['pending', 'in_progress', 'ready', 'completed', 'cancelled']).optional(),
   total_amount: z.number().min(0).optional(),
   advance_paid: z.number().min(0).optional(),
   notes: z.string().max(2000).optional().nullable(),
 });
+const orderUpdateSchema = orderSchema.partial();
+
+const projectMeasurementsSchema = z.union([
+  z.record(z.string(), z.any()),
+  z.string().transform((value, ctx) => {
+    let parsed;
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      ctx.addIssue({ code: 'custom', message: 'Invalid JSON' });
+      return z.NEVER;
+    }
+
+    const result = z.record(z.string(), z.any()).safeParse(parsed);
+    if (!result.success) {
+      ctx.addIssue({ code: 'custom', message: 'Measurements must be a JSON object' });
+      return z.NEVER;
+    }
+    return result.data;
+  }),
+]);
 
 const projectSchema = z.object({
   garment_type: z.enum([
@@ -47,10 +68,9 @@ const projectSchema = z.object({
     'buttonholes', 'pressing', 'trial', 'ready', 'delivered'
   ]).optional(),
   suit_config_id: z.string().optional().nullable(),
-  measurements: z.string().refine(val => {
-    try { JSON.parse(val); return true; } catch { return false; }
-  }, { message: "Invalid JSON" }).optional(),
+  measurements: projectMeasurementsSchema.optional(),
 });
+const projectUpdateSchema = projectSchema.partial();
 
 const projectStatusSchema = z.object({
   status: z.enum([
@@ -85,6 +105,7 @@ const inventorySchema = z.object({
   low_stock_alert: z.number().min(0).optional(),
   notes: z.string().max(2000).optional().nullable(),
 });
+const inventoryUpdateSchema = inventorySchema.partial();
 
 const inventoryTransactionSchema = z.object({
   type: z.enum(['add', 'deduct']),
@@ -103,15 +124,17 @@ const scheduleEventSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   event_date: dateSchema,
   event_time: z.string().max(50).optional().nullable(),
-  all_day: z.union([z.boolean(), z.number()]).transform(val => !!val),
-  status: z.enum(['scheduled', 'completed', 'cancelled']),
+  all_day: z.union([z.boolean(), z.number()]).transform(val => !!val).optional(),
+  status: z.enum(['scheduled', 'completed', 'cancelled']).optional(),
 });
+const scheduleEventUpdateSchema = scheduleEventSchema.partial();
 
 // ── Workshop Hierarchy ──────────────────────────────────────────────────────
 const hierarchySectionSchema = z.object({
   section_name: z.string().min(1).max(100),
   sort_order: z.number().int().optional(),
 });
+const hierarchySectionUpdateSchema = hierarchySectionSchema.partial();
 
 const hierarchyPersonnelSchema = z.object({
   personnel: z.array(z.string()).max(100),
@@ -127,6 +150,7 @@ const shortcomingSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   status: z.enum(['open', 'in_progress', 'resolved']).optional(),
 });
+const shortcomingUpdateSchema = shortcomingSchema.partial();
 
 const shortcomingResolveSchema = z.object({
   resolved_note: z.string().max(2000).optional().nullable(),
@@ -135,24 +159,38 @@ const shortcomingResolveSchema = z.object({
 // ── B2B ─────────────────────────────────────────────────────────────────────
 const b2bEntrySchema = z.object({
   entry_type: z.enum(['corporate_order', 'vendor_purchase']),
+  order_date: dateSchema.optional().nullable(),
   company_name: z.string().max(255).optional().nullable(),
   contact_person: z.string().max(100).optional().nullable(),
   contact_phone: z.string().max(20).optional().nullable(),
   contact_email: z.string().max(100).optional().nullable(),
-  quantity: z.number().int().min(0).optional(),
+  quantity: z.coerce.number().int().min(0).optional(),
   garment_types: z.array(z.string()).optional().nullable(),
   vendor_name: z.string().max(255).optional().nullable(),
   items_ordered: z.string().max(2000).optional().nullable(),
   total_amount: z.number().min(0).optional(),
   advance_paid: z.number().min(0).optional(),
   delivery_date: dateSchema.optional().nullable(),
+  client_code: z.string().max(100).optional().nullable(),
+  style_product_name: z.string().max(255).optional().nullable(),
+  brand_name: z.string().max(255).optional().nullable(),
+  fabric_code: z.string().max(100).optional().nullable(),
+  fabric_colour: z.string().max(100).optional().nullable(),
+  inventory_id: z.string().max(100).optional().nullable(),
+  transfer_to_workshop: dateSchema.optional().nullable(),
+  delivered_date: dateSchema.optional().nullable(),
   status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']).optional(),
   notes: z.string().max(2000).optional().nullable(),
 });
+const b2bEntryUpdateSchema = b2bEntrySchema.partial();
 
 // ── Fabric Receipts ─────────────────────────────────────────────────────────
 const fabricReceiptSchema = z.object({
   client_id: z.string().uuid("Invalid client ID"),
+  order_id: z.string().max(100).optional().nullable(),
+  client_code: z.string().max(100).optional().nullable(),
+  client_name: z.string().max(255).optional().nullable(),
+  inventory_id: z.string().max(100).optional().nullable(),
   fabric_code: z.string().max(100).optional().nullable(),
   fabric_color: z.string().max(100).optional().nullable(),
   accessories_desc: z.string().max(1000).optional().nullable(),
@@ -160,6 +198,7 @@ const fabricReceiptSchema = z.object({
   received_date: dateSchema.optional().nullable(),
   sample_notes: z.string().max(2000).optional().nullable(),
 });
+const fabricReceiptUpdateSchema = fabricReceiptSchema.partial();
 
 module.exports = {
   idSchema,
@@ -167,17 +206,25 @@ module.exports = {
   clientMeasurementsSchema,
   clientVisitSchema,
   orderSchema,
+  orderUpdateSchema,
   projectSchema,
+  projectUpdateSchema,
   projectStatusSchema,
   suitSchema,
   duplicateSuitSchema,
   inventorySchema,
+  inventoryUpdateSchema,
   inventoryTransactionSchema,
   scheduleEventSchema,
+  scheduleEventUpdateSchema,
   hierarchySectionSchema,
+  hierarchySectionUpdateSchema,
   hierarchyPersonnelSchema,
   shortcomingSchema,
+  shortcomingUpdateSchema,
   shortcomingResolveSchema,
   b2bEntrySchema,
+  b2bEntryUpdateSchema,
   fabricReceiptSchema,
+  fabricReceiptUpdateSchema,
 };

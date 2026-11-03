@@ -62,6 +62,12 @@ test('project requests accept object measurements and partial updates', () => {
   }).success, false);
 });
 
+test('project requests accept the additional garment types', () => {
+  for (const garment_type of ['Shirt', 'Kurta', 'Chinos', 'Suit', 'Pajama', 'Shirts/Kurta']) {
+    assert.equal(schemas.projectSchema.safeParse({ garment_type }).success, true, garment_type);
+  }
+});
+
 test('schedule requests accept create and partial update payloads', () => {
   assert.equal(schemas.scheduleEventSchema.safeParse({
     event_type: 'trial',

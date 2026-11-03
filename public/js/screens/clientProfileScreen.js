@@ -23,7 +23,7 @@ import {
   openMeasurementsForProject,
 } from '../workshopLink.js';
 
-const GARMENT_TYPES = ['Jacket','Sherwani','Sadri','Waistcoat','Jodhpuri','Shirts/Kurta','Pant','Safari jkt','Denim'];
+const GARMENT_TYPES = ['Jacket','Sherwani','Sadri','Waistcoat','Jodhpuri','Shirt','Kurta','Pant','Chinos','Suit','Pajama','Safari jkt','Denim'];
 const PROJECT_STAGES = ['pending','cutting','canvas','stitching','buttonholes','pressing','trial','ready','delivered'];
 
 const STAGE_LABELS = {
@@ -120,6 +120,7 @@ export async function renderClientProfileScreen(container) {
         </div>
         <div class="screen-header-actions">
           <button class="btn btn-ghost" id="cpr-edit-btn">✏️ Edit Details</button>
+          <button class="btn btn-ghost btn-sm" id="cpr-delete-btn" style="color:var(--color-danger);">Delete Client</button>
         </div>
       </header>
       <div class="cpr-body" id="cpr-body">
@@ -250,6 +251,22 @@ export async function renderClientProfileScreen(container) {
     // Always replace — never history.back() — so profile ↔ measurements cannot ping-pong.
     // currentClientId stays set so the client↔measurement link remains intact.
     router.back('#client-db');
+  });
+
+  document.getElementById('cpr-delete-btn').addEventListener('click', async () => {
+    if (!clientData) return;
+    const confirmed = window.confirm(
+      `Permanently delete ${clientData.name} (${clientData.client_ref})? Their linked orders, garments, measurements, and visits will also be deleted. This cannot be undone.`
+    );
+    if (!confirmed) return;
+    try {
+      await api.deleteClient(clientId);
+      state.setCurrentClientId(null);
+      showToast('Client deleted.', 'success');
+      router.back('#client-db');
+    } catch (err) {
+      showToast('Failed to delete client: ' + err.message, 'error');
+    }
   });
 
   // ── Load client ────────────────────────────────────────────────────────────
@@ -844,10 +861,10 @@ function getMeasurementFields(garmentType) {
   ];
 
   if (['Jacket','Sherwani','Sadri','Safari jkt'].includes(garmentType)) return suitFields;
-  if (garmentType === 'Pant' || garmentType === 'Denim') return pantFields;
-  if (garmentType === 'Shirts/Kurta') return shirtFields;
+  if (['Pant', 'Chinos', 'Pajama', 'Denim'].includes(garmentType)) return pantFields;
+  if (['Shirt', 'Kurta', 'Shirts/Kurta'].includes(garmentType)) return shirtFields;
   if (garmentType === 'Waistcoat') return wcFields;
-  if (garmentType === 'Jodhpuri') return [...suitFields, ...pantFields];
+  if (garmentType === 'Jodhpuri' || garmentType === 'Suit') return [...suitFields, ...pantFields];
   return [...suitFields]; // default
 }
 

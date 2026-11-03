@@ -1,3 +1,10 @@
+## 2026-11-03: Expand garment choices and improve client/order visibility
+
+- **Decision:** Offer separate Shirt and Kurta choices and add Chinos, Suit, and Pajama to client-profile order/garment creation. Add a confirmed client-profile delete action, and animate only overflowing active-order requirements text horizontally.
+- **Why:** Staff need garment-specific order records, a direct client-removal action, and a way to read long order requirements in the Atelier Hub without ellipsis truncation.
+- **Alternatives considered:** Keep Shirt/Kurta combined (rejected: does not distinguish garment records); scroll every requirements value (rejected: short text should remain still); delete immediately (rejected: client and related records can be removed).
+- **Status:** Implemented with project type validation tests; full browser smoke verification is pending.
+
 ## 2026-11-03: Trial Sheet combines recorded visits and scheduled trials
 
 - **Decision:** Add a Trial Sheet view combining client-profile visits and non-cancelled Schedule trial/client-visit events. Client visits may link to one of that client's orders; Schedule events expose order details when linked to a garment project.

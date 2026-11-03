@@ -213,6 +213,18 @@ async function renderActiveOrders(container) {
       .ctb-order-row:hover { background-color: rgba(201,168,76,0.12); }
       .ctb-order-row:active { background-color: rgba(201,168,76,0.18); }
       .ctb-order-grid { display: grid; grid-template-columns: 1.5fr 1.2fr 1fr 1fr 1fr 1.2fr 1fr 1fr 90px 50px 40px; min-width: 1100px; align-items: center; gap: 1rem; }
+      .ctb-req-scroll { min-width: 0; max-width: 150px; overflow: hidden; white-space: nowrap; }
+      .ctb-req-scroll-text { display: inline-block; min-width: 100%; }
+      .ctb-req-scroll.is-overflowing .ctb-req-scroll-text {
+        animation: ctb-req-scroll var(--ctb-req-duration, 6s) linear infinite alternate;
+      }
+      @keyframes ctb-req-scroll {
+        from { transform: translateX(0); }
+        to { transform: translateX(var(--ctb-req-distance)); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ctb-req-scroll.is-overflowing .ctb-req-scroll-text { animation: none; }
+      }
       .ctb-order-header { 
         position: sticky; top: 0; z-index: 2; 
         background: var(--bg-card); 
@@ -319,7 +331,7 @@ async function renderActiveOrders(container) {
           <div style="font-size: 0.8rem; color: var(--text-secondary);">${dateStr}</div>
           <div style="font-size: 0.8rem; color: var(--text-secondary);">${trialDisplay}</div>
           <div style="font-size: 0.8rem; color: ${deadlineColor}; font-weight: ${order.urgency !== 'on_track' && order.urgency !== 'none' ? '600' : 'normal'};">${deadlineDisplay}</div>
-          <div title="${reqStr}" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${reqStr || '—'}</div>
+          <div class="ctb-req-scroll" title="${reqStr}" aria-label="Requirements: ${reqStr || 'none'}"><span class="ctb-req-scroll-text">${reqStr || '—'}</span></div>
           <div style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.fabric_code || '—')}</div>
           <div style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.fabric_color || '—')}</div>
           <div>
@@ -329,6 +341,14 @@ async function renderActiveOrders(container) {
           <div style="text-align:center;"><div class="ctb-expand-btn chevron">▾</div></div>
         `;
         panel.appendChild(row);
+        const reqViewport = row.querySelector('.ctb-req-scroll');
+        const reqText = row.querySelector('.ctb-req-scroll-text');
+        const reqOverflow = reqText.scrollWidth - reqViewport.clientWidth;
+        if (reqOverflow > 1) {
+          reqViewport.style.setProperty('--ctb-req-distance', `-${reqOverflow}px`);
+          reqViewport.style.setProperty('--ctb-req-duration', `${Math.max(6, reqOverflow / 30)}s`);
+          reqViewport.classList.add('is-overflowing');
+        }
 
         // Accordion
         const accordion = document.createElement('div');

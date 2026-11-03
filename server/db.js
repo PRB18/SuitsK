@@ -116,7 +116,7 @@ async function initDatabase() {
 
   // ── Projects (garments within an order) ──────────────────────────────────
   // garment_type: Jacket | Sherwani | Sadri | Waistcoat | Jodhpuri |
-  //               Shirts/Kurta | Pant | Safari jkt | Denim
+  //               Shirt | Kurta | Pant | Chinos | Suit | Pajama | Safari jkt | Denim
   // status: pending | cutting | canvas | stitching | buttonholes |
   //         pressing | trial | ready | delivered
   // suit_config_id: FK → suits.id (links style configuration)

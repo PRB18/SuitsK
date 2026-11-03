@@ -86,12 +86,15 @@ export async function renderClientProfileScreen(container) {
       body.innerHTML = `
         <div style="padding: 0 0 24px 0;">
           <p class="text-sm text-muted" style="margin-bottom: 16px;">Select a client to view their profile</p>
+          <input type="search" id="cpr-pick-search" class="search-input" placeholder="Search clients by name, phone, reference, or city…" autocomplete="off" aria-label="Search client profiles">
           <div style="display:flex; flex-direction:column; gap: 8px;" id="cpr-pick-list"></div>
+          <p class="text-muted" id="cpr-pick-no-results" hidden>No clients match your search.</p>
         </div>`;
       const list = document.getElementById('cpr-pick-list');
       clients.forEach(c => {
         const card = document.createElement('button');
         card.className = 'cdb-row';
+        card.dataset.searchable = [c.name, c.phone, c.client_ref, c.city].filter(Boolean).join(' ').toLowerCase();
         card.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border:1px solid var(--color-border); border-radius:8px; background:var(--color-surface); cursor:pointer; text-align:left; width:100%;';
         card.innerHTML = `
           <div>
@@ -101,6 +104,16 @@ export async function renderClientProfileScreen(container) {
           <span class="badge badge--neutral">${escHtml(c.phone || '')}</span>`;
         card.addEventListener('click', () => router.navigateTo('#client-profile', { id: c.id }));
         list.appendChild(card);
+      });
+      document.getElementById('cpr-pick-search').addEventListener('input', event => {
+        const query = event.target.value.trim().toLowerCase();
+        let visibleCount = 0;
+        list.querySelectorAll('.cdb-row').forEach(card => {
+          const matches = card.dataset.searchable.includes(query);
+          card.hidden = !matches;
+          if (matches) visibleCount++;
+        });
+        document.getElementById('cpr-pick-no-results').hidden = visibleCount > 0;
       });
     } catch (err) {
       const body = document.getElementById('cpr-pick-body');

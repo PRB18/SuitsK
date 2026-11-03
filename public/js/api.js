@@ -152,6 +152,7 @@ export const api = {
   },
 
   // ── Schedule Events ───────────────────────────────────────────────────────
+  async getTrialSheet() { return request('/api/trial-sheet'); },
   async getSchedule(params = {}) {
     const qs = new URLSearchParams(params).toString();
     return request(`/api/schedule${qs ? '?' + qs : ''}`);

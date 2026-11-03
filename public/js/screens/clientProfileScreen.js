@@ -162,6 +162,7 @@ export async function renderClientProfileScreen(container) {
         </div>
         <div class="modal-body">
           <div class="form-field"><label for="visit-date">Visit Date <span class="required">*</span></label><input type="date" id="visit-date" class="input"></div>
+          <div class="form-field"><label for="visit-order">Related Order (Optional)</label><select id="visit-order" class="input"><option value="">— No order linked —</option></select></div>
           <div class="form-field"><label for="visit-purpose">Purpose</label><input type="text" id="visit-purpose" class="input" placeholder="Fitting, consultation, collection…"></div>
         </div>
         <div class="modal-footer"><button class="btn btn-ghost" id="visit-cancel">Cancel</button><button class="btn btn-primary" id="visit-save">Add Visit</button></div>
@@ -343,7 +344,7 @@ export async function renderClientProfileScreen(container) {
 
       <section class="cpr-section">
         <div class="cpr-section-header"><h2>Client Visits</h2><button class="btn btn-primary btn-sm" id="cpr-add-visit">+ Add Visit</button></div>
-        ${(clientData.visits || []).length ? `<div class="cpr-visits">${clientData.visits.map(v => `<div class="cpr-visit-row"><strong>${fmtDate(v.visit_date)}</strong><span>${escHtml(v.purpose || 'General visit')}</span></div>`).join('')}</div>` : '<p class="text-muted">No visits recorded yet.</p>'}
+        ${(clientData.visits || []).length ? `<div class="cpr-visits">${clientData.visits.map(v => `<div class="cpr-visit-row"><strong>${fmtDate(v.visit_date)}</strong><span>${escHtml(v.purpose || 'General visit')}</span><span class="text-muted">${v.order_ref ? `Order ${escHtml(v.order_ref)}` : 'No order linked'}</span></div>`).join('')}</div>` : '<p class="text-muted">No visits recorded yet.</p>'}
       </section>
 
       <!-- Order History -->
@@ -738,6 +739,11 @@ export async function renderClientProfileScreen(container) {
   function openVisitModal() {
     document.getElementById('visit-date').value = new Date().toISOString().split('T')[0];
     document.getElementById('visit-purpose').value = '';
+    const orderSelect = document.getElementById('visit-order');
+    orderSelect.innerHTML = '<option value="">— No order linked —</option>' +
+      clientData.orders.map(order =>
+        `<option value="${escHtml(order.id)}">${escHtml(order.order_ref)} — ${escHtml(order.status)}</option>`
+      ).join('');
     document.getElementById('visit-modal').style.display = 'flex';
   }
   document.getElementById('visit-modal-close').addEventListener('click', () => { document.getElementById('visit-modal').style.display = 'none'; });
@@ -745,9 +751,10 @@ export async function renderClientProfileScreen(container) {
   document.getElementById('visit-save').addEventListener('click', async () => {
     const visit_date = document.getElementById('visit-date').value;
     const purpose = document.getElementById('visit-purpose').value.trim();
+    const order_id = document.getElementById('visit-order').value;
     if (!visit_date) { showToast('Visit date is required.', 'error'); return; }
     try {
-      await api.addClientVisit(clientId, { visit_date, purpose });
+      await api.addClientVisit(clientId, { visit_date, purpose, order_id });
       document.getElementById('visit-modal').style.display = 'none';
       showToast('Visit added.', 'success');
       await load();

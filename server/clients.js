@@ -263,7 +263,10 @@ router.get('/clients/:id', async (req, res) => {
       args: [req.params.id],
     });
     const visitsResult = await db.execute({
-      sql: 'SELECT id, visit_date, purpose, created_at FROM client_visits WHERE client_id = ? ORDER BY visit_date DESC, created_at DESC',
+      sql: `SELECT v.id, v.visit_date, v.purpose, v.order_id, v.created_at, o.order_ref
+            FROM client_visits v
+            LEFT JOIN orders o ON o.id = v.order_id
+            WHERE v.client_id = ? ORDER BY v.visit_date DESC, v.created_at DESC`,
       args: [req.params.id],
     });
     const measurement = measurementResult.rows[0] || null;
@@ -347,12 +350,20 @@ async function pushMeasurementsToActiveProjects(db, clientId, values, ts) {
 router.post('/clients/:id/visits', validate(clientVisitSchema), async (req, res) => {
   if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
   const visitDate = safe(req.body.visit_date);
+  const orderId = safe(req.body.order_id);
   try {
     const db = getDb();
     const clientCheck = await db.execute({ sql: 'SELECT id FROM clients WHERE id=?', args: [req.params.id] });
     if (clientCheck.rows.length === 0) return res.status(404).json({ error: 'Client not found.' });
-    const row = { id: uuidv4(), client_id: req.params.id, visit_date: visitDate, purpose: safe(req.body.purpose), created_at: now() };
-    await db.execute({ sql: 'INSERT INTO client_visits (id, client_id, visit_date, purpose, created_at) VALUES (?, ?, ?, ?, ?)', args: [row.id, row.client_id, row.visit_date, row.purpose, row.created_at] });
+    if (orderId) {
+      const orderCheck = await db.execute({
+        sql: 'SELECT id FROM orders WHERE id = ? AND client_id = ?',
+        args: [orderId, req.params.id],
+      });
+      if (orderCheck.rows.length === 0) return res.status(400).json({ error: 'Selected order does not belong to this client.' });
+    }
+    const row = { id: uuidv4(), client_id: req.params.id, order_id: orderId, visit_date: visitDate, purpose: safe(req.body.purpose), created_at: now() };
+    await db.execute({ sql: 'INSERT INTO client_visits (id, client_id, order_id, visit_date, purpose, created_at) VALUES (?, ?, ?, ?, ?, ?)', args: [row.id, row.client_id, row.order_id, row.visit_date, row.purpose, row.created_at] });
     res.status(201).json(row);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

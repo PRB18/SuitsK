@@ -14,6 +14,23 @@ test('client measurement payload matches configurator requests', () => {
   }).success, true);
 });
 
+test('client visit requests accept an optional order link', () => {
+  const clientVisitSchema = schemas.clientVisitSchema;
+  assert.equal(clientVisitSchema.safeParse({
+    visit_date: '2026-11-02',
+    purpose: 'Fitting',
+    order_id: '00000000-0000-4000-8000-000000000001',
+  }).success, true);
+  assert.equal(clientVisitSchema.safeParse({
+    visit_date: '2026-11-02',
+    order_id: '',
+  }).success, true);
+  assert.equal(clientVisitSchema.safeParse({
+    visit_date: '2026-11-02',
+    order_id: 'not-an-order',
+  }).success, false);
+});
+
 test('order requests match create and partial-update payloads', () => {
   assert.equal(schemas.orderSchema.safeParse({
     order_date: '2026-11-02',

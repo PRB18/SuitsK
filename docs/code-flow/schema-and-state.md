@@ -94,7 +94,8 @@ Client-side state management for the suit vault and current draft configuration.
 - Creating a client also creates one blank `client_measurements` record.
 - `GET /api/clients/:id` returns the linked measurement profile and dated `client_visits`.
 - `PUT /api/clients/:id/measurements` replaces the client-level measurement values; garment-project measurements remain available for order-specific overrides.
-- `POST /api/clients/:id/visits` records a visit date and purpose.
+- `POST /api/clients/:id/visits` records a visit date and purpose, with an optional order link.
+- `GET /api/trial-sheet` combines client-profile visit records with non-cancelled Schedule trial/client-visit events. The Trial Sheet shows client/order/project details when those records are explicitly linked.
 
 **Draft Persistence:**
 - `currentSuit` stays in memory during wizard navigation.

@@ -18,6 +18,7 @@ import { renderClientDbScreen }      from './screens/clientDbScreen.js';
 import { renderClientProfileScreen } from './screens/clientProfileScreen.js';
 import { renderInventoryScreen }     from './screens/inventoryScreen.js';
 import { renderScheduleScreen }      from './screens/scheduleScreen.js';
+import { renderTrialSheetScreen }    from './screens/trialSheetScreen.js';
 import { renderWorkHierarchyScreen } from './screens/workHierarchyScreen.js';
 import { renderWorkshopScreen }      from './screens/workshopScreen.js';
 import { renderShortcomingsScreen }  from './screens/shortcomingsScreen.js';
@@ -63,6 +64,7 @@ async function bootstrap() {
       '#client-profile': renderClientProfileScreen,
       '#inventory':      renderInventoryScreen,
       '#schedule':       renderScheduleScreen,
+      '#trial-sheet':    renderTrialSheetScreen,
       '#work-hierarchy': renderWorkHierarchyScreen,
       '#workshop':       renderWorkshopScreen,
       '#shortcomings':   renderShortcomingsScreen,

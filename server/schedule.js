@@ -40,6 +40,43 @@ function safe(str) { return typeof str === 'string' ? str.trim() : ''; }
 // SCHEDULE EVENTS CRUD
 // ────────────────────────────────────────────────────────────────────────────
 
+// GET /api/trial-sheet — recorded client visits and trial/client-visit events
+router.get('/trial-sheet', async (req, res) => {
+  try {
+    const db = getDb();
+    const result = await db.execute(`
+      SELECT 'visit' AS source, v.id, v.client_id, '' AS project_id, v.order_id,
+             'client_visit' AS event_type, v.purpose AS title, '' AS description,
+             v.visit_date AS event_date, '' AS event_time, 'completed' AS status,
+             v.created_at, c.name AS client_name, c.client_ref, o.order_ref,
+             '' AS garment_type
+      FROM client_visits v
+      JOIN clients c ON c.id = v.client_id
+      LEFT JOIN orders o ON o.id = v.order_id
+
+      UNION ALL
+
+      SELECT 'schedule' AS source, e.id,
+             COALESCE(NULLIF(e.client_id, ''), p.client_id) AS client_id,
+             e.project_id, COALESCE(NULLIF(p.order_id, ''), '') AS order_id,
+             e.event_type, e.title, e.description, e.event_date, e.event_time,
+             e.status, e.created_at, c.name AS client_name, c.client_ref,
+             o.order_ref, p.garment_type
+      FROM schedule_events e
+      LEFT JOIN projects p ON p.id = e.project_id
+      LEFT JOIN clients c ON c.id = COALESCE(NULLIF(e.client_id, ''), p.client_id)
+      LEFT JOIN orders o ON o.id = p.order_id
+      WHERE e.event_type IN ('trial', 'client_visit') AND e.status != 'cancelled'
+
+      ORDER BY event_date DESC, event_time DESC, created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('[schedule] trial sheet error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/schedule — list events (optional ?month=YYYY-MM or ?client_id=)
 router.get('/schedule', async (req, res) => {
   try {

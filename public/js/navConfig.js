@@ -71,8 +71,18 @@ export const NAV_MODULES = [
     </svg>`,
   },
   {
-    id: 'work-hierarchy',
+    id: 'trial-sheet',
     roman: 'VI',
+    title: 'Trial Sheet',
+    subtitle: 'Client trials & visits',
+    route: '#trial-sheet',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 3h8l4 4v14H4V3h4z"/><path d="M8 3v5h8V3M8 13h8M8 17h5"/>
+    </svg>`,
+  },
+  {
+    id: 'work-hierarchy',
+    roman: 'VII',
     title: 'Work Hierarchy',
     subtitle: 'Roles & task flow',
     route: '#work-hierarchy',
@@ -86,7 +96,7 @@ export const NAV_MODULES = [
   },
   {
     id: 'workshop-db',
-    roman: 'VII',
+    roman: 'VIII',
     title: 'Workshop',
     subtitle: 'Craftsmen & Kanban',
     route: '#workshop',
@@ -96,7 +106,7 @@ export const NAV_MODULES = [
   },
   {
     id: 'shortcomings',
-    roman: 'VIII',
+    roman: 'IX',
     title: 'Shortcomings',
     subtitle: 'Issue & QA tracking',
     route: '#shortcomings',
@@ -108,7 +118,7 @@ export const NAV_MODULES = [
   },
   {
     id: 'dashboard',
-    roman: 'IX',
+    roman: 'X',
     title: 'B2C Work in Progress',
     subtitle: 'Vendor & Corporate',
     route: '#b2b-logistics',
@@ -119,7 +129,7 @@ export const NAV_MODULES = [
   },
   {
     id: 'status-quo',
-    roman: 'X',
+    roman: 'XI',
     title: 'Status Quo',
     subtitle: 'Live Overview',
     route: '#status-quo',
@@ -130,7 +140,7 @@ export const NAV_MODULES = [
   },
   {
     id: 'fabric-receipts',
-    roman: 'XI',
+    roman: 'XII',
     title: 'Fabric Receipts',
     subtitle: 'Raw material intake log',
     route: '#fabric-receipts',
@@ -140,7 +150,7 @@ export const NAV_MODULES = [
   },
   {
     id: 'care-support',
-    roman: 'XII',
+    roman: 'XIII',
     title: 'Care Support',
     subtitle: 'Garment maintenance guide',
     route: '#care-support',
@@ -156,7 +166,7 @@ export const HUB_MODULES = NAV_MODULES.filter((m) => m.id !== 'hub');
 export const IMPLEMENTED_ROUTES = [
   '#congressional', '#dashboard', '#b2b', '#b2b-logistics', '#configurator', '#client-profile',
   '#client-db', '#inventory', '#schedule', '#work-hierarchy', '#workshop',
-  '#shortcomings', '#status-quo', '#fabric-receipts', '#care-support'
+  '#shortcomings', '#status-quo', '#fabric-receipts', '#care-support', '#trial-sheet'
 ];
 
 /** Map hash → nav item id for active highlighting. */
@@ -168,6 +178,7 @@ export function routeToNavId(cleanHash) {
   if (cleanHash === '#dashboard') return 'measurements';
   if (cleanHash === '#b2b-logistics') return 'dashboard';
   if (cleanHash === '#fabric-receipts') return 'fabric-receipts';
+  if (cleanHash === '#trial-sheet') return 'trial-sheet';
   if (cleanHash === '#care-support') return 'care-support';
   if (cleanHash === '#configurator') return 'measurements';
   const match = NAV_MODULES.find((m) => m.route.split('?')[0] === cleanHash);

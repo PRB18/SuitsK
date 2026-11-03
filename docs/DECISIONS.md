@@ -1,3 +1,10 @@
+## 2026-11-03: Trial Sheet combines recorded visits and scheduled trials
+
+- **Decision:** Add a Trial Sheet view combining client-profile visits and non-cancelled Schedule trial/client-visit events. Client visits may link to one of that client's orders; Schedule events expose order details when linked to a garment project.
+- **Why:** Staff need one dated view of client trials and visits with relevant client and order context without adding non-garment records to the Workshop board.
+- **Alternatives considered:** Show only Schedule events (rejected: misses visits recorded from the client profile); infer an order for unlinked visits from the client's latest order (rejected: could misattribute historical visits).
+- **Status:** Implemented in navigation, client visit capture, and the Trial Sheet API/screen; schema and query-fixture checks pass. Full E2E smoke remains blocked because the configured Playwright package and local test server are unavailable.
+
 ## 2026-11-02: Align API validation with UI payloads
 
 - **Decision:** Use distinct partial schemas for update routes, validate project measurements as objects while normalizing legacy JSON strings, and retain all submitted B2B and fabric receipt fields.

@@ -24,6 +24,7 @@ const clientMeasurementsSchema = z.object({
 const clientVisitSchema = z.object({
   visit_date: dateSchema,
   purpose: z.string().max(255).optional().nullable(),
+  order_id: z.union([z.string().uuid(), z.literal('')]).optional().nullable(),
 });
 
 // ── Orders ──────────────────────────────────────────────────────────────────

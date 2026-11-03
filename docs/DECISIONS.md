@@ -1,3 +1,10 @@
+## 2026-11-03: Client Profiles picker uses autocomplete suggestions
+
+- **Decision:** Keep the full client list visible until search starts, then show a compact, keyboard-navigable suggestion menu matching name, phone, reference, or city.
+- **Why:** The first search control did not fit the screen's existing search layout and filtered rows without making autocomplete suggestions apparent.
+- **Alternatives considered:** Keep filtering the full list in place (rejected: matching clients were not presented as suggestions); show a fixed-size subset (rejected: could hide a matching client).
+- **Status:** Implemented with responsive picker styling and arrow/Enter/Escape keyboard behavior.
+
 ## 2026-11-03: Expand garment choices and improve client/order visibility
 
 - **Decision:** Offer separate Shirt and Kurta choices and add Chinos, Suit, and Pajama to client-profile order/garment creation. Add a confirmed client-profile delete action, and animate only overflowing active-order requirements text horizontally.

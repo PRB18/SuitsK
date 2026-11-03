@@ -84,17 +84,21 @@ export async function renderClientProfileScreen(container) {
         return;
       }
       body.innerHTML = `
-        <div style="padding: 0 0 24px 0;">
-          <p class="text-sm text-muted" style="margin-bottom: 16px;">Select a client to view their profile</p>
-          <input type="search" id="cpr-pick-search" class="search-input" placeholder="Search clients by name, phone, reference, or city…" autocomplete="off" aria-label="Search client profiles">
+        <div class="cpr-picker">
+          <p class="text-sm text-muted cpr-picker-hint">Select a client to view their profile</p>
+          <div class="cpr-picker-search-wrap">
+            <div class="search-wrap cpr-picker-search">
+              <span class="search-icon">${getIcon('search') || '⌕'}</span>
+              <input type="search" id="cpr-pick-search" class="search-input" placeholder="Search by name, phone, reference, or city…" autocomplete="off" aria-label="Search client profiles" aria-autocomplete="list" aria-controls="cpr-pick-suggestions" aria-expanded="false">
+            </div>
+            <div class="cpr-picker-suggestions" id="cpr-pick-suggestions" role="listbox" aria-label="Matching clients" hidden></div>
+          </div>
           <div style="display:flex; flex-direction:column; gap: 8px;" id="cpr-pick-list"></div>
-          <p class="text-muted" id="cpr-pick-no-results" hidden>No clients match your search.</p>
         </div>`;
       const list = document.getElementById('cpr-pick-list');
       clients.forEach(c => {
         const card = document.createElement('button');
         card.className = 'cdb-row';
-        card.dataset.searchable = [c.name, c.phone, c.client_ref, c.city].filter(Boolean).join(' ').toLowerCase();
         card.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border:1px solid var(--color-border); border-radius:8px; background:var(--color-surface); cursor:pointer; text-align:left; width:100%;';
         card.innerHTML = `
           <div>
@@ -105,15 +109,79 @@ export async function renderClientProfileScreen(container) {
         card.addEventListener('click', () => router.navigateTo('#client-profile', { id: c.id }));
         list.appendChild(card);
       });
-      document.getElementById('cpr-pick-search').addEventListener('input', event => {
-        const query = event.target.value.trim().toLowerCase();
-        let visibleCount = 0;
-        list.querySelectorAll('.cdb-row').forEach(card => {
-          const matches = card.dataset.searchable.includes(query);
-          card.hidden = !matches;
-          if (matches) visibleCount++;
-        });
-        document.getElementById('cpr-pick-no-results').hidden = visibleCount > 0;
+      const search = document.getElementById('cpr-pick-search');
+      const suggestions = document.getElementById('cpr-pick-suggestions');
+      let matchingClients = [];
+      let activeSuggestion = -1;
+
+      function renderSuggestions() {
+        const query = search.value.trim().toLowerCase();
+        activeSuggestion = -1;
+        search.removeAttribute('aria-activedescendant');
+        list.hidden = query.length > 0;
+        suggestions.hidden = query.length === 0;
+        search.setAttribute('aria-expanded', String(query.length > 0));
+        if (!query) {
+          suggestions.innerHTML = '';
+          return;
+        }
+
+        matchingClients = clients.filter(client =>
+          [client.name, client.phone, client.client_ref, client.city]
+            .filter(Boolean)
+            .some(value => String(value).toLowerCase().includes(query))
+        );
+        suggestions.innerHTML = matchingClients.length
+          ? matchingClients.map((client, index) => `
+              <button type="button" class="cpr-suggestion" id="cpr-suggestion-${index}" role="option" aria-selected="false" data-suggestion-index="${index}">
+                <span class="cpr-suggestion-main">
+                  <strong>${escHtml(client.name)}</strong>
+                  <span>${escHtml([client.client_ref, client.city].filter(Boolean).join(' · '))}</span>
+                </span>
+                ${client.phone ? `<span class="cpr-suggestion-phone">${escHtml(client.phone)}</span>` : ''}
+              </button>
+            `).join('')
+          : '<p class="cpr-suggestion-empty">No matching clients found.</p>';
+      }
+
+      function selectSuggestion(index) {
+        const client = matchingClients[index];
+        if (client) router.navigateTo('#client-profile', { id: client.id });
+      }
+
+      search.addEventListener('input', renderSuggestions);
+      search.addEventListener('keydown', event => {
+        if (suggestions.hidden || matchingClients.length === 0) {
+          if (event.key === 'Escape') {
+            search.value = '';
+            renderSuggestions();
+          }
+          return;
+        }
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          const direction = event.key === 'ArrowDown' ? 1 : -1;
+          activeSuggestion = activeSuggestion < 0
+            ? (direction > 0 ? 0 : matchingClients.length - 1)
+            : (activeSuggestion + direction + matchingClients.length) % matchingClients.length;
+          suggestions.querySelectorAll('.cpr-suggestion').forEach((option, index) => {
+            const active = index === activeSuggestion;
+            option.classList.toggle('is-active', active);
+            option.setAttribute('aria-selected', String(active));
+          });
+          search.setAttribute('aria-activedescendant', `cpr-suggestion-${activeSuggestion}`);
+          suggestions.querySelector('.is-active')?.scrollIntoView({ block: 'nearest' });
+        } else if (event.key === 'Enter' && activeSuggestion >= 0) {
+          event.preventDefault();
+          selectSuggestion(activeSuggestion);
+        } else if (event.key === 'Escape') {
+          search.value = '';
+          renderSuggestions();
+        }
+      });
+      suggestions.addEventListener('click', event => {
+        const option = event.target.closest('[data-suggestion-index]');
+        if (option) selectSuggestion(Number(option.dataset.suggestionIndex));
       });
     } catch (err) {
       const body = document.getElementById('cpr-pick-body');

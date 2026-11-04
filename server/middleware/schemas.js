@@ -61,8 +61,8 @@ const projectMeasurementsSchema = z.union([
 
 const projectSchema = z.object({
   garment_type: z.enum([
-    'Jacket', 'Sherwani', 'Sadri', 'Waistcoat', 'Jodhpuri',
-    'Shirts/Kurta', 'Shirt', 'Kurta', 'Pant', 'Chinos', 'Suit', 'Pajama',
+    'Jacket', 'Sherwani', 'Sadri', 'Shacket', 'Waistcoat', 'Jodhpuri',
+    'Shirts/Kurta', 'Shirt', 'Kurta', 'Pant', 'Chinos', 'Suit', 'Pajama', 'Alterations',
     'Safari jkt', 'Denim'
   ]),
   status: z.enum([

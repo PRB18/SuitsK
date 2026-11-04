@@ -80,7 +80,7 @@ const WC_ROWS = [
 ];
 
 const STYLE_QTY_ROWS = [
-  'Jacket','Sherwani','Sadri','Waistcoat','Jodhpuri','Shirt','Kurta','Shirts/Kurta','Pant','Chinos','Suit','Pajama','Safari jkt','Denim'
+  'Jacket','Sherwani','Sadri','Shacket','Waistcoat','Jodhpuri','Shirt','Kurta','Shirts/Kurta','Pant','Chinos','Suit','Pajama','Alterations','Safari jkt','Denim'
 ];
 
 /**

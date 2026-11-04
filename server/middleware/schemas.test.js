@@ -63,7 +63,7 @@ test('project requests accept object measurements and partial updates', () => {
 });
 
 test('project requests accept the additional garment types', () => {
-  for (const garment_type of ['Shirt', 'Kurta', 'Chinos', 'Suit', 'Pajama', 'Shirts/Kurta']) {
+  for (const garment_type of ['Shirt', 'Kurta', 'Chinos', 'Suit', 'Pajama', 'Shacket', 'Alterations', 'Shirts/Kurta']) {
     assert.equal(schemas.projectSchema.safeParse({ garment_type }).success, true, garment_type);
   }
 });

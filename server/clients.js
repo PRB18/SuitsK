@@ -29,8 +29,8 @@ function isValidId(id) {
 
 // ── Allowed garment types ────────────────────────────────────────────────────
 const GARMENT_TYPES = [
-  'Jacket', 'Sherwani', 'Sadri', 'Waistcoat', 'Jodhpuri',
-  'Shirts/Kurta', 'Shirt', 'Kurta', 'Pant', 'Chinos', 'Suit', 'Pajama',
+  'Jacket', 'Sherwani', 'Sadri', 'Shacket', 'Waistcoat', 'Jodhpuri',
+  'Shirts/Kurta', 'Shirt', 'Kurta', 'Pant', 'Chinos', 'Suit', 'Pajama', 'Alterations',
   'Safari jkt', 'Denim'
 ];
 

@@ -23,7 +23,7 @@ import {
   openMeasurementsForProject,
 } from '../workshopLink.js';
 
-const GARMENT_TYPES = ['Jacket','Sherwani','Sadri','Waistcoat','Jodhpuri','Shirt','Kurta','Pant','Chinos','Suit','Pajama','Safari jkt','Denim'];
+const GARMENT_TYPES = ['Jacket','Sherwani','Sadri','Shacket','Waistcoat','Jodhpuri','Shirt','Kurta','Pant','Chinos','Suit','Pajama','Alterations','Safari jkt','Denim'];
 const PROJECT_STAGES = ['pending','cutting','canvas','stitching','buttonholes','pressing','trial','ready','delivered'];
 
 const STAGE_LABELS = {
@@ -941,7 +941,7 @@ function getMeasurementFields(garmentType) {
     {key:'wc_v_shape',label:'V Shape'},
   ];
 
-  if (['Jacket','Sherwani','Sadri','Safari jkt'].includes(garmentType)) return suitFields;
+  if (['Jacket','Sherwani','Sadri','Shacket','Alterations','Safari jkt'].includes(garmentType)) return suitFields;
   if (['Pant', 'Chinos', 'Pajama', 'Denim'].includes(garmentType)) return pantFields;
   if (['Shirt', 'Kurta', 'Shirts/Kurta'].includes(garmentType)) return shirtFields;
   if (garmentType === 'Waistcoat') return wcFields;

@@ -45,7 +45,7 @@ export async function renderWorkshopScreen(container) {
           <button class="chip chip--active" data-filter="all">All Garments</button>
           <button class="chip" data-filter="overdue">Overdue ----</button>
           <button class="chip" data-filter="due-soon">Due Soon ----</button>
-          ${['Jacket','Sherwani','Sadri','Waistcoat','Jodhpuri','Shirt','Kurta','Shirts/Kurta','Pant','Chinos','Suit','Pajama','Safari jkt','Denim'].map(t =>
+          ${['Jacket','Sherwani','Sadri','Shacket','Waistcoat','Jodhpuri','Shirt','Kurta','Shirts/Kurta','Pant','Chinos','Suit','Pajama','Alterations','Safari jkt','Denim'].map(t =>
             `<button class="chip" data-filter="${t}">${t}</button>`).join('')}
         </div>
       </div>

@@ -1,3 +1,10 @@
+## 2026-11-04: Add Shacket and Alterations garment types
+
+- **Decision:** Add Shacket and Alterations to client order/garment creation, project validation, Workshop filters, and measurement-card garment rows. Use the existing jacket measurement set for both.
+- **Why:** Staff need to distinguish these garment types throughout order tracking without changing existing garment records or measurement fields.
+- **Alternatives considered:** Store either as free-text notes (rejected: loses structured Workshop filtering and validation); add new measurement fields (rejected: not requested and the jacket measurements already cover these tailoring tasks).
+- **Status:** Implemented with project validation regression coverage.
+
 ## 2026-11-03: Client Profiles picker uses autocomplete suggestions
 
 - **Decision:** Keep the full client list visible until search starts, then show a compact, keyboard-navigable suggestion menu matching name, phone, reference, or city.

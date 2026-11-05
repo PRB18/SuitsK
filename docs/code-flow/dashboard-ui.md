@@ -103,3 +103,5 @@ Renders a card for each suit with:
 ### Backup Feedback
 
 The existing backup endpoint and storage behavior are unchanged. During a request the button shows `Backing up…` and `aria-busy`. Success adds a persistent live-status receipt with `backups\\<timestamp>` relative to the vault data folder, the standard AppData location, paired-file guidance and the original-password requirement. Failure explicitly states that no new backup is confirmed. The receipt lasts until dashboard navigation/re-render; it is not a backup history or restore interface.
+
+The Atelier Hub's Active Orders widget is rendered by `public/js/screens/congressionalScreen.js`. It keeps B2C client orders and B2B work-in-progress entries in separate lists, includes the linked client reference, and sorts each list by trial date then order date (B2B entries use their order date).

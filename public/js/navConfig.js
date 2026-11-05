@@ -120,7 +120,7 @@ export const NAV_MODULES = [
     id: 'dashboard',
     roman: 'X',
     title: 'B2C Work in Progress',
-    subtitle: 'Vendor & Corporate',
+    subtitle: 'Client work in progress',
     route: '#b2b-logistics',
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
@@ -128,8 +128,19 @@ export const NAV_MODULES = [
     </svg>`,
   },
   {
-    id: 'status-quo',
+    id: 'b2b-work-progress',
     roman: 'XI',
+    title: 'B2B Work in Progress',
+    subtitle: 'Business work in progress',
+    route: '#b2b-work-progress',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+    </svg>`,
+  },
+  {
+    id: 'status-quo',
+    roman: 'XII',
     title: 'Status Quo',
     subtitle: 'Live Overview',
     route: '#status-quo',
@@ -140,7 +151,7 @@ export const NAV_MODULES = [
   },
   {
     id: 'fabric-receipts',
-    roman: 'XII',
+    roman: 'XIII',
     title: 'Fabric Receipts',
     subtitle: 'Raw material intake log',
     route: '#fabric-receipts',
@@ -150,7 +161,7 @@ export const NAV_MODULES = [
   },
   {
     id: 'care-support',
-    roman: 'XIII',
+    roman: 'XIV',
     title: 'Care Support',
     subtitle: 'Garment maintenance guide',
     route: '#care-support',
@@ -165,18 +176,18 @@ export const HUB_MODULES = NAV_MODULES.filter((m) => m.id !== 'hub');
 
 export const IMPLEMENTED_ROUTES = [
   '#congressional', '#dashboard', '#b2b', '#b2b-logistics', '#configurator', '#client-profile',
-  '#client-db', '#inventory', '#schedule', '#work-hierarchy', '#workshop',
+  '#client-db', '#inventory', '#schedule', '#work-hierarchy', '#workshop', '#b2b-work-progress',
   '#shortcomings', '#status-quo', '#fabric-receipts', '#care-support', '#trial-sheet'
 ];
 
 /** Map hash → nav item id for active highlighting. */
 export function routeToNavId(cleanHash) {
   if (cleanHash === '#congressional') return 'hub';
-  // Measurements (III) and B2B Logistics (IX) share the vault screen at #b2b.
-  // Prefer highlighting Measurements when on that screen; #dashboard keeps IX.
+  // Measurements and the work-progress queues have distinct navigation items.
   if (cleanHash === '#b2b') return 'measurements';
   if (cleanHash === '#dashboard') return 'measurements';
   if (cleanHash === '#b2b-logistics') return 'dashboard';
+  if (cleanHash === '#b2b-work-progress') return 'b2b-work-progress';
   if (cleanHash === '#fabric-receipts') return 'fabric-receipts';
   if (cleanHash === '#trial-sheet') return 'trial-sheet';
   if (cleanHash === '#care-support') return 'care-support';

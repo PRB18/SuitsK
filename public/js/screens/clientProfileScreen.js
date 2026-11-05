@@ -299,6 +299,26 @@ export async function renderClientProfileScreen(container) {
         </div>
       </div>
     </div>
+    <div class="modal-overlay" id="edit-order-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="edit-order-modal-title">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h2 class="modal-title" id="edit-order-modal-title">Edit Order</h2>
+          <button class="btn-icon modal-close" id="edit-order-modal-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid form-grid-2">
+            <div class="form-field"><label for="edit-ord-date">Order Date <span class="required">*</span></label><input type="date" id="edit-ord-date" class="input" required></div>
+            <div class="form-field"><label for="edit-ord-trial">Trial Date</label><input type="date" id="edit-ord-trial" class="input"></div>
+            <div class="form-field"><label for="edit-ord-delivery">Delivery Date</label><input type="date" id="edit-ord-delivery" class="input"></div>
+            <div class="form-field form-field--full"><label for="edit-ord-notes">Notes</label><textarea id="edit-ord-notes" class="input textarea" rows="3"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" id="edit-order-cancel">Cancel</button>
+          <button class="btn btn-primary" id="edit-order-save">Save Changes</button>
+        </div>
+      </div>
+    </div>
     <!-- Add Garment Modal -->
     <div class="modal-overlay" id="garment-modal" style="display:none;" role="dialog" aria-modal="true">
       <div class="modal-panel modal-panel--sm">
@@ -507,6 +527,8 @@ export async function renderClientProfileScreen(container) {
       if (action === 'add-garment') {
         activeGarmentAddOrderId = orderId;
         btn.addEventListener('click', openGarmentModal);
+      } else if (action === 'edit-order') {
+        btn.addEventListener('click', () => openEditOrderModal(orderId));
       } else if (action === 'view-meas') {
         const project = findProject(projectId);
         btn.addEventListener('click', () => openMeasPanel(project));
@@ -575,7 +597,10 @@ export async function renderClientProfileScreen(container) {
             <span>Advance: ₹${(order.advance_paid||0).toLocaleString()}</span>
             ${balance > 0 ? `<span class="balance-due">Balance: ₹${balance.toLocaleString()}</span>` : '<span class="balance-clear">✓ Cleared</span>'}
           </div>
-          ${isActive ? `<button class="btn btn-ghost btn-sm" data-garment-action="complete-order" data-order-id="${order.id}">Mark Completed</button>` : ''}
+          ${isActive ? `
+            <button class="btn btn-ghost btn-sm" data-garment-action="edit-order" data-order-id="${order.id}">✏️ Edit Dates &amp; Notes</button>
+            <button class="btn btn-ghost btn-sm" data-garment-action="complete-order" data-order-id="${order.id}">Mark Completed</button>
+          ` : ''}
         </div>
         <div class="order-projects">
           <div class="project-chips">
@@ -831,6 +856,52 @@ export async function renderClientProfileScreen(container) {
       showToast('Failed: ' + err.message, 'error');
       btn.disabled = false;
       btn.textContent = 'Continue to Measurements';
+    }
+  });
+
+  function openEditOrderModal(orderId) {
+    const order = clientData.orders.find(item => item.id === orderId);
+    if (!order) {
+      showToast('Could not find that order.', 'error');
+      return;
+    }
+    document.getElementById('edit-ord-date').value = order.order_date || '';
+    document.getElementById('edit-ord-trial').value = order.trial_date || '';
+    document.getElementById('edit-ord-delivery').value = order.delivery_date || '';
+    document.getElementById('edit-ord-notes').value = order.notes || '';
+    document.getElementById('edit-order-modal').dataset.orderId = orderId;
+    document.getElementById('edit-order-modal').style.display = 'flex';
+  }
+
+  const closeEditOrderModal = () => {
+    document.getElementById('edit-order-modal').style.display = 'none';
+  };
+  document.getElementById('edit-order-modal-close').addEventListener('click', closeEditOrderModal);
+  document.getElementById('edit-order-cancel').addEventListener('click', closeEditOrderModal);
+  document.getElementById('edit-order-save').addEventListener('click', async () => {
+    const modal = document.getElementById('edit-order-modal');
+    const orderId = modal.dataset.orderId;
+    const button = document.getElementById('edit-order-save');
+    const orderDate = document.getElementById('edit-ord-date').value;
+    if (!orderDate) {
+      showToast('Order date is required.', 'error');
+      return;
+    }
+    button.disabled = true;
+    try {
+      await api.updateOrder(clientId, orderId, {
+        order_date: orderDate,
+        trial_date: document.getElementById('edit-ord-trial').value,
+        delivery_date: document.getElementById('edit-ord-delivery').value,
+        notes: document.getElementById('edit-ord-notes').value.trim(),
+      });
+      closeEditOrderModal();
+      showToast('Order updated.', 'success');
+      await load();
+    } catch (err) {
+      showToast('Failed to update order: ' + err.message, 'error');
+    } finally {
+      button.disabled = false;
     }
   });
 

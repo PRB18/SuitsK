@@ -45,15 +45,23 @@ const ORDER_STATUSES = ['pending', 'in_progress', 'ready', 'completed', 'cancell
 
 function now() { return new Date().toISOString(); }
 
-// ── Auto-generate CTB-YYYY-NNN client ref ────────────────────────────────────
-async function generateClientRef(db) {
-  const year = new Date().getFullYear();
+function clientInitials(name) {
+  const words = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase().match(/[A-Z0-9]+/g) || [];
+  return words.map(word => word[0]).join('') || 'C';
+}
+
+async function generateClientRef(db, name) {
+  const initials = clientInitials(name);
   const result = await db.execute({
-    sql:  `SELECT COUNT(*) as cnt FROM clients WHERE client_ref LIKE ?`,
-    args: [`CTB-${year}-%`],
+    sql: 'SELECT client_ref FROM clients WHERE client_ref LIKE ?',
+    args: [`${initials}-%`],
   });
-  const n = Number(result.rows[0]?.cnt ?? 0) + 1;
-  return `CTB-${year}-${String(n).padStart(3, '0')}`;
+  const maxSequence = result.rows.reduce((max, row) => {
+    const match = new RegExp(`^${initials}-(\\d+)$`).exec(row.client_ref);
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0);
+  return `${initials}-${String(maxSequence + 1).padStart(3, '0')}`;
 }
 
 // ── Auto-generate ORD-YYYY-NNN order ref ────────────────────────────────────
@@ -91,7 +99,7 @@ router.get('/active-orders', async (req, res) => {
   try {
     const db = getDb();
     const result = await db.execute(`
-      SELECT o.id, o.order_ref, o.status, o.order_date as date,
+      SELECT o.id, o.order_ref, o.status, o.order_date as date, c.client_ref,
              o.trial_date, o.delivery_date, o.notes,
              c.name as customer, o.total_amount as amount,
              (SELECT COUNT(*) FROM projects WHERE order_id = o.id AND status != 'delivered') as qty,
@@ -185,6 +193,14 @@ router.post('/clients', validate(clientSchema), async (req, res) => {
   try {
     const db = getDb();
 
+    const sameName = await db.execute({
+      sql: 'SELECT id, client_ref, name FROM clients WHERE lower(trim(name)) = lower(trim(?)) ORDER BY created_at LIMIT 1',
+      args: [safe(name)],
+    });
+    if (sameName.rows.length > 0) {
+      return res.status(200).json({ ...sameName.rows[0], reused: true });
+    }
+
     // Uniqueness check — return the existing client's ref so frontend can link to it
     if (safe(phone)) {
       const existing = await db.execute({
@@ -201,7 +217,7 @@ router.post('/clients', validate(clientSchema), async (req, res) => {
 
     const id         = uuidv4();
     const ts         = now();
-    const client_ref = await generateClientRef(db);
+    const client_ref = await generateClientRef(db, name);
     const normalizedPhone = safe(phone) || null;
     const storedPhone = normalizedPhone || (await supportsNullPhone(db) ? null : `__NO_PHONE__${id}`);
 
@@ -383,6 +399,19 @@ router.put('/clients/:id', validate(clientSchema), async (req, res) => {
     const row = existing.rows[0];
     const { name, phone, email, address, city, notes } = req.body;
     const ts = now();
+    const updatedName = name !== undefined ? safe(name) : row.name;
+    if (name !== undefined && updatedName.toLocaleLowerCase() !== row.name.trim().toLocaleLowerCase()) {
+      const duplicateName = await db.execute({
+        sql: 'SELECT id, client_ref, name FROM clients WHERE lower(trim(name)) = lower(trim(?)) AND id != ? LIMIT 1',
+        args: [updatedName, req.params.id],
+      });
+      if (duplicateName.rows.length > 0) {
+        return res.status(409).json({
+          error: 'A client with this name already exists.',
+          existing: duplicateName.rows[0],
+        });
+      }
+    }
 
     // If phone is being changed, ensure it doesn't clash with another client
     if (phone && safe(phone) !== row.phone) {
@@ -401,10 +430,14 @@ router.put('/clients/:id', validate(clientSchema), async (req, res) => {
     const storedPhone = phone !== undefined
       ? (safe(phone) || (await supportsNullPhone(db) ? null : `__NO_PHONE__${req.params.id}`))
       : row.phone;
+    const clientRef = updatedName.trim().toLocaleLowerCase() !== row.name.trim().toLocaleLowerCase()
+      ? await generateClientRef(db, updatedName)
+      : row.client_ref;
     await db.execute({
-      sql:  `UPDATE clients SET name=?, phone=?, email=?, address=?, city=?, notes=?, updated_at=? WHERE id=?`,
+      sql:  `UPDATE clients SET client_ref=?, name=?, phone=?, email=?, address=?, city=?, notes=?, updated_at=? WHERE id=?`,
       args: [
-        name    !== undefined ? safe(name)    : row.name,
+        clientRef,
+        updatedName,
         storedPhone,
         email   !== undefined ? safe(email)   : row.email,
         address !== undefined ? safe(address) : row.address,

@@ -55,7 +55,7 @@ async function initDatabase() {
 
   // ── Clients ──────────────────────────────────────────────────────────────
   // phone is the natural uniqueness enforcer (prevents duplicate client records).
-  // client_ref is the human-readable ID auto-generated as CTB-YYYY-NNN.
+  // client_ref is the human-readable initials-plus-sequence client code.
   client.execute(`
     CREATE TABLE IF NOT EXISTS clients (
       id          TEXT PRIMARY KEY,
@@ -294,8 +294,12 @@ async function initDatabase() {
   await ensureColumn(client, 'b2b_entries', 'inventory_id', `TEXT NOT NULL DEFAULT ''`);
   await ensureColumn(client, 'b2b_entries', 'transfer_to_workshop', `TEXT NOT NULL DEFAULT ''`);
   await ensureColumn(client, 'b2b_entries', 'delivered_date', `TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn(client, 'b2b_entries', 'work_type', `TEXT NOT NULL DEFAULT 'b2c'`);
+  await ensureColumn(client, 'b2b_entries', 'client_id', `TEXT NOT NULL DEFAULT ''`);
   await ensureColumn(client, 'fabric_receipts', 'fabric_color', `TEXT NOT NULL DEFAULT ''`);
   await ensureColumn(client, 'client_visits', 'order_id', `TEXT NOT NULL DEFAULT ''`);
+  await backfillB2BClientLinks(client);
+  await migrateClientRefs(client);
   await backfillClientMeasurements(client);
 
   // ── Calendar OAuth Tokens ─────────────────────────────────────────────────
@@ -333,6 +337,48 @@ async function initDatabase() {
 
   console.log('[db] Connected to Turso — schema ready (12 tables).');
   return client;
+}
+
+function clientInitials(name) {
+  const words = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase().match(/[A-Z0-9]+/g) || [];
+  return words.map(word => word[0]).join('') || 'C';
+}
+
+async function backfillB2BClientLinks(db) {
+  await db.execute(`
+    UPDATE b2b_entries
+    SET client_id = COALESCE(
+      (SELECT c.id FROM clients c WHERE lower(trim(c.name)) = lower(trim(b2b_entries.company_name)) ORDER BY c.created_at LIMIT 1),
+      (SELECT c.id FROM clients c WHERE c.client_ref = b2b_entries.client_code LIMIT 1),
+      ''
+    )
+    WHERE client_id = ''
+  `);
+}
+
+async function migrateClientRefs(db) {
+  const result = await db.execute('SELECT id, name, client_ref FROM clients ORDER BY created_at, id');
+  const rows = result.rows;
+  const used = new Set(rows.map(row => row.client_ref));
+  const counters = new Map();
+
+  for (const row of rows) {
+    if (/^[A-Z0-9]+-\d{3,}$/.test(row.client_ref)) continue;
+    const initials = clientInitials(row.name);
+    let sequence = counters.get(initials) || 0;
+    let clientRef;
+    do {
+      sequence += 1;
+      clientRef = `${initials}-${String(sequence).padStart(3, '0')}`;
+    } while (used.has(clientRef));
+    counters.set(initials, sequence);
+    await db.execute({
+      sql: 'UPDATE clients SET client_ref = ? WHERE id = ?',
+      args: [clientRef, row.id],
+    });
+    used.add(clientRef);
+  }
 }
 
 async function ensureColumn(db, table, column, definition) {

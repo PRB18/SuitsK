@@ -1,21 +1,23 @@
 /**
- * b2bScreen.js — B2B Work In Progress
+ * b2bScreen.js — Shared B2B/B2C Work In Progress screen
  */
 import { api }       from '../api.js';
 import { showToast } from '../toast.js';
 import { router }    from '../router.js';
 
-export async function renderB2bScreen(container) {
+export async function renderB2bScreen(container, workType = 'b2c') {
+  const sectionName = workType.toUpperCase();
   let entries = [];
   let inventoryItems = [];
+  let clients = [];
   
   container.innerHTML = `
     <div class="screen-wrapper b2b-screen">
       <header class="screen-header">
         <button class="btn-icon back-btn" id="b2b-back">← Back</button>
-        <div class="screen-header-title"><h1 class="screen-title">B2B Work In Progress</h1></div>
+        <div class="screen-header-title"><h1 class="screen-title">${sectionName} Work in Progress</h1></div>
         <div class="screen-header-actions">
-          <input type="text" id="b2b-search" class="input" placeholder="Search B2B..." style="width: 250px; margin-right: 12px;">
+          <input type="text" id="b2b-search" class="input" placeholder="Search ${sectionName}..." style="width: 250px; margin-right: 12px;">
           <button class="btn btn-primary" id="b2b-new-btn">+ Add Entry</button>
         </div>
       </header>
@@ -49,7 +51,7 @@ export async function renderB2bScreen(container) {
     <div class="modal-overlay" id="b2b-modal" style="display:none;" role="dialog" aria-modal="true">
       <div class="modal-panel">
         <div class="modal-header">
-          <h2 class="modal-title" id="b2b-modal-title">Add B2B Entry</h2>
+          <h2 class="modal-title" id="b2b-modal-title">Add ${sectionName} Entry</h2>
           <button class="btn-icon modal-close" id="b2b-modal-close">✕</button>
         </div>
         <div class="modal-body">
@@ -60,11 +62,14 @@ export async function renderB2bScreen(container) {
             </div>
             <div class="form-field">
               <label>Client Name</label>
-              <input type="text" id="b2b-f-client-name" class="input">
+              <input type="text" id="b2b-f-client-name" class="input" list="b2b-client-list" autocomplete="off">
+              <datalist id="b2b-client-list"></datalist>
+              <input type="hidden" id="b2b-f-client-id">
             </div>
             <div class="form-field">
               <label>Client Code</label>
-              <input type="text" id="b2b-f-client-code" class="input">
+              <input type="text" id="b2b-f-client-code" class="input" aria-describedby="b2b-code-hint">
+              <small id="b2b-code-hint" class="text-muted">Select a client to link its code automatically.</small>
             </div>
             <div class="form-field">
               <label>Style / Product Name</label>
@@ -143,14 +148,17 @@ export async function renderB2bScreen(container) {
 
   async function load() {
     try {
-      const [resB2B, resInv] = await Promise.all([
-        api.getB2B(),
-        api.getInventory() // To populate the dropdown
+      const [resB2B, resInv, resClients] = await Promise.all([
+        api.getB2B({ work_type: workType }),
+        api.getInventory(),
+        api.getClients(),
       ]);
       entries = resB2B;
       inventoryItems = resInv.filter(i => i.type === 'fabric');
+      clients = resClients;
       renderTable();
       populateInventoryPicker();
+      populateClientPicker();
     } catch (err) {
       showToast('Error loading B2B: ' + err.message, 'error');
     }
@@ -167,30 +175,30 @@ export async function renderB2bScreen(container) {
     );
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding: 20px;">No B2B entries found.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding: 20px;">No ${sectionName} entries found.</td></tr>`;
       return;
     }
 
     tbody.innerHTML = filtered.map((e, index) => {
-      let fabricDisplay = e.fabric_code;
-      if (e.fabric_colour) fabricDisplay += ` / ${e.fabric_colour}`;
+      let fabricDisplay = escapeHtml(e.fabric_code);
+      if (e.fabric_colour) fabricDisplay += ` / ${escapeHtml(e.fabric_colour)}`;
       if (e.inventory_id && e.inventory_name) {
-        fabricDisplay = `<span class="badge badge--neutral" title="${e.inventory_name}">🔗 ${e.inventory_article || e.fabric_code}</span>`;
+        fabricDisplay = `<span class="badge badge--neutral" title="${escapeHtml(e.inventory_name)}">🔗 ${escapeHtml(e.inventory_article || e.fabric_code)}</span>`;
       }
 
       return `
         <tr>
           <td>${index + 1}</td>
-          <td>${e.order_date || '—'}</td>
-          <td style="font-weight: 500;">${e.company_name || '—'}</td>
-          <td><span class="mono">${e.client_code || '—'}</span></td>
-          <td>${e.style_product_name || '—'}</td>
+          <td>${escapeHtml(e.order_date || '—')}</td>
+          <td style="font-weight: 500;">${escapeHtml(e.company_name || '—')}</td>
+          <td><span class="mono">${escapeHtml(e.client_code || '—')}</span></td>
+          <td>${escapeHtml(e.style_product_name || '—')}</td>
           <td>${fabricDisplay || '—'}</td>
-          <td>${e.brand_name || '—'}</td>
-          <td>${e.quantity || 0}</td>
-          <td style="color: ${e.transfer_to_workshop ? 'var(--accent-color)' : 'var(--text-secondary)'}">${e.transfer_to_workshop || '—'}</td>
-          <td>${e.delivered_date || '—'}</td>
-          <td><span class="badge">${e.status}</span></td>
+          <td>${escapeHtml(e.brand_name || '—')}</td>
+          <td>${Number(e.quantity) || 0}</td>
+          <td style="color: ${e.transfer_to_workshop ? 'var(--accent-color)' : 'var(--text-secondary)'}">${escapeHtml(e.transfer_to_workshop || '—')}</td>
+          <td>${escapeHtml(e.delivered_date || '—')}</td>
+          <td><span class="badge">${escapeHtml(e.status)}</span></td>
           <td>
             <button class="btn-icon ctb-edit-btn" data-id="${e.id}">✎</button>
             <button class="btn-icon ctb-del-btn" data-id="${e.id}" style="color: var(--text-secondary);">✕</button>
@@ -212,13 +220,15 @@ export async function renderB2bScreen(container) {
   
   function openModal(id = null) {
     currentEditId = id;
-    document.getElementById('b2b-modal-title').textContent = id ? 'Edit B2B Entry' : 'Add B2B Entry';
+    document.getElementById('b2b-modal-title').textContent = id ? `Edit ${sectionName} Entry` : `Add ${sectionName} Entry`;
     
     if (id) {
       const e = entries.find(x => x.id === id);
       document.getElementById('b2b-f-date').value = e.order_date || '';
       document.getElementById('b2b-f-client-name').value = e.company_name || '';
       document.getElementById('b2b-f-client-code').value = e.client_code || '';
+      document.getElementById('b2b-f-client-id').value = e.client_id || '';
+      document.getElementById('b2b-f-client-code').readOnly = Boolean(e.client_id);
       document.getElementById('b2b-f-style').value = e.style_product_name || '';
       document.getElementById('b2b-f-fabric-code').value = e.fabric_code || '';
       document.getElementById('b2b-f-fabric-colour').value = e.fabric_colour || '';
@@ -234,6 +244,8 @@ export async function renderB2bScreen(container) {
       document.getElementById('b2b-f-date').value = new Date().toISOString().split('T')[0];
       document.getElementById('b2b-f-client-name').value = '';
       document.getElementById('b2b-f-client-code').value = '';
+      document.getElementById('b2b-f-client-id').value = '';
+      document.getElementById('b2b-f-client-code').readOnly = false;
       document.getElementById('b2b-f-style').value = '';
       document.getElementById('b2b-f-fabric-code').value = '';
       document.getElementById('b2b-f-fabric-colour').value = '';
@@ -261,8 +273,10 @@ export async function renderB2bScreen(container) {
   document.getElementById('b2b-modal-save').addEventListener('click', async () => {
     const data = {
       entry_type: 'corporate_order',
+      work_type: workType,
       order_date: document.getElementById('b2b-f-date').value,
       company_name: document.getElementById('b2b-f-client-name').value,
+      client_id: document.getElementById('b2b-f-client-id').value,
       client_code: document.getElementById('b2b-f-client-code').value,
       style_product_name: document.getElementById('b2b-f-style').value,
       fabric_code: document.getElementById('b2b-f-fabric-code').value,
@@ -305,9 +319,14 @@ export async function renderB2bScreen(container) {
   // Inventory Picker
   function populateInventoryPicker() {
     const select = document.getElementById('b2b-inv-select');
-    select.innerHTML = inventoryItems.map(i => 
-      `<option value="${i.id}" data-code="${i.article_number}" data-name="${i.name}">${i.article_number} - ${i.name}</option>`
-    ).join('');
+    select.replaceChildren(...inventoryItems.map(item => {
+      const option = document.createElement('option');
+      option.value = item.id;
+      option.dataset.code = item.article_number;
+      option.dataset.name = item.name;
+      option.textContent = `${item.article_number} - ${item.name}`;
+      return option;
+    }));
   }
   
   function updateInvDisplay(invId) {
@@ -336,4 +355,27 @@ export async function renderB2bScreen(container) {
   });
 
   load();
+
+  document.getElementById('b2b-f-client-name').addEventListener('input', () => {
+    const name = document.getElementById('b2b-f-client-name').value.trim().toLocaleLowerCase();
+    const match = clients.find(client => client.name.trim().toLocaleLowerCase() === name);
+    document.getElementById('b2b-f-client-id').value = match?.id || '';
+    document.getElementById('b2b-f-client-code').value = match?.client_ref || '';
+    document.getElementById('b2b-f-client-code').readOnly = Boolean(match);
+  });
+
+  function populateClientPicker() {
+    const list = document.getElementById('b2b-client-list');
+    list.replaceChildren(...clients.map(client => {
+      const option = document.createElement('option');
+      option.value = client.name;
+      return option;
+    }));
+  }
+}
+
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[character]));
 }

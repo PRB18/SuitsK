@@ -96,6 +96,8 @@ Client-side state management for the suit vault and current draft configuration.
 - `PUT /api/clients/:id/measurements` replaces the client-level measurement values; garment-project measurements remain available for order-specific overrides.
 - `POST /api/clients/:id/visits` records a visit date and purpose, with an optional order link.
 - `GET /api/trial-sheet` combines client-profile visit records with non-cancelled Schedule trial/client-visit events. The Trial Sheet shows client/order/project details when those records are explicitly linked.
+- Client references are stored on the client master as initials plus a sequence (for example `AN-001`). Work-in-progress and fabric-receipt views resolve linked references from that master record so updates stay consistent.
+- B2B and B2C work-in-progress entries share the same fields but are partitioned by `work_type`; existing entries migrate to B2C.
 
 **Draft Persistence:**
 - `currentSuit` stays in memory during wizard navigation.

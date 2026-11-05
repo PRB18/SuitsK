@@ -51,7 +51,7 @@ export async function renderClientDbScreen(container) {
         <table class="cdb-table" id="cdb-table" aria-label="Client roster">
           <thead>
             <tr>
-              <th>CTB Ref</th>
+              <th>Client Code</th>
               <th>Client Name</th>
               <th>Phone</th>
               <th>City</th>
@@ -279,7 +279,9 @@ export async function renderClientDbScreen(container) {
     saveBtn.textContent = 'Creating…';
     try {
       const created = await api.createClient({ name, phone, email, city, address, notes });
-      showToast(`Client ${name} created — measurement profile linked.`, 'success');
+      showToast(created.reused
+        ? `Existing client ${created.name} selected.`
+        : `Client ${name} created — measurement profile linked.`, 'success');
       closeModal();
       if (created?.id) {
         router.navigateTo('#client-profile', { id: created.id });

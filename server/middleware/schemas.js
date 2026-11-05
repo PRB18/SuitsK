@@ -161,6 +161,8 @@ const shortcomingResolveSchema = z.object({
 // ── B2B ─────────────────────────────────────────────────────────────────────
 const b2bEntrySchema = z.object({
   entry_type: z.enum(['corporate_order', 'vendor_purchase']),
+  work_type: z.enum(['b2b', 'b2c']).optional(),
+  client_id: z.union([z.string().uuid(), z.literal('')]).optional().nullable(),
   order_date: dateSchema.optional().nullable(),
   company_name: z.string().max(255).optional().nullable(),
   contact_person: z.string().max(100).optional().nullable(),

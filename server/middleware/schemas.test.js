@@ -101,6 +101,8 @@ test('status and reorder updates accept the fields sent by their screens', () =>
 test('B2B form payload validates, coerces quantity, and retains form fields', () => {
   const result = schemas.b2bEntrySchema.safeParse({
     entry_type: 'corporate_order',
+    work_type: 'b2b',
+    client_id: '',
     order_date: '2026-11-02',
     company_name: 'Company',
     client_code: 'CTB-1',
@@ -118,6 +120,17 @@ test('B2B form payload validates, coerces quantity, and retains form fields', ()
 
   assert.equal(result.success, true);
   assert.equal(result.data.quantity, 2);
+  assert.equal(result.data.work_type, 'b2b');
+  assert.equal(result.data.client_id, '');
+  assert.equal(schemas.b2bEntrySchema.safeParse({
+    entry_type: 'corporate_order',
+    work_type: 'b2c',
+    client_id: '00000000-0000-4000-8000-000000000001',
+  }).success, true);
+  assert.equal(schemas.b2bEntrySchema.safeParse({
+    entry_type: 'corporate_order',
+    work_type: 'other',
+  }).success, false);
   for (const field of [
     'order_date',
     'client_code',

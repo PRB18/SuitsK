@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
     const db = getDb();
     let sql = `
       SELECT f.*, i.name as inventory_name, i.article_number as inventory_article,
-             c.name as client_name_lookup 
+             c.name as client_name_lookup, c.client_ref as client_ref_lookup
       FROM fabric_receipts f
       LEFT JOIN inventory i ON f.inventory_id = i.id
       LEFT JOIN clients c ON f.client_id = c.id
@@ -48,7 +48,11 @@ router.get('/', async (req, res) => {
 
     sql += ' ORDER BY f.created_at DESC';
     const result = await db.execute({ sql, args });
-    res.json(result.rows);
+    res.json(result.rows.map(row => ({
+      ...row,
+      client_code: row.client_ref_lookup || row.client_code,
+      client_name: row.client_name_lookup || row.client_name,
+    })));
   } catch (err) {
     console.error('[fabric-receipts] GET / error:', err);
     res.status(500).json({ error: err.message });

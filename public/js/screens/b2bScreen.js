@@ -28,6 +28,7 @@ export async function renderB2bScreen(container, workType = 'b2c') {
             <tr>
               <th>#</th>
               <th>Date</th>
+              <th>B2B/B2C</th>
               <th>Client Name</th>
               <th>Client Code</th>
               <th>Style / Product</th>
@@ -41,7 +42,7 @@ export async function renderB2bScreen(container, workType = 'b2c') {
             </tr>
           </thead>
           <tbody id="b2b-tbody">
-            <tr><td colspan="12" style="text-align:center; padding: 20px;">Loading...</td></tr>
+            <tr><td colspan="13" style="text-align:center; padding: 20px;">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -59,6 +60,13 @@ export async function renderB2bScreen(container, workType = 'b2c') {
             <div class="form-field">
               <label>Date</label>
               <input type="date" id="b2b-f-date" class="input">
+            </div>
+            <div class="form-field">
+              <label for="b2b-f-work-type">Order Type</label>
+              <select id="b2b-f-work-type" class="input">
+                <option value="b2c">B2C</option>
+                <option value="b2b">B2B</option>
+              </select>
             </div>
             <div class="form-field">
               <label>Client Name</label>
@@ -175,7 +183,7 @@ export async function renderB2bScreen(container, workType = 'b2c') {
     );
 
     if (filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding: 20px;">No ${sectionName} entries found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding: 20px;">No ${sectionName} entries found.</td></tr>`;
       return;
     }
 
@@ -190,6 +198,7 @@ export async function renderB2bScreen(container, workType = 'b2c') {
         <tr>
           <td>${index + 1}</td>
           <td>${escapeHtml(e.order_date || '—')}</td>
+          <td><span class="badge">${e.work_type === 'b2b' ? 'B2B' : 'B2C'}</span></td>
           <td style="font-weight: 500;">${escapeHtml(e.company_name || '—')}</td>
           <td><span class="mono">${escapeHtml(e.client_code || '—')}</span></td>
           <td>${escapeHtml(e.style_product_name || '—')}</td>
@@ -225,6 +234,7 @@ export async function renderB2bScreen(container, workType = 'b2c') {
     if (id) {
       const e = entries.find(x => x.id === id);
       document.getElementById('b2b-f-date').value = e.order_date || '';
+      document.getElementById('b2b-f-work-type').value = e.work_type === 'b2b' ? 'b2b' : 'b2c';
       document.getElementById('b2b-f-client-name').value = e.company_name || '';
       document.getElementById('b2b-f-client-code').value = e.client_code || '';
       document.getElementById('b2b-f-client-id').value = e.client_id || '';
@@ -242,6 +252,7 @@ export async function renderB2bScreen(container, workType = 'b2c') {
       updateInvDisplay(e.inventory_id);
     } else {
       document.getElementById('b2b-f-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('b2b-f-work-type').value = workType;
       document.getElementById('b2b-f-client-name').value = '';
       document.getElementById('b2b-f-client-code').value = '';
       document.getElementById('b2b-f-client-id').value = '';
@@ -273,7 +284,7 @@ export async function renderB2bScreen(container, workType = 'b2c') {
   document.getElementById('b2b-modal-save').addEventListener('click', async () => {
     const data = {
       entry_type: 'corporate_order',
-      work_type: workType,
+      work_type: document.getElementById('b2b-f-work-type').value,
       order_date: document.getElementById('b2b-f-date').value,
       company_name: document.getElementById('b2b-f-client-name').value,
       client_id: document.getElementById('b2b-f-client-id').value,
@@ -291,6 +302,7 @@ export async function renderB2bScreen(container, workType = 'b2c') {
     };
     
     try {
+      const selectedWorkType = data.work_type;
       if (currentEditId) {
         await api.updateB2BEntry(currentEditId, data);
         showToast('Updated entry');
@@ -299,7 +311,11 @@ export async function renderB2bScreen(container, workType = 'b2c') {
         showToast('Created entry');
       }
       closeModal();
-      load();
+      if (selectedWorkType !== workType) {
+        router.navigate(selectedWorkType === 'b2b' ? '#b2b-work-progress' : '#b2b-logistics');
+      } else {
+        load();
+      }
     } catch(err) {
       showToast(err.message, 'error');
     }

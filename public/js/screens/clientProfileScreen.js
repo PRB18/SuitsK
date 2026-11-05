@@ -272,6 +272,13 @@ export async function renderClientProfileScreen(container) {
               </select>
             </div>
             <div class="form-field">
+              <label for="ord-work-type">Order Type</label>
+              <select id="ord-work-type" class="input">
+                <option value="b2c">B2C</option>
+                <option value="b2b">B2B</option>
+              </select>
+            </div>
+            <div class="form-field">
               <label for="ord-trial">Trial Date</label>
               <input type="date" id="ord-trial" class="input">
             </div>
@@ -308,6 +315,7 @@ export async function renderClientProfileScreen(container) {
         <div class="modal-body">
           <div class="form-grid form-grid-2">
             <div class="form-field"><label for="edit-ord-date">Order Date <span class="required">*</span></label><input type="date" id="edit-ord-date" class="input" required></div>
+            <div class="form-field"><label for="edit-ord-work-type">Order Type</label><select id="edit-ord-work-type" class="input"><option value="b2c">B2C</option><option value="b2b">B2B</option></select></div>
             <div class="form-field"><label for="edit-ord-trial">Trial Date</label><input type="date" id="edit-ord-trial" class="input"></div>
             <div class="form-field"><label for="edit-ord-delivery">Delivery Date</label><input type="date" id="edit-ord-delivery" class="input"></div>
             <div class="form-field form-field--full"><label for="edit-ord-notes">Notes</label><textarea id="edit-ord-notes" class="input textarea" rows="3"></textarea></div>
@@ -586,6 +594,7 @@ export async function renderClientProfileScreen(container) {
           <div class="order-card-ref">
             <span class="order-ref">${escHtml(order.order_ref)}</span>
             <span class="badge ${isActive ? 'badge--info' : 'badge--neutral'}">${ORDER_STATUS_LABELS[order.status] || order.status}</span>
+            <span class="badge badge--neutral">${order.work_type === 'b2b' ? 'B2B' : 'B2C'}</span>
           </div>
           <div class="order-card-meta">
             ${order.order_date   ? `<span>Ordered: ${fmtDate(order.order_date)}</span>` : ''}
@@ -598,7 +607,7 @@ export async function renderClientProfileScreen(container) {
             ${balance > 0 ? `<span class="balance-due">Balance: ₹${balance.toLocaleString()}</span>` : '<span class="balance-clear">✓ Cleared</span>'}
           </div>
           ${isActive ? `
-            <button class="btn btn-ghost btn-sm" data-garment-action="edit-order" data-order-id="${order.id}">✏️ Edit Dates &amp; Notes</button>
+            <button class="btn btn-ghost btn-sm" data-garment-action="edit-order" data-order-id="${order.id}">✏️ Edit Order Details</button>
             <button class="btn btn-ghost btn-sm" data-garment-action="complete-order" data-order-id="${order.id}">Mark Completed</button>
           ` : ''}
         </div>
@@ -815,6 +824,7 @@ export async function renderClientProfileScreen(container) {
   function openOrderModal() {
     document.getElementById('ord-date').value     = new Date().toISOString().split('T')[0];
     document.getElementById('ord-garment').value  = 'Jacket';
+    document.getElementById('ord-work-type').value = 'b2c';
     document.getElementById('ord-trial').value    = '';
     document.getElementById('ord-delivery').value = '';
     document.getElementById('ord-total').value    = '';
@@ -827,6 +837,7 @@ export async function renderClientProfileScreen(container) {
   document.getElementById('ord-save').addEventListener('click', async () => {
     const order_date    = document.getElementById('ord-date').value;
     const garment_type  = document.getElementById('ord-garment').value;
+    const work_type     = document.getElementById('ord-work-type').value;
     const trial_date    = document.getElementById('ord-trial').value;
     const delivery_date = document.getElementById('ord-delivery').value;
     const total_amount  = parseFloat(document.getElementById('ord-total').value)   || 0;
@@ -841,7 +852,7 @@ export async function renderClientProfileScreen(container) {
     try {
       const { order, project } = await createOrderWithProject(
         clientId,
-        { order_date, trial_date, delivery_date, total_amount, advance_paid, notes },
+        { order_date, trial_date, delivery_date, total_amount, advance_paid, notes, work_type },
         garment_type,
       );
       document.getElementById('order-modal').style.display = 'none';
@@ -866,6 +877,7 @@ export async function renderClientProfileScreen(container) {
       return;
     }
     document.getElementById('edit-ord-date').value = order.order_date || '';
+    document.getElementById('edit-ord-work-type').value = order.work_type === 'b2b' ? 'b2b' : 'b2c';
     document.getElementById('edit-ord-trial').value = order.trial_date || '';
     document.getElementById('edit-ord-delivery').value = order.delivery_date || '';
     document.getElementById('edit-ord-notes').value = order.notes || '';
@@ -894,6 +906,7 @@ export async function renderClientProfileScreen(container) {
         trial_date: document.getElementById('edit-ord-trial').value,
         delivery_date: document.getElementById('edit-ord-delivery').value,
         notes: document.getElementById('edit-ord-notes').value.trim(),
+        work_type: document.getElementById('edit-ord-work-type').value,
       });
       closeEditOrderModal();
       showToast('Order updated.', 'success');

@@ -102,6 +102,7 @@ async function initDatabase() {
       id            TEXT PRIMARY KEY,
       client_id     TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
       order_ref     TEXT NOT NULL,
+      work_type     TEXT NOT NULL DEFAULT 'b2c',
       order_date    TEXT NOT NULL,
       trial_date    TEXT NOT NULL DEFAULT '',
       delivery_date TEXT NOT NULL DEFAULT '',
@@ -296,6 +297,7 @@ async function initDatabase() {
   await ensureColumn(client, 'b2b_entries', 'delivered_date', `TEXT NOT NULL DEFAULT ''`);
   await ensureColumn(client, 'b2b_entries', 'work_type', `TEXT NOT NULL DEFAULT 'b2c'`);
   await ensureColumn(client, 'b2b_entries', 'client_id', `TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn(client, 'orders', 'work_type', `TEXT NOT NULL DEFAULT 'b2c'`);
   await ensureColumn(client, 'fabric_receipts', 'fabric_color', `TEXT NOT NULL DEFAULT ''`);
   await ensureColumn(client, 'client_visits', 'order_id', `TEXT NOT NULL DEFAULT ''`);
   await backfillB2BClientLinks(client);

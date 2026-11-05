@@ -1,6 +1,13 @@
+## 2026-11-05: Unify dashboard active orders with explicit order type
+
+- **Decision:** Render client-profile orders and manual B2B/B2C work entries in one dashboard Active Orders list, label each row B2B or B2C, and allow staff to select the type when creating or editing either kind of record.
+- **Why:** Staff need one date-sorted view of active work while preserving separate work-in-progress screens and consistent classification at creation time.
+- **Alternatives considered:** Keep separate dashboard lists (rejected: the user requested one list); infer classification from which screen created the entry (rejected: profile orders and manual entries have separate creation paths and need explicit, editable values).
+- **Status:** Implemented with an additive `orders.work_type` migration and schema validation coverage.
+
 ## 2026-11-05: Separate B2B/B2C work queues and link short client codes
 
-- **Decision:** Keep the existing work-in-progress entries in B2C, add an independent B2B queue using the same workflow, generate initials-plus-sequence client references, and reuse an existing client when a new record has the same normalized name. Display linked client references from the client master in B2B, fabric receipts, and dashboard rows. Client profiles can edit active order dates and notes; the hub shows separate B2C and B2B lists sorted by trial date then order date where applicable.
+- **Decision:** Keep the existing work-in-progress entries in B2C, add an independent B2B queue using the same workflow, generate initials-plus-sequence client references, and reuse an existing client when a new record has the same normalized name. Display linked client references from the client master in B2B, fabric receipts, and dashboard rows. Client profiles can edit active order dates and notes; the hub shows one combined Active Orders list sorted by trial date then order date where applicable.
 - **Why:** Staff need independent business/client work tracking while maintaining one source of truth for client identity and references; changing dates must immediately affect dashboard order.
 - **Alternatives considered:** Reuse one mixed queue (rejected: B2B and B2C must stay separate); retain manually typed client codes (rejected: stale or inconsistent references); sort only by creation date (rejected: ignores rescheduled trials).
 - **Status:** Implemented with additive database migration and validation coverage.

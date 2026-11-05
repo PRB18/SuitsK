@@ -99,7 +99,7 @@ router.get('/active-orders', async (req, res) => {
   try {
     const db = getDb();
     const result = await db.execute(`
-      SELECT o.id, o.order_ref, o.status, o.order_date as date, c.client_ref,
+      SELECT o.id, o.order_ref, o.status, o.work_type, o.order_date as date, c.client_ref,
              o.trial_date, o.delivery_date, o.notes,
              c.name as customer, o.total_amount as amount,
              (SELECT COUNT(*) FROM projects WHERE order_id = o.id AND status != 'delivered') as qty,
@@ -496,7 +496,7 @@ router.get('/clients/:id/orders', async (req, res) => {
 // POST /api/clients/:id/orders — create order for a client
 router.post('/clients/:id/orders', validate(orderSchema), async (req, res) => {
   if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Not found' });
-  const { order_date, trial_date = '', delivery_date = '', total_amount = 0, advance_paid = 0, status, notes = '' } = req.body;
+  const { order_date, trial_date = '', delivery_date = '', total_amount = 0, advance_paid = 0, status, notes = '', work_type = 'b2c' } = req.body;
 
   try {
     const db = getDb();
@@ -510,12 +510,12 @@ router.post('/clients/:id/orders', validate(orderSchema), async (req, res) => {
     const order_ref = await generateOrderRef(db);
 
     await db.execute({
-      sql:  `INSERT INTO orders (id, client_id, order_ref, order_date, trial_date, delivery_date, status, total_amount, advance_paid, notes, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)`,
-      args: [id, req.params.id, order_ref, order_date, trial_date, delivery_date, Number(total_amount), Number(advance_paid), safe(notes), ts, ts],
+      sql:  `INSERT INTO orders (id, client_id, order_ref, work_type, order_date, trial_date, delivery_date, status, total_amount, advance_paid, notes, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)`,
+      args: [id, req.params.id, order_ref, work_type, order_date, trial_date, delivery_date, Number(total_amount), Number(advance_paid), safe(notes), ts, ts],
     });
 
-    res.status(201).json({ id, client_id: req.params.id, order_ref, order_date, trial_date, delivery_date, status: 'pending', total_amount: Number(total_amount), advance_paid: Number(advance_paid), notes: safe(notes), created_at: ts, updated_at: ts, projects: [] });
+    res.status(201).json({ id, client_id: req.params.id, order_ref, work_type, order_date, trial_date, delivery_date, status: 'pending', total_amount: Number(total_amount), advance_paid: Number(advance_paid), notes: safe(notes), created_at: ts, updated_at: ts, projects: [] });
   } catch (err) {
     console.error('[clients] POST /:id/orders error:', err);
     res.status(500).json({ error: err.message });
@@ -530,14 +530,14 @@ router.put('/clients/:id/orders/:orderId', validate(orderUpdateSchema), async (r
     const existing = await db.execute({ sql: 'SELECT * FROM orders WHERE id = ? AND client_id = ?', args: [req.params.orderId, req.params.id] });
     if (existing.rows.length === 0) return res.status(404).json({ error: 'Order not found.' });
     const row = existing.rows[0];
-    const { order_date, trial_date, delivery_date, status, total_amount, advance_paid, notes } = req.body;
+    const { order_date, trial_date, delivery_date, status, total_amount, advance_paid, notes, work_type } = req.body;
 
     if (status && !ORDER_STATUSES.includes(status))
       return res.status(400).json({ error: `Invalid status. Must be one of: ${ORDER_STATUSES.join(', ')}` });
 
     const ts = now();
     await db.execute({
-      sql:  `UPDATE orders SET order_date=?, trial_date=?, delivery_date=?, status=?, total_amount=?, advance_paid=?, notes=?, updated_at=? WHERE id=?`,
+      sql:  `UPDATE orders SET order_date=?, trial_date=?, delivery_date=?, status=?, total_amount=?, advance_paid=?, notes=?, work_type=?, updated_at=? WHERE id=?`,
       args: [
         order_date    !== undefined ? order_date    : row.order_date,
         trial_date    !== undefined ? trial_date    : row.trial_date,
@@ -546,6 +546,7 @@ router.put('/clients/:id/orders/:orderId', validate(orderUpdateSchema), async (r
         total_amount  !== undefined ? Number(total_amount)  : row.total_amount,
         advance_paid  !== undefined ? Number(advance_paid)  : row.advance_paid,
         notes         !== undefined ? safe(notes)   : row.notes,
+        work_type     !== undefined ? work_type     : row.work_type,
         ts, req.params.orderId,
       ],
     });

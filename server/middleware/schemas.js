@@ -29,6 +29,7 @@ const clientVisitSchema = z.object({
 
 // ── Orders ──────────────────────────────────────────────────────────────────
 const orderSchema = z.object({
+  work_type: z.enum(['b2b', 'b2c']).optional(),
   order_date: dateSchema,
   trial_date: dateSchema.optional().nullable(),
   delivery_date: dateSchema.optional().nullable(),

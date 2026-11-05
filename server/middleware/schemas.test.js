@@ -33,6 +33,7 @@ test('client visit requests accept an optional order link', () => {
 
 test('order requests match create and partial-update payloads', () => {
   assert.equal(schemas.orderSchema.safeParse({
+    work_type: 'b2b',
     order_date: '2026-11-02',
     trial_date: '',
     delivery_date: '',
@@ -40,8 +41,13 @@ test('order requests match create and partial-update payloads', () => {
     advance_paid: 0,
     notes: '',
   }).success, true);
+  assert.equal(schemas.orderSchema.safeParse({
+    work_type: 'other',
+    order_date: '2026-11-02',
+  }).success, false);
 
   assert.equal(schemas.orderUpdateSchema.safeParse({ status: 'completed' }).success, true);
+  assert.equal(schemas.orderUpdateSchema.safeParse({ work_type: 'b2c' }).success, true);
 });
 
 test('project requests accept object measurements and partial updates', () => {

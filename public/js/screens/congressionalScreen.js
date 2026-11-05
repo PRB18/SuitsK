@@ -158,28 +158,33 @@ async function loadStatusQuoWidget(container) {
 // ---------------------------------------------------------------------------
 async function renderActiveOrders(container) {
   try {
-    const [orders, b2bEntries] = await Promise.all([
+    const [orders, workEntries] = await Promise.all([
       api.getActiveOrders(),
-      api.getB2B({ work_type: 'b2b' }),
+      api.getB2B({ type: 'corporate_order' }),
     ]);
-    const activeOrders = (orders || []).sort((a, b) => dateKey(a) - dateKey(b));
-    const activeB2b = (b2bEntries || [])
-      .filter(entry => !['completed', 'cancelled'].includes(entry.status))
+    const activeOrders = (orders || []).map(order => ({
+      ...order,
+      work_type: order.work_type === 'b2b' ? 'b2b' : 'b2c',
+      record_kind: 'client-order',
+    }));
+    const activeEntries = (workEntries || [])
+      .filter(entry => entry.entry_type === 'corporate_order' && !['completed', 'cancelled'].includes(entry.status))
       .map(entry => ({
         ...entry,
         customer: entry.company_name || entry.vendor_name || '—',
         client_ref: entry.client_code || '',
-        order_ref: 'B2B Entry',
+        order_ref: 'Work Entry',
         date: entry.order_date,
         trial_date: '',
         delivery_date: entry.delivered_date || entry.delivery_date,
         notes: [entry.style_product_name, entry.brand_name, entry.notes].filter(Boolean).join(' · '),
         fabric_color: entry.fabric_colour,
         qty: entry.quantity,
-        is_b2b: true,
-      }))
-      .sort((a, b) => dateKey(a) - dateKey(b));
-    if (activeOrders.length === 0 && activeB2b.length === 0) {
+        work_type: entry.work_type === 'b2b' ? 'b2b' : 'b2c',
+        record_kind: 'work-entry',
+      }));
+    const activeList = [...activeOrders, ...activeEntries].sort((a, b) => dateKey(a) - dateKey(b));
+    if (activeList.length === 0) {
       container.innerHTML = `
         <div class="empty-vault-card" style="padding: 1.5rem; text-align: center; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card);">
           <div class="empty-icon-wrap" style="width: 40px; height: 40px; margin: 0 auto 0.5rem auto; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(0,0,0,0.05);">
@@ -234,7 +239,7 @@ async function renderActiveOrders(container) {
       .ctb-order-row { transition: background-color 0.2s ease, transform 0.1s ease; cursor: pointer; }
       .ctb-order-row:hover { background-color: rgba(201,168,76,0.12); }
       .ctb-order-row:active { background-color: rgba(201,168,76,0.18); }
-      .ctb-order-grid { display: grid; grid-template-columns: 1.5fr 1.2fr 1fr 1fr 1fr 1.2fr 1fr 1fr 90px 50px 40px; min-width: 1100px; align-items: center; gap: 1rem; }
+      .ctb-order-grid { display: grid; grid-template-columns: 1.5fr 0.65fr 1.2fr 1fr 1fr 1fr 1.2fr 0.8fr 0.8fr 90px 50px 40px; min-width: 1200px; align-items: center; gap: 1rem; }
       .ctb-req-scroll { min-width: 0; max-width: 150px; overflow: hidden; white-space: nowrap; }
       .ctb-req-scroll-text { display: inline-block; min-width: 100%; }
       .ctb-req-scroll.is-overflowing .ctb-req-scroll-text {
@@ -293,7 +298,7 @@ async function renderActiveOrders(container) {
       }
     `;
     
-    const renderRows = (list, targetPanel, isB2B = false) => {
+    const renderRows = (list, targetPanel) => {
       targetPanel.innerHTML = '';
       targetPanel.appendChild(styleEl.cloneNode(true));
       
@@ -302,6 +307,7 @@ async function renderActiveOrders(container) {
       header.className = 'ctb-order-grid ctb-order-header';
       header.innerHTML = `
         <div>Client Name</div>
+        <div>B2B/B2C</div>
         <div>Order Ref</div>
         <div>Order Date</div>
         <div>Trial Date</div>
@@ -330,17 +336,20 @@ async function renderActiveOrders(container) {
         row.style.padding = '14px 24px';
         row.style.borderBottom = '1px solid var(--border-color, rgba(201,168,76,0.15))';
         
-        const dateStr = new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        const formatDate = value => {
+          if (!value) return '—';
+          const parsed = new Date(value.length === 10 ? `${value}T00:00:00` : value);
+          return Number.isNaN(parsed.getTime())
+            ? '—'
+            : parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        };
+        const dateStr = formatDate(order.date);
         
-        let trialDisplay = '—';
-        if (order.trial_date) {
-          trialDisplay = new Date(order.trial_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-        }
+        const trialDisplay = formatDate(order.trial_date);
 
-        let deadlineDisplay = '—';
+        const deadlineDisplay = formatDate(order.delivery_date);
         let deadlineColor = 'inherit';
         if (order.delivery_date) {
-          deadlineDisplay = new Date(order.delivery_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
           if (order.urgency === 'overdue') deadlineColor = '#D0453A';
           else if (order.urgency === 'due_soon') deadlineColor = '#C9881A';
         }
@@ -349,6 +358,7 @@ async function renderActiveOrders(container) {
 
         row.innerHTML = `
           <div style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.customer)}<small style="display:block;font:0.72rem var(--font-sans);color:var(--text-secondary);">${escapeHTML(order.client_ref || '')}</small></div>
+          <div><span class="vault-status-badge ${order.work_type === 'b2b' ? 'badge--info' : 'badge--neutral'}" style="font-size:0.65rem;text-transform:uppercase;padding:0.2rem 0.5rem;line-height:1;">${order.work_type === 'b2b' ? 'B2B' : 'B2C'}</span></div>
           <div style="font-size: 0.8rem; color: var(--text-secondary); font-variant-numeric: tabular-nums;">${escapeHTML(order.order_ref)}</div>
           <div style="font-size: 0.8rem; color: var(--text-secondary);">${dateStr}</div>
           <div style="font-size: 0.8rem; color: var(--text-secondary);">${trialDisplay}</div>
@@ -357,9 +367,9 @@ async function renderActiveOrders(container) {
           <div style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.fabric_code || '—')}</div>
           <div style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(order.fabric_color || '—')}</div>
           <div>
-            <span class="vault-status-badge ${getBadgeClass(order.status, order.urgency)}" style="font-size: 0.6rem; text-transform: uppercase; padding: 0.2rem 0.5rem; line-height: 1;">${escapeHTML(order.status.replace('_', ' '))}</span>
+            <span class="vault-status-badge ${getBadgeClass(order.status, order.urgency)}" style="font-size: 0.6rem; text-transform: uppercase; padding: 0.2rem 0.5rem; line-height: 1;">${escapeHTML(String(order.status || 'pending').replace('_', ' '))}</span>
           </div>
-          <div style="font-size: 0.85rem; text-align: right; color: var(--text-secondary);"><strong style="color: var(--text-primary);">${order.qty}</strong></div>
+          <div style="font-size: 0.85rem; text-align: right; color: var(--text-secondary);"><strong style="color: var(--text-primary);">${order.qty || 0}</strong></div>
           <div style="text-align:center;"><div class="ctb-expand-btn chevron">▾</div></div>
         `;
         targetPanel.appendChild(row);
@@ -392,15 +402,15 @@ async function renderActiveOrders(container) {
             accordion.classList.add('open');
             
             if (!accordion.getAttribute('data-loaded')) {
-              if (isB2B || order.is_b2b) {
+              if (order.record_kind === 'work-entry') {
                 accordion.innerHTML = `
-                  <div style="font-weight:600;margin-bottom:8px;font-size:0.9rem;">B2B details for ${escapeHTML(order.customer)}</div>
+                  <div style="font-weight:600;margin-bottom:8px;font-size:0.9rem;">${order.work_type.toUpperCase()} details for ${escapeHTML(order.customer)}</div>
                   <div>Style / Product: ${escapeHTML(order.style_product_name || '—')}</div>
                   <div>Brand: ${escapeHTML(order.brand_name || '—')}</div>
                   <div>Fabric: ${escapeHTML([order.fabric_code, order.fabric_colour].filter(Boolean).join(' / ') || '—')}</div>
                   <div>Quantity: ${escapeHTML(order.quantity || 0)}</div>
                   <div>Notes: ${escapeHTML(order.notes || '—')}</div>
-                  <div style="text-align:right;margin-top:8px;"><a href="#b2b-work-progress" class="btn btn-primary btn-sm" style="text-decoration:none;">Open B2B Work in Progress →</a></div>`;
+                  <div style="text-align:right;margin-top:8px;"><a href="#${order.work_type === 'b2b' ? 'b2b-work-progress' : 'b2b-logistics'}" class="btn btn-primary btn-sm" style="text-decoration:none;">Open ${order.work_type.toUpperCase()} Work in Progress →</a></div>`;
                 accordion.setAttribute('data-loaded', 'true');
                 return;
               }
@@ -460,34 +470,21 @@ async function renderActiveOrders(container) {
     };
 
     container.innerHTML = '';
-    const b2cHeading = document.createElement('h3');
-    b2cHeading.textContent = `B2C Client Orders (${activeOrders.length})`;
-    b2cHeading.style.cssText = 'margin:1rem 0 0.5rem;font-family:var(--font-serif);';
-    const b2cPanel = createPanel();
-    const b2bHeading = document.createElement('h3');
-    b2bHeading.textContent = `B2B Work in Progress (${activeB2b.length})`;
-    b2bHeading.style.cssText = 'margin:1.5rem 0 0.5rem;font-family:var(--font-serif);';
-    const b2bPanel = createPanel();
-    container.append(b2cHeading, b2cPanel, b2bHeading, b2bPanel);
-    renderRows(activeOrders, b2cPanel);
-    renderRows(activeB2b, b2bPanel, true);
+    const panel = createPanel();
+    container.append(panel);
+    renderRows(activeList, panel);
 
     const searchInput = document.getElementById('active-orders-search');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         const q = e.target.value.toLowerCase();
-        const filteredB2c = activeOrders.filter(o =>
+        const filtered = activeList.filter(o =>
           (o.customer||'').toLowerCase().includes(q) || 
           (o.order_ref||'').toLowerCase().includes(q) ||
+          (o.work_type||'').toLowerCase().includes(q) ||
           (o.notes||'').toLowerCase().includes(q)
         );
-        const filteredB2b = activeB2b.filter(o =>
-          (o.customer||'').toLowerCase().includes(q) ||
-          (o.client_ref||'').toLowerCase().includes(q) ||
-          (o.notes||'').toLowerCase().includes(q)
-        );
-        renderRows(filteredB2c, b2cPanel);
-        renderRows(filteredB2b, b2bPanel, true);
+        renderRows(filtered, panel);
       });
     }
   } catch (err) {
